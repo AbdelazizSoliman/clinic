@@ -1,0 +1,9 @@
+<div id="product-results" aria-live="polite" aria-busy="false">
+  <%= render "products/active_filters" %>
+  <% if @products.any? %>
+    <div class="grid grid-cols-1 gap-4 min-[420px]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"><%= render partial: "products/product_card", collection: @products, as: :product %></div>
+    <%= render "products/pagination" %>
+  <% else %>
+    <%= render "products/empty_state" %>
+  <% end %>
+</div>

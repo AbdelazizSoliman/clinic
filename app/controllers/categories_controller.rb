@@ -1,6 +1,12 @@
 class CategoriesController < ApplicationController
+  include ProductBrowsing
+
   def show
     @category = Category.find_by!(slug: params[:id])
-    @products = @category.products.includes(:brand).active.order(featured: :desc, name: :asc)
+    load_product_browsing(
+      base_relation: @category.products.active,
+      path: category_path(@category),
+      locked_category: @category
+    )
   end
 end

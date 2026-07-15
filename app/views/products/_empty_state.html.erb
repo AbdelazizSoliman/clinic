@@ -1,0 +1,13 @@
+<div class="rounded-3xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
+  <div class="text-5xl" aria-hidden="true"><%= @locked_category && active_filter_chips.empty? ? "📦" : "🔎" %></div>
+  <% if @products_query.invalid_price_range? %>
+    <h2 class="mt-4 text-xl font-black">نطاق السعر غير صحيح</h2><p class="mt-2 text-sm text-slate-600">راجع أقل وأعلى سعر ثم حاول مرة أخرى.</p>
+  <% elsif @active_browsing_params["q"].present? %>
+    <h2 class="mt-4 text-xl font-black">لا توجد نتائج لعبارة «<%= @active_browsing_params["q"] %>»</h2><p class="mt-2 text-sm text-slate-600">جرّب كلمة أقصر أو امسح بعض الفلاتر.</p>
+  <% elsif @locked_category && active_filter_chips.empty? %>
+    <h2 class="mt-4 text-xl font-black">لا توجد منتجات في هذا القسم بعد</h2><p class="mt-2 text-sm text-slate-600">سنضيف منتجات جديدة قريبًا.</p>
+  <% else %>
+    <h2 class="mt-4 text-xl font-black">لا توجد منتجات تطابق هذه الفلاتر</h2><p class="mt-2 text-sm text-slate-600">خفف خيارات التصفية لرؤية نتائج أكثر.</p>
+  <% end %>
+  <%= link_to "عرض كل المنتجات", @browsing_path, data: { turbo_frame: "products_browser", turbo_action: "advance" }, class: "mt-6 inline-block rounded-xl bg-pharmacy-600 px-5 py-3 text-sm font-black text-white" %>
+</div>

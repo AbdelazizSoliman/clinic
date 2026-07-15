@@ -1,0 +1,9 @@
+<% chips = active_filter_chips %>
+<% if chips.any? %>
+  <div class="mb-5 flex flex-wrap items-center gap-2" aria-label="الفلاتر النشطة">
+    <% chips.each do |key, label| %>
+      <%= link_to browsing_url(key => nil), data: { turbo_frame: "products_browser", turbo_action: "advance" }, class: "inline-flex items-center gap-2 rounded-full bg-pharmacy-50 px-3 py-2 text-xs font-bold text-pharmacy-700 hover:bg-pharmacy-100", aria: { label: "إزالة فلتر #{label}" } do %><span><%= label %></span><span aria-hidden="true">×</span><% end %>
+    <% end %>
+    <% if chips.many? %><%= link_to "مسح الكل", @browsing_path, data: { turbo_frame: "products_browser", turbo_action: "advance" }, class: "px-2 py-2 text-xs font-black text-rose-600 hover:underline" %><% end %>
+  </div>
+<% end %>

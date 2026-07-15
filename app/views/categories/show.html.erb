@@ -2,5 +2,5 @@
 <div class="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
   <nav aria-label="مسار التنقل" class="text-sm text-slate-500"><%= link_to "الرئيسية", root_path %> / <span><%= @category.name %></span></nav>
   <header class="mt-6 flex items-center gap-5 rounded-3xl bg-pharmacy-50 p-7"><span class="grid size-20 shrink-0 place-items-center rounded-2xl bg-white text-4xl shadow-sm" aria-hidden="true"><%= @category.icon %></span><div><h1 class="text-3xl font-black"><%= @category.name %></h1><p class="mt-2 text-slate-600"><%= @category.description %></p></div></header>
-  <div class="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"><%= render partial: "products/product_card", collection: @products, as: :product %></div>
+  <%= render "products/browser" %>
 </div>

@@ -1,0 +1,12 @@
+<% if @pagy.last > 1 %>
+  <nav class="mt-10 flex items-center justify-between gap-3" aria-label="صفحات المنتجات">
+    <% if @pagy.previous %><%= link_to "السابق", browsing_url(page: @pagy.previous), data: { turbo_frame: "products_browser", turbo_action: "advance" }, rel: "prev", class: "rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold hover:border-pharmacy-500" %><% else %><span class="rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-300" aria-disabled="true">السابق</span><% end %>
+    <div class="hidden items-center gap-1 sm:flex">
+      <% pagination_pages.each do |page| %>
+        <% if page == :gap %><span class="px-2 text-slate-400">…</span><% elsif page == @pagy.page %><span class="grid size-10 place-items-center rounded-xl bg-pharmacy-600 text-sm font-black text-white" aria-current="page"><%= page %></span><% else %><%= link_to page, browsing_url(page: page), data: { turbo_frame: "products_browser", turbo_action: "advance" }, class: "grid size-10 place-items-center rounded-xl text-sm font-bold hover:bg-pharmacy-50" %><% end %>
+      <% end %>
+    </div>
+    <span class="text-sm font-bold text-slate-600 sm:hidden"><%= @pagy.page %> / <%= @pagy.last %></span>
+    <% if @pagy.next %><%= link_to "التالي", browsing_url(page: @pagy.next), data: { turbo_frame: "products_browser", turbo_action: "advance" }, rel: "next", class: "rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold hover:border-pharmacy-500" %><% else %><span class="rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-300" aria-disabled="true">التالي</span><% end %>
+  </nav>
+<% end %>

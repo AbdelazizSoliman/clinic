@@ -1,0 +1,18 @@
+<div data-controller="mobile-filters product-browser" class="relative mt-8">
+  <div data-product-browser-target="loading" class="pointer-events-none fixed inset-x-0 top-0 z-[70] hidden h-1 animate-pulse bg-pharmacy-500" role="status"><span class="sr-only">جارٍ تحديث النتائج</span></div>
+  <%= turbo_frame_tag "products_browser", data: { turbo_action: "advance" } do %>
+    <div class="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-white p-4 shadow-sm">
+      <div><p class="font-black text-slate-900"><%= selected_filter_summary %></p><p class="mt-1 text-sm text-slate-500">عرض <%= @pagy.from %>–<%= @pagy.to %> من <%= @pagy.count %> منتج</p></div>
+      <div class="flex flex-wrap items-center gap-2"><button type="button" data-mobile-filters-target="trigger" data-action="mobile-filters#open" aria-expanded="false" aria-controls="mobile-filters-panel" class="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-black lg:hidden">☰ الفلاتر</button><%= render "products/sort" %></div>
+    </div>
+    <div class="grid gap-7 lg:grid-cols-[16rem_minmax(0,1fr)]">
+      <aside class="hidden self-start rounded-2xl bg-white p-5 shadow-sm lg:block" aria-label="تصفية المنتجات"><h2 class="mb-5 text-lg font-black">تصفية النتائج</h2><%= render "products/filters", form_id: "desktop" %></aside>
+      <section class="min-w-0"><%= render "products/results" %></section>
+    </div>
+    <div data-mobile-filters-target="backdrop" data-action="click->mobile-filters#backdrop" class="fixed inset-0 z-[60] hidden bg-slate-950/50 backdrop-blur-sm" aria-hidden="true"></div>
+    <aside id="mobile-filters-panel" data-mobile-filters-target="panel" role="dialog" aria-modal="true" aria-labelledby="mobile-filters-title" class="fixed inset-y-0 right-0 z-[65] w-[min(90vw,22rem)] translate-x-full overflow-y-auto bg-white p-5 shadow-2xl transition-transform duration-300 lg:hidden">
+      <div class="mb-6 flex items-center justify-between"><h2 id="mobile-filters-title" class="text-xl font-black">تصفية النتائج</h2><button type="button" data-mobile-filters-target="close" data-action="mobile-filters#close" class="grid size-10 place-items-center rounded-full hover:bg-slate-100" aria-label="إغلاق الفلاتر">✕</button></div>
+      <%= render "products/filters", form_id: "mobile" %>
+    </aside>
+  <% end %>
+</div>

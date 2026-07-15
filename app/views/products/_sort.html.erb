@@ -1,0 +1,5 @@
+<%= form_with url: @browsing_path, method: :get, class: "flex items-center gap-2", data: { turbo_frame: "products_browser", turbo_action: "advance", controller: "autosubmit", action: "change->autosubmit#submit" } do |form| %>
+  <% @active_browsing_params.except("sort").each do |key, value| %><%= hidden_field_tag key, value %><% end %>
+  <%= form.label :sort, "ترتيب حسب", class: "whitespace-nowrap text-sm font-bold text-slate-600" %>
+  <%= form.select :sort, options_for_select(ApplicationHelper::SORT_OPTIONS, @products_query.sort_key), {}, class: "max-w-52 rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm font-bold" %>
+<% end %>

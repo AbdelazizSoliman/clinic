@@ -1,6 +1,6 @@
 <% content_for :title, "كل المنتجات | صيدليتي" %>
 <div class="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
   <nav aria-label="مسار التنقل" class="text-sm text-slate-500"><%= link_to "الرئيسية", root_path, class: "hover:text-pharmacy-600" %> / <span>كل المنتجات</span></nav>
-  <div class="mt-6 flex flex-wrap items-end justify-between gap-4"><div><h1 class="text-3xl font-black"><%= params[:q].present? ? "نتائج البحث عن: #{params[:q]}" : "كل المنتجات" %></h1><p class="mt-2 text-slate-600">اكتشف منتجات موثوقة لصحتك وعنايتك اليومية</p></div><span class="rounded-full bg-slate-100 px-4 py-2 text-sm font-bold"><%= @products.size %> منتج</span></div>
-  <% if @products.any? %><div class="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"><%= render partial: "product_card", collection: @products, as: :product %></div><% else %><div class="mt-10 rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center"><div class="text-5xl">🔎</div><h2 class="mt-4 text-xl font-black">لم نجد منتجات مطابقة</h2><%= link_to "عرض كل المنتجات", products_path, class: "mt-5 inline-block font-bold text-pharmacy-700" %></div><% end %>
+  <div class="mt-6"><h1 class="text-3xl font-black">تصفح المنتجات</h1><p class="mt-2 text-slate-600">ابحث وصفِّ المنتجات للوصول إلى احتياجك بسهولة</p></div>
+  <%= render "products/browser" %>
 </div>
