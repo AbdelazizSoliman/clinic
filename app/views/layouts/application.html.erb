@@ -20,10 +20,12 @@
   </head>
 
   <body class="min-h-screen bg-slate-50 text-slate-900 antialiased">
+    <script type="application/json" id="product-catalog"><%= raw json_escape(storefront_catalog.to_json) %></script>
     <%= render "shared/header" %>
     <main>
       <%= yield %>
     </main>
     <%= render "shared/footer" %>
+    <%= render "shared/toast_container" %>
   </body>
 </html>

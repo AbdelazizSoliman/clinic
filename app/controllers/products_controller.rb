@@ -12,6 +12,7 @@ class ProductsController < ApplicationController
     category_products = Product.active.where(category: @product.category).order(:name)
     @previous_product = category_products.where("name < ?", @product.name).last
     @next_product = category_products.where("name > ?", @product.name).first
+    @recent_candidates = Product.includes(:brand).active.where.not(id: @product.id).limit(24)
   end
 
   private

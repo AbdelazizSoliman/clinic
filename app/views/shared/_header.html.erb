@@ -12,7 +12,8 @@
     <% end %>
     <div class="mr-auto flex items-center gap-2">
       <button type="button" class="rounded-xl p-2 text-sm font-bold text-slate-700 hover:bg-slate-100" aria-label="حسابي">👤 <span class="hidden lg:inline">حسابي</span></button>
-      <button type="button" class="relative rounded-xl p-2 text-sm font-bold text-slate-700 hover:bg-slate-100" aria-label="سلة التسوق، فارغة">🛒 <span class="hidden lg:inline">السلة</span><span class="absolute -left-1 -top-1 grid size-5 place-items-center rounded-full bg-rose-500 text-xs text-white">0</span></button>
+      <%= link_to wishlist_path, data: { controller: "shopping-count", shopping_count_type_value: "wishlist" }, class: "relative rounded-xl p-2 text-sm font-bold text-slate-700 hover:bg-slate-100", aria: { label: "المفضلة، 0 منتجات" } do %>♥ <span class="hidden lg:inline">المفضلة</span><span data-shopping-count-target="badge" class="absolute -left-1 -top-1 grid size-5 place-items-center rounded-full bg-rose-500 text-xs text-white opacity-0 transition-opacity">0</span><% end %>
+      <%= render "shared/cart_drawer" %>
     </div>
   </nav>
   <div class="border-t border-slate-100">

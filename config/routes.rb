@@ -2,6 +2,9 @@ Rails.application.routes.draw do
   root "home#index"
   resources :products, only: %i[index show]
   resources :categories, only: :show
+  get "cart", to: "shopping#cart", as: :cart
+  get "wishlist", to: "shopping#wishlist", as: :wishlist
+  get "checkout", to: "shopping#checkout", as: :checkout
 
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
