@@ -1,0 +1,9 @@
+<footer class="mt-20 bg-pharmacy-900 text-white">
+  <div class="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:grid-cols-2 sm:px-6 lg:grid-cols-4 lg:px-8">
+    <div><div class="mb-4 text-2xl font-black">+ صيدليتي</div><p class="text-sm leading-7 text-emerald-100">رعايتك تبدأ من هنا. منتجات موثوقة وخدمة صيدلية قريبة منك دائمًا.</p></div>
+    <div><h2 class="mb-4 font-bold">تسوق</h2><ul class="space-y-3 text-sm text-emerald-100"><li><%= link_to "كل المنتجات", products_path %></li><li><%= link_to "العروض الحالية", root_path(anchor: "offers") %></li><li><%= link_to "الأقسام", root_path(anchor: "categories") %></li></ul></div>
+    <div><h2 class="mb-4 font-bold">مساعدة</h2><ul class="space-y-3 text-sm text-emerald-100"><li><a href="#">الأسئلة الشائعة</a></li><li><a href="#">سياسة الاستبدال</a></li><li><a href="#">تواصل معنا</a></li></ul></div>
+    <div><h2 class="mb-4 font-bold">نحن هنا من أجلك</h2><p class="text-sm text-emerald-100">خدمة العملاء يوميًا من 9 ص إلى 11 م</p><a href="tel:19000" class="mt-3 inline-block text-xl font-black" dir="ltr">19000</a></div>
+  </div>
+  <div class="border-t border-white/10 px-4 py-5 text-center text-xs text-emerald-200">© <%= Date.current.year %> صيدليتي. نموذج تجريبي للواجهة.</div>
+</footer>

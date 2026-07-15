@@ -1,0 +1,37 @@
+featured:
+  name: بانادول أدفانس
+  slug: panadol-advance
+  short_description: مسكن للآلام
+  description: منتج تجريبي موثوق
+  price: 70
+  compare_at_price: 85
+  stock_quantity: 20
+  featured: true
+  requires_prescription: false
+  active: true
+  category: medicines
+  brand: eva
+
+skin_product:
+  name: كريم مرطب
+  slug: moisturizing-cream
+  short_description: ترطيب يومي
+  description: مناسب للبشرة الحساسة
+  price: 250
+  stock_quantity: 5
+  featured: false
+  requires_prescription: false
+  active: true
+  category: skin_care
+  brand: vichy
+
+inactive:
+  name: منتج غير نشط
+  slug: inactive-product
+  price: 100
+  stock_quantity: 0
+  featured: false
+  requires_prescription: false
+  active: false
+  category: medicines
+  brand: eva

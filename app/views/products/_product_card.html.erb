@@ -1,0 +1,14 @@
+<article class="group flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
+  <%= link_to product_path(product), class: "relative block bg-gradient-to-br from-slate-50 to-pharmacy-50 p-6", aria: { label: "عرض #{product.name}" } do %>
+    <div class="grid aspect-square place-items-center rounded-xl bg-white text-6xl shadow-inner" aria-hidden="true">💊</div>
+    <% if product.discounted? %><span class="absolute right-3 top-3 rounded-full bg-rose-500 px-2.5 py-1 text-xs font-black text-white">خصم <%= product.discount_percentage %>٪</span><% end %>
+    <% if product.requires_prescription? %><span class="absolute bottom-3 right-3 rounded-lg bg-amber-100 px-2 py-1 text-xs font-bold text-amber-800">يتطلب روشتة</span><% end %>
+  <% end %>
+  <div class="flex flex-1 flex-col p-4">
+    <p class="mb-1 text-xs font-bold text-pharmacy-600"><%= product.brand.name %></p>
+    <h3 class="min-h-12 font-bold leading-6"><%= link_to product.name, product_path(product), class: "hover:text-pharmacy-600" %></h3>
+    <div class="mt-3 flex items-end gap-2"><span class="text-lg font-black text-pharmacy-700"><%= number_to_currency(product.price, unit: "ج.م", format: "%n %u") %></span><% if product.discounted? %><del class="text-sm text-slate-400"><%= number_to_currency(product.compare_at_price, unit: "ج.م", format: "%n %u") %></del><% end %></div>
+    <p class="mt-2 text-xs font-bold <%= product.available? ? "text-pharmacy-600" : "text-rose-600" %>"><%= product.available? ? "متوفر" : "غير متوفر حاليًا" %></p>
+    <button type="button" <%= "disabled" unless product.available? %> class="mt-4 w-full rounded-xl px-4 py-3 text-sm font-bold <%= product.available? ? "bg-pharmacy-600 text-white hover:bg-pharmacy-700" : "cursor-not-allowed bg-slate-100 text-slate-400" %>"><%= product.available? ? "أضف إلى السلة" : "أعلمني عند التوفر" %></button>
+  </div>
+</article>

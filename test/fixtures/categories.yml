@@ -1,0 +1,11 @@
+medicines:
+  name: الأدوية والعلاجات
+  slug: medicines
+  description: أدوية وعلاجات موثوقة
+  icon: 💊
+
+skin_care:
+  name: العناية بالبشرة
+  slug: skin-care
+  description: منتجات العناية بالبشرة
+  icon: ✨

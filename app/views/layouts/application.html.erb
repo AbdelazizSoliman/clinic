@@ -1,7 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html lang="ar" dir="rtl">
   <head>
-    <title><%= content_for(:title) || "Clinic" %></title>
+    <title><%= content_for(:title) || "صيدليتي | كل ما تحتاجه لصحتك" %></title>
+    <meta name="description" content="صيدلية إلكترونية موثوقة للعناية بصحتك وصحة عائلتك">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <%= csrf_meta_tags %>
@@ -18,9 +19,11 @@
     <%= javascript_importmap_tags %>
   </head>
 
-  <body>
-    <main class="container mx-auto mt-28 px-5 flex">
+  <body class="min-h-screen bg-slate-50 text-slate-900 antialiased">
+    <%= render "shared/header" %>
+    <main>
       <%= yield %>
     </main>
+    <%= render "shared/footer" %>
   </body>
 </html>
