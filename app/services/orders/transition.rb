@@ -15,6 +15,10 @@ module Orders
     def call
       return failure("غير مصرح بإدارة الطلبات") unless @actor&.can_operate_orders?
       return Result.new(success?: true, order: @order, errors: []) if @order.status == @to_status
+      if @to_status == "cancelled"
+        cancelled = Orders::Cancel.new(order: @order, actor: @actor, reason: "إلغاء تشغيلي", source: "staff", lock_version: @lock_version).call
+        return Result.new(success?: cancelled.success?, order: @order, errors: cancelled.errors)
+      end
 
       Order.transaction do
         @order.lock!
@@ -29,7 +33,9 @@ module Orders
           return failure("تعذر استهلاك الحجز لعدم كفاية المخزون") unless Inventory::ConsumeReservations.new(@order).call
         end
         @order.update!(status: @to_status, confirmed_at: (@to_status == "confirmed" ? Time.current : @order.confirmed_at))
+        @order.inventory_reservations.active.update_all(expires_at: nil, updated_at: Time.current) if @to_status == "confirmed"
         @order.events.create!(actor: @actor, event_type: EVENTS.fetch(@to_status), from_status: from, to_status: @to_status, customer_visible: true)
+        notify_customer
         if %w[cancelled rejected].include?(@to_status)
           @order.events.create!(actor: @actor, event_type: "reservations_released", customer_visible: true)
         elsif @to_status == "ready_for_delivery"
@@ -42,6 +48,16 @@ module Orders
     end
 
     private
+
+    def notify_customer
+      kinds = { "confirmed" => [ "order_confirmed", "تم تأكيد الطلب" ], "preparing" => [ "order_preparing", "بدأ تجهيز الطلب" ],
+        "ready_for_delivery" => [ "order_ready", "الطلب جاهز للتوصيل" ], "out_for_delivery" => [ "order_out_for_delivery", "الطلب في الطريق" ],
+        "delivered" => [ "order_delivered", "تم توصيل الطلب" ] }
+      kind, title = kinds[@to_status]
+      return unless kind
+      Notifications::Create.call(user: @order.user, actor: @actor, notifiable: @order, kind:, title:,
+        body: "تحديث جديد للطلب #{@order.number}", key: "#{kind}-#{@order.id}")
+    end
 
     def failure(message) = Result.new(success?: false, order: @order, errors: [ message ])
   end

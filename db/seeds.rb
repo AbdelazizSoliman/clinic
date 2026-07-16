@@ -15,9 +15,9 @@ categories = [
   [ "العناية بالأم والطفل", "mother-baby", "منتجات آمنة للأم وطفلها", "🍼" ],
   [ "العناية الشخصية", "personal-care", "أساسيات النظافة والعناية اليومية", "🧴" ],
   [ "الأجهزة والمستلزمات الطبية", "medical-supplies", "أجهزة موثوقة لمتابعة صحتك في المنزل", "🩺" ]
-].to_h do |name, slug, description, icon|
+].each_with_index.to_h do |(name, slug, description, icon), position|
   category = Category.find_or_initialize_by(slug: slug)
-  category.update!(name: name, description: description, icon: icon)
+  category.update!(name: name, description: description, icon: icon, active: true, position: position)
   [ slug, category ]
 end
 
@@ -27,7 +27,7 @@ brands = [
   [ "جونسون", "johnsons" ], [ "أورال بي", "oral-b" ], [ "أومرون", "omron" ]
 ].to_h do |name, slug|
   brand = Brand.find_or_initialize_by(slug: slug)
-  brand.update!(name: name)
+  brand.update!(name: name, active: true)
   [ slug, brand ]
 end
 
@@ -58,15 +58,23 @@ products = [
   [ "شرائط اختبار سكر 50 شريط", "glucose-test-strips-50", "شرائط قياس للاستخدام المنزلي", 450, nil, 0, false, false, "medical-supplies", "omron" ]
 ]
 
-products.each do |name, slug, short_description, price, compare_at_price, stock, featured, prescription, category_slug, brand_slug|
+products.each_with_index do |(name, slug, short_description, price, compare_at_price, stock, featured, prescription, category_slug, brand_slug), index|
   product = Product.find_or_initialize_by(slug: slug)
   product.update!(
     name: name, short_description: short_description,
     description: "#{short_description}. منتج أصلي من #{brands.fetch(brand_slug).name}. يُحفظ في مكان جاف بعيدًا عن أشعة الشمس ومتناول الأطفال.",
     price: price, compare_at_price: compare_at_price, stock_quantity: stock,
     featured: featured, requires_prescription: prescription, active: true,
-    category: categories.fetch(category_slug), brand: brands.fetch(brand_slug)
+    category: categories.fetch(category_slug), brand: brands.fetch(brand_slug),
+    sku: format("PH-%04d", index + 1), barcode: format("622000%06d", index + 1), low_stock_threshold: 5,
+    maximum_order_quantity: 10, published_at: product.published_at || Time.current
   )
+  if stock.positive?
+    product.inventory_movements.find_or_create_by!(idempotency_key: "seed-opening-#{slug}") do |movement|
+      movement.assign_attributes(movement_type: :opening_balance, quantity_delta: stock, quantity_before: 0,
+        quantity_after: stock, reason: "رصيد افتتاحي من بيانات العرض")
+    end
+  end
 end
 
 puts "Seeded #{Category.count} categories, #{Brand.count} brands, and #{Product.count} products."

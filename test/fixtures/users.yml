@@ -51,3 +51,12 @@ order_manager:
   mobile_number: "01066666666"
   role: 3
   active: true
+
+inventory_manager:
+  email: inventory@example.com
+  encrypted_password: <%= Devise::Encryptor.digest(User, "password123") %>
+  first_name: مدير
+  last_name: المخزون
+  mobile_number: "01055555555"
+  role: 4
+  active: true

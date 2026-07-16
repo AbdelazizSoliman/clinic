@@ -1,0 +1,1 @@
+<div class="mx-auto max-w-3xl px-4 py-10"><h1 class="text-3xl font-black">حركة مخزون</h1><pre class="mt-6 rounded-2xl bg-white p-6"><%= @movement.attributes.slice("movement_type","quantity_before","quantity_delta","quantity_after","reason","created_at").to_yaml %></pre></div>

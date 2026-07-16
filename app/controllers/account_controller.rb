@@ -5,6 +5,8 @@ class AccountController < ApplicationController
     @addresses = current_user.addresses.where(active: true)
     @default_address = @addresses.find_by(default: true)
     @recent_orders = current_user.orders.order(submitted_at: :desc).limit(3)
+    @awaiting_follow_ups = OrderFollowUp.joins(:order).where(orders: { user_id: current_user.id }, status: :awaiting_customer)
+    @unread_notifications_count = current_user.notifications.unread.count
   end
 
   def edit; end

@@ -17,7 +17,7 @@ module Prescriptions
       Prescription.transaction do
         @prescription.lock!
         raise ActiveRecord::StaleObjectError.new(@prescription, "review") if @lock_version && @prescription.lock_version != @lock_version.to_i
-        allowed = @prescription.submitted? || @prescription.under_review?
+        allowed = @prescription.submitted? || @prescription.under_review? || @prescription.partially_approved?
         return failure("تم اتخاذ قرار نهائي بالفعل") unless allowed
 
         from = @prescription.status
@@ -44,19 +44,31 @@ module Prescriptions
       case @decision
       when "approved"
         @prescription.order.update!(status: :submitted)
+        Inventory::ExtendReservations.new(order: @prescription.order, actor: @actor).call
         event("prescription_approved", from, "approved", true)
+        notify_customer("prescription_approved", "تم اعتماد الروشتة", "تم اعتماد روشتة الطلب #{@prescription.order.number}")
       when "partially_approved"
         event("prescription_partially_approved", from, "partially_approved", true)
+        OrderFollowUps::Open.new(order: @prescription.order, actor: @actor, kind: :prescription_clarification,
+          subject: "مطلوب توضيح قبل استكمال مراجعة الروشتة", customer_message: @customer_message,
+          internal_notes: @internal_notes).call
+        notify_customer("prescription_partial", "مطلوب ردك", @customer_message)
       when "rejected"
         @prescription.order.update!(status: :rejected)
         Inventory::ReleaseReservations.new(@prescription.order).call
         event("prescription_rejected", from, "rejected", true)
         @prescription.order.events.create!(actor: @actor, event_type: "reservations_released", customer_visible: true)
+        notify_customer("prescription_rejected", "تعذر اعتماد الروشتة", @customer_message)
       end
     end
 
     def event(type, from, to, visible)
       @prescription.order.events.create!(actor: @actor, event_type: type, from_status: from, to_status: to, customer_visible: visible)
+    end
+
+    def notify_customer(kind, title, body)
+      Notifications::Create.call(user: @prescription.user, actor: @actor, notifiable: @prescription.order,
+        kind:, title:, body:, key: "#{kind}-#{@prescription.id}")
     end
 
     def failure(message) = Result.new(success?: false, prescription: @prescription, errors: [ message ])

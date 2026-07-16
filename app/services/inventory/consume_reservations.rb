@@ -14,7 +14,11 @@ module Inventory
           product = reservation.product.reload
           raise ActiveRecord::Rollback if product.stock_quantity < reservation.quantity
 
-          product.update!(stock_quantity: product.stock_quantity - reservation.quantity)
+          before = product.stock_quantity
+          product.update!(stock_quantity: before - reservation.quantity)
+          product.inventory_movements.create!(movement_type: :reservation_consumed, quantity_delta: -reservation.quantity,
+            quantity_before: before, quantity_after: product.stock_quantity, reason: "استهلاك حجز الطلب #{reservation.order.number}",
+            reference: reservation, idempotency_key: "reservation-consumed-#{reservation.id}")
           reservation.update!(status: :consumed, consumed_at: Time.current)
         end
       end

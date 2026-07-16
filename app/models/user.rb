@@ -7,8 +7,10 @@ class User < ApplicationRecord
   has_many :wishlist_products, through: :wishlist_items, source: :product
   has_many :orders, dependent: :restrict_with_error
   has_many :prescriptions, dependent: :restrict_with_error
+  has_many :notifications, dependent: :destroy
+  has_many :opened_follow_ups, class_name: "OrderFollowUp", foreign_key: :opened_by_id, dependent: :restrict_with_exception
 
-  enum :role, { customer: 0, admin: 1, pharmacist: 2, order_manager: 3 }, default: :customer, validate: true
+  enum :role, { customer: 0, admin: 1, pharmacist: 2, order_manager: 3, inventory_manager: 4 }, default: :customer, validate: true
 
   validates :first_name, :last_name, presence: true, length: { maximum: 60 }
   validates :mobile_number, presence: true, format: { with: /\A[+0-9][0-9 ]{7,14}\z/ }
@@ -18,6 +20,8 @@ class User < ApplicationRecord
   def staff? = pharmacist? || order_manager? || admin?
   def can_review_prescriptions? = pharmacist? || admin?
   def can_operate_orders? = order_manager? || admin?
+  def can_manage_catalog? = inventory_manager? || admin?
+  alias_method :can_manage_inventory?, :can_manage_catalog?
 
   def active_for_authentication?
     super && active?

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_07_16_040001) do
+ActiveRecord::Schema[7.2].define(version: 2026_07_16_060002) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -69,11 +69,29 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_16_040001) do
     t.check_constraint "longitude IS NULL OR longitude >= '-180'::integer::numeric AND longitude <= 180::numeric", name: "addresses_longitude_range"
   end
 
+  create_table "admin_audit_events", force: :cascade do |t|
+    t.bigint "actor_id", null: false
+    t.string "auditable_type", null: false
+    t.bigint "auditable_id", null: false
+    t.string "action", null: false
+    t.jsonb "change_data", default: {}, null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.index ["actor_id"], name: "index_admin_audit_events_on_actor_id"
+    t.index ["auditable_type", "auditable_id", "created_at"], name: "index_admin_audits_on_subject_and_created_at"
+    t.index ["auditable_type", "auditable_id"], name: "index_admin_audit_events_on_auditable"
+  end
+
   create_table "brands", force: :cascade do |t|
     t.string "name", null: false
     t.string "slug", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.text "description"
+    t.boolean "active", default: true, null: false
+    t.string "website_url"
+    t.integer "lock_version", default: 0, null: false
+    t.index ["active"], name: "index_brands_on_active"
     t.index ["name"], name: "index_brands_on_name", unique: true
     t.index ["slug"], name: "index_brands_on_slug", unique: true
   end
@@ -115,8 +133,35 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_16_040001) do
     t.string "icon"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "active", default: true, null: false
+    t.integer "position", default: 0, null: false
+    t.integer "lock_version", default: 0, null: false
+    t.index ["active", "position"], name: "index_categories_on_active_and_position"
     t.index ["name"], name: "index_categories_on_name", unique: true
     t.index ["slug"], name: "index_categories_on_slug", unique: true
+    t.check_constraint "\"position\" >= 0", name: "categories_position_nonnegative"
+  end
+
+  create_table "inventory_movements", force: :cascade do |t|
+    t.bigint "product_id", null: false
+    t.bigint "actor_id"
+    t.integer "movement_type", null: false
+    t.integer "quantity_delta", null: false
+    t.integer "quantity_before", null: false
+    t.integer "quantity_after", null: false
+    t.text "reason", null: false
+    t.string "reference_type"
+    t.bigint "reference_id"
+    t.jsonb "metadata", default: {}, null: false
+    t.string "idempotency_key"
+    t.datetime "created_at", null: false
+    t.index ["actor_id"], name: "index_inventory_movements_on_actor_id"
+    t.index ["idempotency_key"], name: "index_inventory_movements_on_idempotency_key", unique: true, where: "(idempotency_key IS NOT NULL)"
+    t.index ["product_id", "created_at"], name: "index_inventory_movements_on_product_id_and_created_at"
+    t.index ["product_id"], name: "index_inventory_movements_on_product_id"
+    t.index ["reference_type", "reference_id"], name: "index_inventory_movements_on_reference"
+    t.check_constraint "quantity_before >= 0 AND quantity_after >= 0", name: "inventory_movements_quantities_nonnegative"
+    t.check_constraint "quantity_delta <> 0", name: "inventory_movements_delta_nonzero"
   end
 
   create_table "inventory_reservations", force: :cascade do |t|
@@ -136,6 +181,26 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_16_040001) do
     t.index ["product_id"], name: "index_inventory_reservations_on_product_id"
     t.check_constraint "quantity > 0", name: "inventory_reservations_quantity_positive"
     t.check_constraint "status = ANY (ARRAY[0, 1, 2])", name: "inventory_reservations_status_valid"
+  end
+
+  create_table "notifications", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "actor_id"
+    t.string "notifiable_type", null: false
+    t.bigint "notifiable_id", null: false
+    t.string "kind", null: false
+    t.string "title", null: false
+    t.text "body", null: false
+    t.datetime "read_at"
+    t.jsonb "metadata", default: {}, null: false
+    t.string "deduplication_key"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["actor_id"], name: "index_notifications_on_actor_id"
+    t.index ["deduplication_key"], name: "index_notifications_on_deduplication_key", unique: true, where: "(deduplication_key IS NOT NULL)"
+    t.index ["notifiable_type", "notifiable_id"], name: "index_notifications_on_notifiable"
+    t.index ["user_id", "read_at"], name: "index_notifications_on_user_id_and_read_at"
+    t.index ["user_id"], name: "index_notifications_on_user_id"
   end
 
   create_table "order_addresses", force: :cascade do |t|
@@ -173,7 +238,44 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_16_040001) do
     t.index ["event_type"], name: "index_order_events_on_event_type"
     t.index ["order_id", "created_at"], name: "index_order_events_on_order_id_and_created_at"
     t.index ["order_id"], name: "index_order_events_on_order_id"
-    t.check_constraint "event_type::text = ANY (ARRAY['order_submitted'::character varying, 'prescription_review_started'::character varying, 'prescription_approved'::character varying, 'prescription_partially_approved'::character varying, 'prescription_rejected'::character varying, 'order_confirmed'::character varying, 'preparation_started'::character varying, 'order_ready'::character varying, 'out_for_delivery'::character varying, 'delivered'::character varying, 'cancelled'::character varying, 'rejected'::character varying, 'reservations_released'::character varying, 'reservations_consumed'::character varying]::text[])", name: "order_events_type_valid"
+    t.check_constraint "event_type::text = ANY (ARRAY['order_submitted'::character varying, 'prescription_review_started'::character varying, 'prescription_approved'::character varying, 'prescription_partially_approved'::character varying, 'prescription_rejected'::character varying, 'order_confirmed'::character varying, 'preparation_started'::character varying, 'order_ready'::character varying, 'out_for_delivery'::character varying, 'delivered'::character varying, 'cancelled'::character varying, 'rejected'::character varying, 'reservations_released'::character varying, 'reservations_consumed'::character varying, 'follow_up_opened'::character varying, 'customer_responded'::character varying, 'follow_up_resolved'::character varying, 'customer_cancelled'::character varying, 'staff_cancelled'::character varying, 'system_cancelled'::character varying, 'reservations_extended'::character varying, 'reservations_expired'::character varying, 'notification_sent'::character varying]::text[])", name: "order_events_type_valid"
+  end
+
+  create_table "order_follow_up_messages", force: :cascade do |t|
+    t.bigint "order_follow_up_id", null: false
+    t.bigint "author_id", null: false
+    t.string "author_role", null: false
+    t.text "body", null: false
+    t.boolean "customer_visible", default: true, null: false
+    t.datetime "created_at", null: false
+    t.index ["author_id"], name: "index_order_follow_up_messages_on_author_id"
+    t.index ["order_follow_up_id"], name: "index_order_follow_up_messages_on_order_follow_up_id"
+  end
+
+  create_table "order_follow_ups", force: :cascade do |t|
+    t.bigint "order_id", null: false
+    t.bigint "prescription_id"
+    t.bigint "opened_by_id", null: false
+    t.bigint "resolved_by_id"
+    t.integer "kind", null: false
+    t.integer "status", default: 1, null: false
+    t.string "subject", null: false
+    t.text "customer_message", null: false
+    t.text "internal_notes"
+    t.boolean "response_required", default: true, null: false
+    t.datetime "responded_at"
+    t.datetime "resolved_at"
+    t.datetime "due_at"
+    t.integer "lock_version", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["opened_by_id"], name: "index_order_follow_ups_on_opened_by_id"
+    t.index ["order_id"], name: "index_order_follow_ups_on_order_id"
+    t.index ["prescription_id"], name: "index_order_follow_ups_on_prescription_id"
+    t.index ["resolved_by_id"], name: "index_order_follow_ups_on_resolved_by_id"
+    t.index ["status", "due_at"], name: "index_order_follow_ups_on_status_and_due_at"
+    t.check_constraint "kind >= 0 AND kind <= 5", name: "follow_ups_kind_valid"
+    t.check_constraint "status >= 0 AND status <= 4", name: "follow_ups_status_valid"
   end
 
   create_table "order_items", force: :cascade do |t|
@@ -222,6 +324,10 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_16_040001) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "lock_version", default: 0, null: false
+    t.bigint "cancelled_by_id"
+    t.text "cancellation_reason"
+    t.integer "cancellation_source"
+    t.index ["cancelled_by_id"], name: "index_orders_on_cancelled_by_id"
     t.index ["cart_id"], name: "index_orders_on_cart_id", unique: true
     t.index ["number"], name: "index_orders_on_number", unique: true
     t.index ["user_id", "submitted_at"], name: "index_orders_on_user_id_and_submitted_at"
@@ -254,6 +360,38 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_16_040001) do
     t.check_constraint "status = ANY (ARRAY[0, 1, 2, 3, 4])", name: "prescriptions_status_valid"
   end
 
+  create_table "product_images", force: :cascade do |t|
+    t.bigint "product_id", null: false
+    t.integer "position", default: 0, null: false
+    t.string "alt_text", null: false
+    t.boolean "primary", default: false, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["product_id", "position"], name: "index_product_images_on_product_id_and_position", unique: true
+    t.index ["product_id"], name: "index_one_primary_image_per_product", unique: true, where: "(\"primary\" = true)"
+    t.index ["product_id"], name: "index_product_images_on_product_id"
+    t.check_constraint "\"position\" >= 0", name: "product_images_position_nonnegative"
+  end
+
+  create_table "product_price_changes", force: :cascade do |t|
+    t.bigint "product_id", null: false
+    t.bigint "changed_by_id", null: false
+    t.integer "old_price_cents", null: false
+    t.integer "new_price_cents", null: false
+    t.integer "old_compare_at_price_cents"
+    t.integer "new_compare_at_price_cents"
+    t.integer "old_cost_price_cents"
+    t.integer "new_cost_price_cents"
+    t.text "reason", null: false
+    t.integer "source", default: 0, null: false
+    t.datetime "effective_at", null: false
+    t.datetime "created_at", null: false
+    t.index ["changed_by_id"], name: "index_product_price_changes_on_changed_by_id"
+    t.index ["product_id", "effective_at"], name: "index_product_price_changes_on_product_id_and_effective_at"
+    t.index ["product_id"], name: "index_product_price_changes_on_product_id"
+    t.check_constraint "old_price_cents >= 0 AND new_price_cents >= 0", name: "price_changes_prices_nonnegative"
+  end
+
   create_table "products", force: :cascade do |t|
     t.string "name", null: false
     t.string "slug", null: false
@@ -269,12 +407,32 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_16_040001) do
     t.bigint "brand_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "active_ingredient"
+    t.string "dosage_form"
+    t.string "strength"
+    t.string "manufacturer"
+    t.string "sku"
+    t.string "barcode"
+    t.decimal "cost_price", precision: 10, scale: 2
+    t.integer "low_stock_threshold", default: 5, null: false
+    t.integer "maximum_order_quantity", default: 10, null: false
+    t.boolean "pharmacist_review_required", default: false, null: false
+    t.boolean "cold_chain_required", default: false, null: false
+    t.datetime "published_at"
+    t.datetime "discontinued_at"
+    t.integer "lock_version", default: 0, null: false
+    t.index ["active", "low_stock_threshold"], name: "index_products_on_active_and_low_stock_threshold"
     t.index ["active"], name: "index_products_on_active"
+    t.index ["barcode"], name: "index_products_on_barcode", unique: true, where: "(barcode IS NOT NULL)"
     t.index ["brand_id"], name: "index_products_on_brand_id"
     t.index ["category_id"], name: "index_products_on_category_id"
     t.index ["featured"], name: "index_products_on_featured"
+    t.index ["sku"], name: "index_products_on_sku", unique: true, where: "(sku IS NOT NULL)"
     t.index ["slug"], name: "index_products_on_slug", unique: true
     t.check_constraint "compare_at_price IS NULL OR compare_at_price >= 0::numeric", name: "products_compare_at_price_non_negative"
+    t.check_constraint "cost_price IS NULL OR cost_price >= 0::numeric", name: "products_cost_price_nonnegative"
+    t.check_constraint "low_stock_threshold >= 0", name: "products_low_stock_threshold_nonnegative"
+    t.check_constraint "maximum_order_quantity > 0", name: "products_maximum_order_quantity_positive"
     t.check_constraint "price >= 0::numeric", name: "products_price_non_negative"
     t.check_constraint "stock_quantity >= 0", name: "products_stock_nonnegative"
     t.check_constraint "stock_quantity >= 0", name: "products_stock_quantity_non_negative"
@@ -295,7 +453,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_16_040001) do
     t.datetime "updated_at", null: false
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
-    t.check_constraint "role = ANY (ARRAY[0, 1, 2, 3])", name: "users_role_valid"
+    t.check_constraint "role = ANY (ARRAY[0, 1, 2, 3, 4])", name: "users_role_valid"
   end
 
   create_table "wishlist_items", force: :cascade do |t|
@@ -311,22 +469,37 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_16_040001) do
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "addresses", "users", on_delete: :cascade
+  add_foreign_key "admin_audit_events", "users", column: "actor_id"
   add_foreign_key "cart_items", "carts", on_delete: :cascade
   add_foreign_key "cart_items", "products"
   add_foreign_key "carts", "users"
+  add_foreign_key "inventory_movements", "products"
+  add_foreign_key "inventory_movements", "users", column: "actor_id"
   add_foreign_key "inventory_reservations", "order_items", on_delete: :cascade
   add_foreign_key "inventory_reservations", "orders", on_delete: :cascade
   add_foreign_key "inventory_reservations", "products"
+  add_foreign_key "notifications", "users"
+  add_foreign_key "notifications", "users", column: "actor_id"
   add_foreign_key "order_addresses", "orders", on_delete: :cascade
   add_foreign_key "order_events", "orders", on_delete: :cascade
   add_foreign_key "order_events", "users", column: "actor_id"
+  add_foreign_key "order_follow_up_messages", "order_follow_ups"
+  add_foreign_key "order_follow_up_messages", "users", column: "author_id"
+  add_foreign_key "order_follow_ups", "orders"
+  add_foreign_key "order_follow_ups", "prescriptions"
+  add_foreign_key "order_follow_ups", "users", column: "opened_by_id"
+  add_foreign_key "order_follow_ups", "users", column: "resolved_by_id"
   add_foreign_key "order_items", "orders", on_delete: :cascade
   add_foreign_key "order_items", "products", on_delete: :nullify
   add_foreign_key "orders", "carts"
   add_foreign_key "orders", "users"
+  add_foreign_key "orders", "users", column: "cancelled_by_id"
   add_foreign_key "prescriptions", "orders", on_delete: :cascade
   add_foreign_key "prescriptions", "users"
   add_foreign_key "prescriptions", "users", column: "reviewed_by_id"
+  add_foreign_key "product_images", "products"
+  add_foreign_key "product_price_changes", "products"
+  add_foreign_key "product_price_changes", "users", column: "changed_by_id"
   add_foreign_key "products", "brands"
   add_foreign_key "products", "categories"
   add_foreign_key "wishlist_items", "products", on_delete: :cascade

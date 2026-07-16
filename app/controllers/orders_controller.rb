@@ -1,12 +1,17 @@
 class OrdersController < ApplicationController
   before_action :authenticate_user!
-  before_action :set_order, only: :show
+  before_action :set_order, only: %i[show cancel]
 
   def index
     @orders = current_user.orders.includes(:items).order(submitted_at: :desc)
   end
 
   def show; end
+
+  def cancel
+    result = Orders::Cancel.new(order: @order, actor: current_user, reason: params[:reason], source: "customer", lock_version: params[:lock_version]).call
+    redirect_to order_path(@order), status: :see_other, flash: { result.success? ? :notice : :alert => result.success? ? "تم إلغاء الطلب وتحرير المخزون المحجوز" : result.errors.join("، ") }
+  end
 
   def create
     result = Orders::CreateFromCart.new(
@@ -28,7 +33,7 @@ class OrdersController < ApplicationController
   private
 
   def set_order
-    @order = current_user.orders.includes(:items, :order_address, :events, prescription: { images_attachments: :blob }).find_by!(number: params[:number])
+    @order = current_user.orders.includes(:items, :order_address, :events, follow_ups: :messages, prescription: { images_attachments: :blob }).find_by!(number: params[:number])
   end
 
   def order_params
