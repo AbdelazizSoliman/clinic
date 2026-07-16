@@ -28,7 +28,7 @@ class OrdersController < ApplicationController
   private
 
   def set_order
-    @order = current_user.orders.includes(:items, :order_address, prescription: { images_attachments: :blob }).find_by!(number: params[:number])
+    @order = current_user.orders.includes(:items, :order_address, :events, prescription: { images_attachments: :blob }).find_by!(number: params[:number])
   end
 
   def order_params

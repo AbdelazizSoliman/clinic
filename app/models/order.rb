@@ -5,6 +5,7 @@ class Order < ApplicationRecord
   has_one :order_address, dependent: :destroy
   has_one :prescription, dependent: :destroy
   has_many :inventory_reservations, dependent: :destroy
+  has_many :events, class_name: "OrderEvent", dependent: :destroy
 
   enum :status, { pending_prescription: 0, submitted: 1, confirmed: 2, preparing: 3, ready_for_delivery: 4, out_for_delivery: 5, delivered: 6, cancelled: 7, rejected: 8 }, validate: true
   enum :payment_method, { cash_on_delivery: 0, card_placeholder: 1, wallet_placeholder: 2 }, validate: true

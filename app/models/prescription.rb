@@ -11,9 +11,18 @@ class Prescription < ApplicationRecord
 
   enum :status, { submitted: 0, under_review: 1, approved: 2, partially_approved: 3, rejected: 4 }, default: :submitted, validate: true
   validates :submitted_at, presence: true
+  validates :rejection_reason, presence: true, if: :rejected?
+  validates :customer_message, presence: true, if: :partially_approved?
+  validate :reviewer_consistency
   validate :validate_images
 
   private
+
+  def reviewer_consistency
+    final = approved? || partially_approved? || rejected?
+    errors.add(:reviewed_by, "مطلوب للقرار النهائي") if final && reviewed_by.blank?
+    errors.add(:reviewed_at, "مطلوب للقرار النهائي") if final && reviewed_at.blank?
+  end
 
   def validate_images
     errors.add(:images, "يجب إرفاق صورة أو ملف روشتة") if images.empty?

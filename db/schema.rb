@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_07_16_030003) do
+ActiveRecord::Schema[7.2].define(version: 2026_07_16_040001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -160,6 +160,22 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_16_030003) do
     t.index ["order_id"], name: "index_order_addresses_on_order_id", unique: true
   end
 
+  create_table "order_events", force: :cascade do |t|
+    t.bigint "order_id", null: false
+    t.bigint "actor_id"
+    t.string "event_type", null: false
+    t.string "from_status"
+    t.string "to_status"
+    t.jsonb "metadata", default: {}, null: false
+    t.boolean "customer_visible", default: false, null: false
+    t.datetime "created_at", null: false
+    t.index ["actor_id"], name: "index_order_events_on_actor_id"
+    t.index ["event_type"], name: "index_order_events_on_event_type"
+    t.index ["order_id", "created_at"], name: "index_order_events_on_order_id_and_created_at"
+    t.index ["order_id"], name: "index_order_events_on_order_id"
+    t.check_constraint "event_type::text = ANY (ARRAY['order_submitted'::character varying, 'prescription_review_started'::character varying, 'prescription_approved'::character varying, 'prescription_partially_approved'::character varying, 'prescription_rejected'::character varying, 'order_confirmed'::character varying, 'preparation_started'::character varying, 'order_ready'::character varying, 'out_for_delivery'::character varying, 'delivered'::character varying, 'cancelled'::character varying, 'rejected'::character varying, 'reservations_released'::character varying, 'reservations_consumed'::character varying]::text[])", name: "order_events_type_valid"
+  end
+
   create_table "order_items", force: :cascade do |t|
     t.bigint "order_id", null: false
     t.bigint "product_id"
@@ -205,6 +221,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_16_030003) do
     t.datetime "cancelled_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "lock_version", default: 0, null: false
     t.index ["cart_id"], name: "index_orders_on_cart_id", unique: true
     t.index ["number"], name: "index_orders_on_number", unique: true
     t.index ["user_id", "submitted_at"], name: "index_orders_on_user_id_and_submitted_at"
@@ -228,6 +245,9 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_16_030003) do
     t.text "customer_notes"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "lock_version", default: 0, null: false
+    t.text "customer_message"
+    t.text "internal_notes"
     t.index ["order_id"], name: "index_prescriptions_on_order_id", unique: true
     t.index ["reviewed_by_id"], name: "index_prescriptions_on_reviewed_by_id"
     t.index ["user_id"], name: "index_prescriptions_on_user_id"
@@ -275,7 +295,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_16_030003) do
     t.datetime "updated_at", null: false
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
-    t.check_constraint "role = ANY (ARRAY[0, 1])", name: "users_role_valid"
+    t.check_constraint "role = ANY (ARRAY[0, 1, 2, 3])", name: "users_role_valid"
   end
 
   create_table "wishlist_items", force: :cascade do |t|
@@ -298,6 +318,8 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_16_030003) do
   add_foreign_key "inventory_reservations", "orders", on_delete: :cascade
   add_foreign_key "inventory_reservations", "products"
   add_foreign_key "order_addresses", "orders", on_delete: :cascade
+  add_foreign_key "order_events", "orders", on_delete: :cascade
+  add_foreign_key "order_events", "users", column: "actor_id"
   add_foreign_key "order_items", "orders", on_delete: :cascade
   add_foreign_key "order_items", "products", on_delete: :nullify
   add_foreign_key "orders", "carts"

@@ -1,0 +1,29 @@
+<% content_for :title, "قائمة الطلبات" %>
+<div class="mx-auto max-w-7xl px-4 py-10">
+  <h1 class="text-3xl font-black">قائمة الطلبات</h1>
+  <%= form_with url: staff_orders_path, method: :get, class: "mt-6 grid gap-3 rounded-2xl bg-white p-4 sm:grid-cols-2 lg:grid-cols-4" do |form| %>
+    <%= form.search_field :q, value: params[:q], placeholder: "رقم الطلب أو بيانات العميل", aria: { label: "البحث في الطلبات" }, class: "rounded-xl border px-3 py-2" %>
+    <%= form.select :status, options_for_select([["كل حالات الطلب", ""]] + Order.statuses.keys.map { |status| [I18n.t("orders.statuses.#{status}"), status] }, params[:status]), {}, aria: { label: "حالة الطلب" }, class: "rounded-xl border px-3 py-2" %>
+    <%= form.select :prescription_status, options_for_select([["كل حالات الروشتة", ""]] + Prescription.statuses.keys.map { |status| [t("staff.prescription_statuses.#{status}"), status] }, params[:prescription_status]), {}, aria: { label: "حالة مراجعة الروشتة" }, class: "rounded-xl border px-3 py-2" %>
+    <%= form.select :prescription, options_for_select([["كل الطلبات", ""], ["تتطلب روشتة", "true"]], params[:prescription]), {}, aria: { label: "متطلبات الروشتة" }, class: "rounded-xl border px-3 py-2" %>
+    <%= form.select :payment_method, options_for_select([["كل طرق الدفع", ""]] + Order.payment_methods.keys.map { |method| [t("orders.payment_methods.#{method}"), method] }, params[:payment_method]), {}, aria: { label: "طريقة الدفع" }, class: "rounded-xl border px-3 py-2" %>
+    <%= form.select :payment_status, options_for_select([["كل حالات الدفع", ""]] + Order.payment_statuses.keys.map { |status| [t("orders.payment_statuses.#{status}"), status] }, params[:payment_status]), {}, aria: { label: "حالة الدفع" }, class: "rounded-xl border px-3 py-2" %>
+    <%= form.date_field :date_from, value: params[:date_from], aria: { label: "من تاريخ" }, class: "rounded-xl border px-3 py-2" %>
+    <%= form.date_field :date_to, value: params[:date_to], aria: { label: "إلى تاريخ" }, class: "rounded-xl border px-3 py-2" %>
+    <%= form.select :sort, options_for_select([["الأقدم انتظارًا", "oldest"], ["الأحدث", "newest"], ["رقم الطلب", "number"], ["أولوية الحالة", "priority"]], params[:sort]), {}, aria: { label: "ترتيب النتائج" }, class: "rounded-xl border px-3 py-2" %>
+    <%= form.submit "تطبيق", class: "rounded-xl bg-pharmacy-700 px-4 py-2 font-bold text-white" %>
+  <% end %>
+  <p class="mt-4 text-sm text-slate-500" aria-live="polite"><%= @pagy.count %> طلب</p>
+  <div class="mt-4 overflow-x-auto rounded-2xl bg-white">
+    <table class="w-full min-w-[700px] text-right text-sm">
+      <thead class="bg-slate-50"><tr><th class="p-4">الطلب</th><th>العميل</th><th>الحالة</th><th>الروشتة</th><th>الإجمالي</th></tr></thead>
+      <tbody>
+        <% @orders.each do |order| %>
+          <tr class="border-t"><td class="p-4"><%= link_to order.number, staff_order_path(order), class: "font-black text-pharmacy-700" %><small class="block text-slate-500"><%= l(order.submitted_at, format: :short) %></small></td><td><%= order.customer_first_name %> <%= order.customer_last_name %></td><td><%= order_status_label(order) %></td><td><%= order.prescription ? t("staff.prescription_statuses.#{order.prescription.status}") : "—" %></td><td><%= number_to_currency(order.total_cents / 100.0, unit: "ج.م", format: "%n %u") %></td></tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+  <% if @orders.empty? %><p class="mt-5 rounded-2xl bg-white p-8 text-center text-slate-600">لا توجد طلبات مطابقة.</p><% end %>
+  <nav class="mt-5 flex justify-between" aria-label="صفحات الطلبات"><%= link_to "السابق", staff_orders_path(request.query_parameters.merge(page: @pagy.previous)) if @pagy.previous %><%= link_to "التالي", staff_orders_path(request.query_parameters.merge(page: @pagy.next)) if @pagy.next %></nav>
+</div>

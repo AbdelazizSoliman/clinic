@@ -33,3 +33,21 @@ admin:
   mobile_number: "01099999999"
   role: 1
   active: true
+
+pharmacist:
+  email: pharmacist@example.com
+  encrypted_password: <%= Devise::Encryptor.digest(User, "password123") %>
+  first_name: صيدلي
+  last_name: مراجع
+  mobile_number: "01077777777"
+  role: 2
+  active: true
+
+order_manager:
+  email: operations@example.com
+  encrypted_password: <%= Devise::Encryptor.digest(User, "password123") %>
+  first_name: مدير
+  last_name: الطلبات
+  mobile_number: "01066666666"
+  role: 3
+  active: true

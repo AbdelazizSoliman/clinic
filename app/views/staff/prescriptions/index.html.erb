@@ -1,0 +1,21 @@
+<% content_for :title, "قائمة مراجعة الروشتات" %>
+<div class="mx-auto max-w-7xl px-4 py-10">
+  <h1 class="text-3xl font-black">قائمة مراجعة الروشتات</h1>
+  <%= form_with url: staff_prescriptions_path, method: :get, class: "mt-6 grid gap-3 rounded-2xl bg-white p-4 sm:grid-cols-2 lg:grid-cols-5" do |form| %>
+    <%= form.search_field :q, value: params[:q], placeholder: "رقم الطلب", aria: { label: "رقم الطلب" }, class: "rounded-xl border px-3 py-2" %>
+    <%= form.select :status, options_for_select([["كل الحالات", ""]] + Prescription.statuses.keys.map { |status| [t("staff.prescription_statuses.#{status}"), status] }, params[:status]), {}, aria: { label: "حالة الروشتة" }, class: "rounded-xl border px-3 py-2" %>
+    <%= form.date_field :date_from, value: params[:date_from], aria: { label: "من تاريخ" }, class: "rounded-xl border px-3 py-2" %>
+    <%= form.date_field :date_to, value: params[:date_to], aria: { label: "إلى تاريخ" }, class: "rounded-xl border px-3 py-2" %>
+    <%= form.submit "تطبيق", class: "rounded-xl bg-pharmacy-700 px-4 py-2 text-white" %>
+  <% end %>
+  <p class="mt-4 text-sm text-slate-500" aria-live="polite"><%= @pagy.count %> روشتة</p>
+  <div class="mt-5 grid gap-4">
+    <% @prescriptions.each do |prescription| %>
+      <%= link_to staff_prescription_path(prescription), class: "grid gap-2 rounded-2xl bg-white p-5 shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-pharmacy-600 sm:grid-cols-4" do %>
+        <strong><%= prescription.order.number %></strong><span><%= prescription.order.customer_first_name %> <%= prescription.order.customer_last_name %></span><span><%= t("staff.prescription_statuses.#{prescription.status}") %></span><span><%= prescription.images.count %> ملفات · منذ <%= time_ago_in_words(prescription.submitted_at) %></span>
+      <% end %>
+    <% end %>
+  </div>
+  <% if @prescriptions.empty? %><p class="mt-5 rounded-2xl bg-white p-8 text-center text-slate-600">لا توجد روشتات مطابقة.</p><% end %>
+  <nav class="mt-5 flex justify-between" aria-label="صفحات الروشتات"><%= link_to "السابق", staff_prescriptions_path(request.query_parameters.merge(page: @pagy.previous)) if @pagy.previous %><%= link_to "التالي", staff_prescriptions_path(request.query_parameters.merge(page: @pagy.next)) if @pagy.next %></nav>
+</div>

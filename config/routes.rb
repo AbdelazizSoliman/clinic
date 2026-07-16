@@ -27,6 +27,16 @@ Rails.application.routes.draw do
       end
     end
   end
+  namespace :staff do
+    root "dashboard#index"
+    resources :orders, only: %i[index show], param: :number do
+      member { patch :transition }
+    end
+    resources :prescriptions, only: %i[index show] do
+      member { patch :review }
+      get "files/:attachment_id", to: "prescription_files#show", as: :file
+    end
+  end
 
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 

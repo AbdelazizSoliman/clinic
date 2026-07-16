@@ -8,13 +8,16 @@ class User < ApplicationRecord
   has_many :orders, dependent: :restrict_with_error
   has_many :prescriptions, dependent: :restrict_with_error
 
-  enum :role, { customer: 0, admin: 1 }, default: :customer, validate: true
+  enum :role, { customer: 0, admin: 1, pharmacist: 2, order_manager: 3 }, default: :customer, validate: true
 
   validates :first_name, :last_name, presence: true, length: { maximum: 60 }
   validates :mobile_number, presence: true, format: { with: /\A[+0-9][0-9 ]{7,14}\z/ }
   validates :active, inclusion: { in: [ true, false ] }
 
   def full_name = "#{first_name} #{last_name}"
+  def staff? = pharmacist? || order_manager? || admin?
+  def can_review_prescriptions? = pharmacist? || admin?
+  def can_operate_orders? = order_manager? || admin?
 
   def active_for_authentication?
     super && active?

@@ -48,6 +48,7 @@ module Orders
         end
 
         order = create_order!(totals, prescription_required)
+        order.events.create!(event_type: "order_submitted", to_status: order.status, customer_visible: true)
         create_items_and_reservations!(order, totals)
         create_address_snapshot!(order)
         create_prescription!(order) if prescription_required
