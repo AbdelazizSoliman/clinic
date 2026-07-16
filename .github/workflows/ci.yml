@@ -27,7 +27,8 @@ jobs:
       - name: Verify container health
         run: |
           image="clinic:${GITHUB_SHA}"
-          container=$(docker run --detach --publish 127.0.0.1:3000:3000 -e SECRET_KEY_BASE_DUMMY=1 "$image")
+          container=$(docker run --detach --publish 127.0.0.1:3000:3000 -e SECRET_KEY_BASE_DUMMY=1 \
+            --entrypoint ./bin/rails "$image" server --binding 0.0.0.0)
           trap 'docker logs "$container"; docker rm --force "$container"' EXIT
           for attempt in {1..30}; do
             status=$(docker inspect --format='{{.State.Health.Status}}' "$container")
