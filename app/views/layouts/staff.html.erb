@@ -17,6 +17,7 @@
           <%= link_to "المتابعات", staff_follow_ups_path %>
           <%= link_to "التوصيل", staff_fulfilments_path if current_user.can_manage_delivery? %>
           <%= link_to "مناطق التوصيل", staff_delivery_zones_path if current_user.can_manage_delivery? %>
+          <%= link_to "التقارير", admin_reports_root_path if current_user.can_view_business_reports? || current_user.can_view_prescription_reports? %>
           <%= link_to "الإشعارات (#{current_user.notifications.unread.count})", notifications_path %>
           <%= link_to "المتجر", root_path %>
         </div>

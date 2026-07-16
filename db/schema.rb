@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_07_16_080002) do
+ActiveRecord::Schema[7.2].define(version: 2026_07_16_090001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -257,6 +257,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_16_080002) do
     t.index ["delivery_zone_id"], name: "index_fulfilments_on_delivery_zone_id"
     t.index ["order_id"], name: "index_fulfilments_on_order_id", unique: true
     t.index ["status", "created_at"], name: "index_fulfilments_on_status_and_created_at"
+    t.index ["status", "created_at"], name: "index_fulfilments_reporting_status_created"
     t.check_constraint "status >= 0 AND status <= 5", name: "fulfilments_status_valid"
   end
 
@@ -275,6 +276,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_16_080002) do
     t.datetime "created_at", null: false
     t.index ["actor_id"], name: "index_inventory_movements_on_actor_id"
     t.index ["idempotency_key"], name: "index_inventory_movements_on_idempotency_key", unique: true, where: "(idempotency_key IS NOT NULL)"
+    t.index ["movement_type", "created_at"], name: "index_inventory_movements_reporting_type_time"
     t.index ["product_id", "created_at"], name: "index_inventory_movements_on_product_id_and_created_at"
     t.index ["product_id"], name: "index_inventory_movements_on_product_id"
     t.index ["reference_type", "reference_id"], name: "index_inventory_movements_on_reference"
@@ -297,6 +299,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_16_080002) do
     t.index ["order_item_id"], name: "index_inventory_reservations_on_order_item_id", unique: true
     t.index ["product_id", "status"], name: "index_inventory_reservations_on_product_id_and_status"
     t.index ["product_id"], name: "index_inventory_reservations_on_product_id"
+    t.index ["status", "product_id"], name: "index_inventory_reservations_reporting_status_product"
     t.check_constraint "quantity > 0", name: "inventory_reservations_quantity_positive"
     t.check_constraint "status = ANY (ARRAY[0, 1, 2])", name: "inventory_reservations_status_valid"
   end
@@ -353,6 +356,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_16_080002) do
     t.boolean "customer_visible", default: false, null: false
     t.datetime "created_at", null: false
     t.index ["actor_id"], name: "index_order_events_on_actor_id"
+    t.index ["event_type", "created_at"], name: "index_order_events_reporting_type_time"
     t.index ["event_type"], name: "index_order_events_on_event_type"
     t.index ["order_id", "created_at"], name: "index_order_events_on_order_id_and_created_at"
     t.index ["order_id"], name: "index_order_events_on_order_id"
@@ -414,6 +418,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_16_080002) do
     t.integer "original_unit_price_cents"
     t.integer "final_unit_price_cents"
     t.index ["order_id"], name: "index_order_items_on_order_id"
+    t.index ["product_id", "order_id"], name: "index_order_items_reporting_product_order"
     t.index ["product_id"], name: "index_order_items_on_product_id"
     t.check_constraint "quantity > 0", name: "order_items_quantity_positive"
     t.check_constraint "unit_price_cents >= 0 AND discount_cents >= 0 AND line_total_cents >= 0", name: "order_items_money_nonnegative"
@@ -483,7 +488,9 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_16_080002) do
     t.index ["delivery_slot_id"], name: "index_orders_on_delivery_slot_id"
     t.index ["delivery_zone_id"], name: "index_orders_on_delivery_zone_id"
     t.index ["number"], name: "index_orders_on_number", unique: true
+    t.index ["status", "submitted_at"], name: "index_orders_reporting_status_submitted"
     t.index ["user_id", "submitted_at"], name: "index_orders_on_user_id_and_submitted_at"
+    t.index ["user_id", "submitted_at"], name: "index_orders_reporting_user_submitted"
     t.index ["user_id"], name: "index_orders_on_user_id"
     t.check_constraint "currency::text = 'EGP'::text", name: "orders_currency_valid"
     t.check_constraint "delivery_method = ANY (ARRAY[0, 1, 2])", name: "orders_delivery_method_valid"
@@ -509,6 +516,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_16_080002) do
     t.text "internal_notes"
     t.index ["order_id"], name: "index_prescriptions_on_order_id", unique: true
     t.index ["reviewed_by_id"], name: "index_prescriptions_on_reviewed_by_id"
+    t.index ["status", "submitted_at"], name: "index_prescriptions_reporting_status_submitted"
     t.index ["user_id"], name: "index_prescriptions_on_user_id"
     t.check_constraint "status = ANY (ARRAY[0, 1, 2, 3, 4])", name: "prescriptions_status_valid"
   end
@@ -659,6 +667,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_16_080002) do
     t.index ["order_id"], name: "index_promotion_redemptions_on_order_id"
     t.index ["promotion_id", "order_id"], name: "index_promotion_redemptions_on_promotion_id_and_order_id", unique: true
     t.index ["promotion_id"], name: "index_promotion_redemptions_on_promotion_id"
+    t.index ["status", "redeemed_at"], name: "index_redemptions_reporting_status_time"
     t.index ["user_id"], name: "index_promotion_redemptions_on_user_id"
     t.check_constraint "discount_cents >= 0", name: "promotion_redemptions_discount_nonnegative"
     t.check_constraint "status::text = ANY (ARRAY['redeemed'::character varying, 'released'::character varying]::text[])", name: "promotion_redemptions_status_valid"
@@ -702,6 +711,23 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_16_080002) do
     t.check_constraint "per_customer_usage_limit IS NULL OR per_customer_usage_limit > 0", name: "promotions_customer_limit_positive"
     t.check_constraint "promotion_type::text = ANY (ARRAY['product'::character varying, 'category'::character varying, 'brand'::character varying, 'cart'::character varying, 'delivery'::character varying]::text[])", name: "promotions_type_valid"
     t.check_constraint "total_usage_limit IS NULL OR total_usage_limit > 0", name: "promotions_total_limit_positive"
+  end
+
+  create_table "report_export_events", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "report_type", null: false
+    t.string "format", default: "csv", null: false
+    t.datetime "range_start", null: false
+    t.datetime "range_end", null: false
+    t.jsonb "filters", default: {}, null: false
+    t.integer "row_count", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id", "created_at"], name: "index_report_export_events_on_user_id_and_created_at"
+    t.index ["user_id"], name: "index_report_export_events_on_user_id"
+    t.check_constraint "format::text = 'csv'::text", name: "report_export_events_format_valid"
+    t.check_constraint "range_end > range_start AND row_count >= 0", name: "report_export_events_range_rows_valid"
+    t.check_constraint "report_type::text = ANY (ARRAY['sales'::character varying, 'orders'::character varying, 'products'::character varying, 'inventory'::character varying, 'promotions'::character varying, 'customers'::character varying, 'prescriptions'::character varying, 'fulfilments'::character varying]::text[])", name: "report_export_events_type_valid"
   end
 
   create_table "users", force: :cascade do |t|
@@ -800,6 +826,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_16_080002) do
   add_foreign_key "promotions", "delivery_zones"
   add_foreign_key "promotions", "users", column: "created_by_id"
   add_foreign_key "promotions", "users", column: "updated_by_id"
+  add_foreign_key "report_export_events", "users"
   add_foreign_key "wishlist_items", "products", on_delete: :cascade
   add_foreign_key "wishlist_items", "users", on_delete: :cascade
 end

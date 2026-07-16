@@ -25,6 +25,11 @@ class User < ApplicationRecord
   def can_manage_catalog? = inventory_manager? || admin?
   alias_method :can_manage_inventory?, :can_manage_catalog?
   def can_manage_promotions? = admin?
+  def can_view_business_reports? = admin? || order_manager?
+  def can_view_inventory_reports? = admin? || inventory_manager?
+  def can_view_prescription_reports? = admin? || pharmacist?
+  def can_view_fulfilment_reports? = admin? || order_manager?
+  def can_export_reports? = admin? || inventory_manager? || order_manager? || pharmacist?
 
   def active_for_authentication?
     super && active?

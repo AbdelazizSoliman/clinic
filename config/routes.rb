@@ -63,6 +63,17 @@ Rails.application.routes.draw do
     end
   end
   namespace :admin do
+    namespace :reports do
+      root "dashboard#index"
+      resources :sales, only: :index
+      resources :orders, only: :index
+      resources :products, only: :index
+      resources :inventory, only: :index
+      resources :promotions, only: :index
+      resources :customers, only: :index
+      resources :prescriptions, only: :index
+      resources :fulfilments, only: :index
+    end
     root "inventory#index"
     resources :products do
       member do

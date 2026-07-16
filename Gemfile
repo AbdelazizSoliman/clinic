@@ -22,6 +22,8 @@ gem "pagy"
 gem "devise"
 # Build JSON APIs with ease [https://github.com/rails/jbuilder]
 gem "jbuilder"
+# CSV left Ruby's default gems in Ruby 3.4; reports require it explicitly.
+gem "csv"
 # Use Redis adapter to run Action Cable in production
 # gem "redis", ">= 4.0.1"
 
