@@ -50,6 +50,9 @@ class OrdersController < ApplicationController
     @selected_delivery_method = order_params[:delivery_method]
     @delivery_slots = @delivery_zone&.delivery_slots&.available&.order(:delivery_date, :starts_at) || DeliverySlot.none
     @selected_delivery_slot = @delivery_slots.find_by(id: order_params[:delivery_slot_id])
+    @pricing = Checkout::Totals.call(@cart&.valid_items || [], zone: @delivery_zone,
+      delivery_method: @delivery_methods.find { |method| method.code == @selected_delivery_method },
+      user: current_user, coupon: @cart&.applied_coupon)
     @readiness = Checkout::Readiness.new(user: current_user, cart: @cart, address: @selected_address,
       payment_method: order_params[:payment_method], delivery_method: @selected_delivery_method,
       delivery_slot: @selected_delivery_slot).call

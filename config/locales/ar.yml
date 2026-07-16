@@ -72,6 +72,26 @@ ar:
       paid: "مدفوع"
       failed: "فشل الدفع"
       refunded: "مسترد"
+  promotions:
+    types:
+      product: "منتج"
+      category: "تصنيف"
+      brand: "علامة تجارية"
+      cart: "السلة"
+      delivery: "التوصيل"
+    discount_types:
+      percentage: "نسبة مئوية"
+      fixed_amount: "مبلغ ثابت"
+      fixed_price: "سعر ثابت"
+      free_delivery: "توصيل مجاني"
+    states:
+      draft: "مسودة"
+      scheduled: "مجدولة"
+      active: "نشطة"
+      paused: "متوقفة"
+      expired: "منتهية"
+    coupon_applied: "تم تطبيق كود الخصم"
+    coupon_invalid: "الكود غير صالح أو غير متاح لهذه السلة"
   staff:
     roles:
       customer: "عميل"

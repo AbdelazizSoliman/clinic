@@ -43,7 +43,13 @@ module Orders
 
         lock_delivery_slot!(transaction_errors)
         raise ActiveRecord::Rollback if transaction_errors.any?
-        totals = Checkout::Totals.call(items, zone: @delivery_zone, delivery_method: @delivery_method_record)
+        lock_promotions!
+        totals = Checkout::Totals.call(items, zone: @delivery_zone, delivery_method: @delivery_method_record,
+          user: @user, coupon: @cart.applied_coupon)
+        if @cart.applied_coupon && totals.applied_promotions.none? { |applied| applied.coupon&.id == @cart.applied_coupon_id }
+          transaction_errors << "كود الخصم لم يعد صالحًا لهذه السلة"
+          raise ActiveRecord::Rollback
+        end
         prescription_required = totals.lines.any? { |line| line.product.requires_prescription? }
         if prescription_required
           transaction_errors.concat(Prescriptions::AttachmentValidator.call(@prescription_files))
@@ -53,6 +59,7 @@ module Orders
         order = create_order!(totals, prescription_required)
         order.events.create!(event_type: "order_submitted", to_status: order.status, customer_visible: true)
         create_items_and_reservations!(order, totals)
+        create_commercial_records!(order, totals)
         create_address_snapshot!(order)
         order.create_fulfilment!(delivery_zone: @delivery_zone, delivery_slot: @delivery_slot, status: :unassigned)
         create_prescription!(order) if prescription_required
@@ -116,6 +123,8 @@ module Orders
         status: prescription_required ? :pending_prescription : :submitted,
         payment_method: @payment_method, payment_status: :unpaid, delivery_method: @delivery_method,
         currency: @cart.currency, subtotal_cents: totals.subtotal_cents, discount_cents: totals.discount_cents,
+        product_discount_cents: totals.product_discount_cents, cart_discount_cents: totals.cart_discount_cents,
+        delivery_discount_cents: totals.delivery_discount_cents, pricing_calculation_version: totals.calculation_version,
         delivery_fee_cents: totals.delivery_fee_cents, total_cents: totals.total_cents,
         delivery_zone: @delivery_zone, delivery_slot: @delivery_slot, delivery_zone_code: @delivery_zone.code,
         delivery_zone_name: @delivery_zone.name, delivery_method_name: @delivery_method_record.name,
@@ -134,12 +143,33 @@ module Orders
         item = order.items.create!(
           product:, product_name: product.name, product_slug: product.slug,
           brand_name: product.brand.name, category_name: product.category.name,
-          unit_price_cents: line.unit_price_cents, compare_at_price_cents: line.compare_at_price_cents,
+          unit_price_cents: line.final_unit_price_cents, original_unit_price_cents: line.original_unit_price_cents,
+          final_unit_price_cents: line.final_unit_price_cents, compare_at_price_cents: line.compare_at_price_cents,
           discount_cents: line.discount_cents, quantity: line.quantity,
           line_total_cents: line.line_total_cents, requires_prescription: product.requires_prescription?
         )
         order.inventory_reservations.create!(order_item: item, product:, quantity: line.quantity, status: :active,
           expires_at: Inventory::ReservationExpiryPolicy.expires_at_for(order))
+      end
+    end
+
+    def lock_promotions!
+      ids = Promotion.effective_at.automatic.ids
+      ids << @cart.applied_coupon.promotion_id if @cart.applied_coupon
+      Promotion.where(id: ids.uniq.sort).order(:id).lock.load
+      @cart.applied_coupon&.lock!
+    end
+
+    def create_commercial_records!(order, totals)
+      totals.applied_promotions.each do |applied|
+        promotion = applied.promotion
+        order.order_promotions.create!(promotion:, coupon: applied.coupon, promotion_name: promotion.name,
+          code: applied.coupon&.code, promotion_type: promotion.promotion_type, discount_type: promotion.discount_type,
+          discount_value_snapshot: promotion.discount_value, discount_cents: applied.discount_cents,
+          metadata: { scope: applied.scope, calculation_version: totals.calculation_version })
+        order.promotion_redemptions.create!(promotion:, coupon: applied.coupon, user: @user,
+          code_snapshot: applied.coupon&.code, discount_cents: applied.discount_cents,
+          status: :redeemed, redeemed_at: Time.current)
       end
     end
 

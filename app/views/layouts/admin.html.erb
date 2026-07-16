@@ -2,7 +2,11 @@
 <html lang="ar" dir="rtl">
   <head><title><%= content_for(:title) || "إدارة الكتالوج" %></title><meta name="viewport" content="width=device-width,initial-scale=1"><%= csrf_meta_tags %><%= csp_meta_tag %><%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %><%= javascript_importmap_tags %><style>html{overflow-x:hidden}</style></head>
   <body class="min-h-screen overflow-x-hidden bg-slate-100 text-slate-900">
-    <header class="bg-slate-950 text-white"><nav class="mx-auto flex max-w-7xl flex-wrap items-center gap-5 px-4 py-4" aria-label="إدارة الكتالوج"><%= link_to "+ إدارة صيدليتي", admin_root_path, class: "text-xl font-black" %><%= link_to "المنتجات", admin_products_path %><%= link_to "التصنيفات", admin_categories_path %><%= link_to "العلامات", admin_brands_path %><%= link_to "حركات المخزون", admin_inventory_adjustments_path %><%= link_to "تاريخ الأسعار", admin_price_changes_path %><%= link_to "المخزون المنخفض", admin_low_stock_inventory_path %><%= link_to "المتجر", root_path, class: "mr-auto" %></nav></header>
-    <%= render "shared/flash" %><main><%= yield %></main>
+    <header class="bg-slate-950 text-white"><nav class="mx-auto flex max-w-7xl flex-wrap items-center gap-5 px-4 py-4" aria-label="إدارة الصيدلية">
+      <%= link_to "+ إدارة صيدليتي", admin_root_path, class: "text-xl font-black" %>
+      <%= link_to "المنتجات", admin_products_path %><%= link_to "التصنيفات", admin_categories_path %><%= link_to "العلامات", admin_brands_path %>
+      <%= link_to "حركات المخزون", admin_inventory_adjustments_path %><%= link_to "تاريخ الأسعار", admin_price_changes_path %><%= link_to "المخزون المنخفض", admin_low_stock_inventory_path %>
+      <%= link_to "العروض والكوبونات", admin_promotions_path if current_user.can_manage_promotions? %><%= link_to "المتجر", root_path, class: "mr-auto" %>
+    </nav></header><%= render "shared/flash" %><main><%= yield %></main>
   </body>
 </html>

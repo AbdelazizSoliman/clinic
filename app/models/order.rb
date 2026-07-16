@@ -12,6 +12,8 @@ class Order < ApplicationRecord
   belongs_to :delivery_zone, optional: true
   belongs_to :delivery_slot, optional: true
   has_one :fulfilment, dependent: :destroy
+  has_many :order_promotions, dependent: :destroy
+  has_many :promotion_redemptions, dependent: :restrict_with_error
 
   enum :status, { pending_prescription: 0, submitted: 1, confirmed: 2, preparing: 3, ready_for_delivery: 4, out_for_delivery: 5, delivered: 6, cancelled: 7, rejected: 8 }, validate: true
   enum :payment_method, { cash_on_delivery: 0, card_placeholder: 1, wallet_placeholder: 2 }, validate: true
@@ -21,7 +23,9 @@ class Order < ApplicationRecord
 
   validates :number, presence: true, uniqueness: true
   validates :currency, inclusion: { in: %w[EGP] }
-  validates :subtotal_cents, :discount_cents, :delivery_fee_cents, :total_cents, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
+  validates :subtotal_cents, :discount_cents, :product_discount_cents, :cart_discount_cents,
+    :delivery_discount_cents, :delivery_fee_cents, :total_cents,
+    numericality: { only_integer: true, greater_than_or_equal_to: 0 }
   validates :customer_email, :customer_mobile_number, :customer_first_name, :customer_last_name, :submitted_at, presence: true
   validate :total_matches_components
   validate :cancellation_consistency

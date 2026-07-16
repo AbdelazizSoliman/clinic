@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_07_16_070002) do
+ActiveRecord::Schema[7.2].define(version: 2026_07_16_080002) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -118,6 +118,9 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_16_070002) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "checkout_submission_token"
+    t.bigint "applied_coupon_id"
+    t.string "applied_coupon_code_snapshot"
+    t.index ["applied_coupon_id"], name: "index_carts_on_applied_coupon_id"
     t.index ["checkout_submission_token"], name: "index_carts_on_checkout_submission_token", unique: true
     t.index ["guest_token"], name: "index_carts_on_guest_token", unique: true, where: "(guest_token IS NOT NULL)"
     t.index ["user_id"], name: "index_carts_on_user_id"
@@ -140,6 +143,28 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_16_070002) do
     t.index ["name"], name: "index_categories_on_name", unique: true
     t.index ["slug"], name: "index_categories_on_slug", unique: true
     t.check_constraint "\"position\" >= 0", name: "categories_position_nonnegative"
+  end
+
+  create_table "coupons", force: :cascade do |t|
+    t.bigint "promotion_id", null: false
+    t.string "code", null: false
+    t.string "normalized_code", null: false
+    t.boolean "active", default: true, null: false
+    t.datetime "starts_at"
+    t.datetime "ends_at"
+    t.integer "total_usage_limit"
+    t.integer "per_customer_usage_limit"
+    t.integer "minimum_subtotal_cents"
+    t.integer "maximum_discount_cents"
+    t.boolean "first_order_only"
+    t.boolean "authenticated_only"
+    t.integer "lock_version", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index "lower((normalized_code)::text)", name: "index_coupons_on_lower_normalized_code", unique: true
+    t.index ["promotion_id"], name: "index_coupons_on_promotion_id"
+    t.check_constraint "per_customer_usage_limit IS NULL OR per_customer_usage_limit > 0", name: "coupons_customer_limit_positive"
+    t.check_constraint "total_usage_limit IS NULL OR total_usage_limit > 0", name: "coupons_total_limit_positive"
   end
 
   create_table "delivery_methods", force: :cascade do |t|
@@ -386,10 +411,31 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_16_070002) do
     t.boolean "requires_prescription", default: false, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "original_unit_price_cents"
+    t.integer "final_unit_price_cents"
     t.index ["order_id"], name: "index_order_items_on_order_id"
     t.index ["product_id"], name: "index_order_items_on_product_id"
     t.check_constraint "quantity > 0", name: "order_items_quantity_positive"
     t.check_constraint "unit_price_cents >= 0 AND discount_cents >= 0 AND line_total_cents >= 0", name: "order_items_money_nonnegative"
+  end
+
+  create_table "order_promotions", force: :cascade do |t|
+    t.bigint "order_id", null: false
+    t.bigint "promotion_id"
+    t.bigint "coupon_id"
+    t.string "promotion_name", null: false
+    t.string "code"
+    t.string "promotion_type", null: false
+    t.string "discount_type", null: false
+    t.integer "discount_value_snapshot", null: false
+    t.integer "discount_cents", null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["coupon_id"], name: "index_order_promotions_on_coupon_id"
+    t.index ["order_id", "promotion_id"], name: "index_order_promotions_on_order_id_and_promotion_id", unique: true
+    t.index ["order_id"], name: "index_order_promotions_on_order_id"
+    t.index ["promotion_id"], name: "index_order_promotions_on_promotion_id"
   end
 
   create_table "orders", force: :cascade do |t|
@@ -428,6 +474,10 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_16_070002) do
     t.integer "delivery_estimated_min_minutes"
     t.integer "delivery_estimated_max_minutes"
     t.datetime "scheduled_for"
+    t.integer "product_discount_cents", default: 0, null: false
+    t.integer "cart_discount_cents", default: 0, null: false
+    t.integer "delivery_discount_cents", default: 0, null: false
+    t.string "pricing_calculation_version", default: "v1", null: false
     t.index ["cancelled_by_id"], name: "index_orders_on_cancelled_by_id"
     t.index ["cart_id"], name: "index_orders_on_cart_id", unique: true
     t.index ["delivery_slot_id"], name: "index_orders_on_delivery_slot_id"
@@ -541,6 +591,119 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_16_070002) do
     t.check_constraint "stock_quantity >= 0", name: "products_stock_quantity_non_negative"
   end
 
+  create_table "promotion_audit_events", force: :cascade do |t|
+    t.bigint "promotion_id", null: false
+    t.bigint "actor_id", null: false
+    t.string "action", null: false
+    t.jsonb "changes", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["actor_id"], name: "index_promotion_audit_events_on_actor_id"
+    t.index ["promotion_id"], name: "index_promotion_audit_events_on_promotion_id"
+  end
+
+  create_table "promotion_brands", force: :cascade do |t|
+    t.bigint "promotion_id", null: false
+    t.bigint "brand_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["brand_id"], name: "index_promotion_brands_on_brand_id"
+    t.index ["promotion_id", "brand_id"], name: "index_promotion_brands_unique", unique: true
+    t.index ["promotion_id"], name: "index_promotion_brands_on_promotion_id"
+  end
+
+  create_table "promotion_categories", force: :cascade do |t|
+    t.bigint "promotion_id", null: false
+    t.bigint "category_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["category_id"], name: "index_promotion_categories_on_category_id"
+    t.index ["promotion_id", "category_id"], name: "index_promotion_categories_unique", unique: true
+    t.index ["promotion_id"], name: "index_promotion_categories_on_promotion_id"
+  end
+
+  create_table "promotion_exclusions", force: :cascade do |t|
+    t.bigint "promotion_id", null: false
+    t.bigint "product_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["product_id"], name: "index_promotion_exclusions_on_product_id"
+    t.index ["promotion_id", "product_id"], name: "index_promotion_exclusions_on_promotion_id_and_product_id", unique: true
+    t.index ["promotion_id"], name: "index_promotion_exclusions_on_promotion_id"
+  end
+
+  create_table "promotion_products", force: :cascade do |t|
+    t.bigint "promotion_id", null: false
+    t.bigint "product_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["product_id"], name: "index_promotion_products_on_product_id"
+    t.index ["promotion_id", "product_id"], name: "index_promotion_products_unique", unique: true
+    t.index ["promotion_id"], name: "index_promotion_products_on_promotion_id"
+  end
+
+  create_table "promotion_redemptions", force: :cascade do |t|
+    t.bigint "promotion_id", null: false
+    t.bigint "coupon_id"
+    t.bigint "user_id", null: false
+    t.bigint "order_id", null: false
+    t.string "code_snapshot"
+    t.integer "discount_cents", null: false
+    t.string "status", default: "redeemed", null: false
+    t.datetime "redeemed_at", null: false
+    t.datetime "released_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["coupon_id"], name: "index_promotion_redemptions_on_coupon_id"
+    t.index ["order_id"], name: "index_one_coupon_redemption_per_order", unique: true, where: "(coupon_id IS NOT NULL)"
+    t.index ["order_id"], name: "index_promotion_redemptions_on_order_id"
+    t.index ["promotion_id", "order_id"], name: "index_promotion_redemptions_on_promotion_id_and_order_id", unique: true
+    t.index ["promotion_id"], name: "index_promotion_redemptions_on_promotion_id"
+    t.index ["user_id"], name: "index_promotion_redemptions_on_user_id"
+    t.check_constraint "discount_cents >= 0", name: "promotion_redemptions_discount_nonnegative"
+    t.check_constraint "status::text = ANY (ARRAY['redeemed'::character varying, 'released'::character varying]::text[])", name: "promotion_redemptions_status_valid"
+  end
+
+  create_table "promotions", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "internal_name", null: false
+    t.text "description"
+    t.string "promotion_type", null: false
+    t.string "discount_type", null: false
+    t.integer "discount_value", null: false
+    t.integer "maximum_discount_cents"
+    t.integer "minimum_subtotal_cents", default: 0, null: false
+    t.datetime "starts_at", null: false
+    t.datetime "ends_at", null: false
+    t.boolean "active", default: false, null: false
+    t.integer "priority", default: 0, null: false
+    t.boolean "stackable", default: false, null: false
+    t.boolean "automatic", default: false, null: false
+    t.boolean "first_order_only", default: false, null: false
+    t.boolean "authenticated_only", default: false, null: false
+    t.boolean "applies_to_prescription_products", default: false, null: false
+    t.integer "total_usage_limit"
+    t.integer "per_customer_usage_limit"
+    t.bigint "delivery_zone_id"
+    t.string "delivery_method_code"
+    t.jsonb "metadata", default: {}, null: false
+    t.bigint "created_by_id", null: false
+    t.bigint "updated_by_id", null: false
+    t.integer "lock_version", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["active", "starts_at", "ends_at"], name: "index_promotions_on_active_and_starts_at_and_ends_at"
+    t.index ["created_by_id"], name: "index_promotions_on_created_by_id"
+    t.index ["delivery_zone_id"], name: "index_promotions_on_delivery_zone_id"
+    t.index ["updated_by_id"], name: "index_promotions_on_updated_by_id"
+    t.check_constraint "discount_type::text = ANY (ARRAY['percentage'::character varying, 'fixed_amount'::character varying, 'fixed_price'::character varying, 'free_delivery'::character varying]::text[])", name: "promotions_discount_type_valid"
+    t.check_constraint "discount_value >= 0 AND minimum_subtotal_cents >= 0 AND priority >= 0", name: "promotions_values_nonnegative"
+    t.check_constraint "ends_at > starts_at", name: "promotions_time_range_valid"
+    t.check_constraint "per_customer_usage_limit IS NULL OR per_customer_usage_limit > 0", name: "promotions_customer_limit_positive"
+    t.check_constraint "promotion_type::text = ANY (ARRAY['product'::character varying, 'category'::character varying, 'brand'::character varying, 'cart'::character varying, 'delivery'::character varying]::text[])", name: "promotions_type_valid"
+    t.check_constraint "total_usage_limit IS NULL OR total_usage_limit > 0", name: "promotions_total_limit_positive"
+  end
+
   create_table "users", force: :cascade do |t|
     t.string "email", default: "", null: false
     t.string "encrypted_password", default: "", null: false
@@ -575,7 +738,9 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_16_070002) do
   add_foreign_key "admin_audit_events", "users", column: "actor_id"
   add_foreign_key "cart_items", "carts", on_delete: :cascade
   add_foreign_key "cart_items", "products"
+  add_foreign_key "carts", "coupons", column: "applied_coupon_id"
   add_foreign_key "carts", "users"
+  add_foreign_key "coupons", "promotions"
   add_foreign_key "delivery_methods", "delivery_zones"
   add_foreign_key "delivery_slots", "delivery_zones"
   add_foreign_key "delivery_zone_districts", "delivery_zones"
@@ -602,6 +767,9 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_16_070002) do
   add_foreign_key "order_follow_ups", "users", column: "resolved_by_id"
   add_foreign_key "order_items", "orders", on_delete: :cascade
   add_foreign_key "order_items", "products", on_delete: :nullify
+  add_foreign_key "order_promotions", "coupons"
+  add_foreign_key "order_promotions", "orders"
+  add_foreign_key "order_promotions", "promotions"
   add_foreign_key "orders", "carts"
   add_foreign_key "orders", "delivery_slots"
   add_foreign_key "orders", "delivery_zones"
@@ -615,6 +783,23 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_16_070002) do
   add_foreign_key "product_price_changes", "users", column: "changed_by_id"
   add_foreign_key "products", "brands"
   add_foreign_key "products", "categories"
+  add_foreign_key "promotion_audit_events", "promotions"
+  add_foreign_key "promotion_audit_events", "users", column: "actor_id"
+  add_foreign_key "promotion_brands", "brands"
+  add_foreign_key "promotion_brands", "promotions"
+  add_foreign_key "promotion_categories", "categories"
+  add_foreign_key "promotion_categories", "promotions"
+  add_foreign_key "promotion_exclusions", "products"
+  add_foreign_key "promotion_exclusions", "promotions"
+  add_foreign_key "promotion_products", "products"
+  add_foreign_key "promotion_products", "promotions"
+  add_foreign_key "promotion_redemptions", "coupons"
+  add_foreign_key "promotion_redemptions", "orders"
+  add_foreign_key "promotion_redemptions", "promotions"
+  add_foreign_key "promotion_redemptions", "users"
+  add_foreign_key "promotions", "delivery_zones"
+  add_foreign_key "promotions", "users", column: "created_by_id"
+  add_foreign_key "promotions", "users", column: "updated_by_id"
   add_foreign_key "wishlist_items", "products", on_delete: :cascade
   add_foreign_key "wishlist_items", "users", on_delete: :cascade
 end

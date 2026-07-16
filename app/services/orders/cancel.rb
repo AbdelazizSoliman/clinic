@@ -18,6 +18,7 @@ module Orders
         return failure("لا يمكن الإلغاء بعد تجهيز المخزون") if @order.inventory_reservations.consumed.exists?
 
         Inventory::ReleaseReservations.new(@order).call
+        Promotions::ReleaseRedemptions.call(@order)
         @order.update!(status: :cancelled, cancellation_reason: @reason.to_s.squish, cancellation_source: @source,
           cancelled_by: @source == "system" ? nil : @actor, cancelled_at: Time.current)
         event_type = { "customer" => "customer_cancelled", "staff" => "staff_cancelled", "system" => "system_cancelled" }.fetch(@source)

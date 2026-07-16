@@ -56,6 +56,7 @@ module Prescriptions
       when "rejected"
         @prescription.order.update!(status: :rejected)
         Inventory::ReleaseReservations.new(@prescription.order).call
+        Promotions::ReleaseRedemptions.call(@prescription.order)
         event("prescription_rejected", from, "rejected", true)
         @prescription.order.events.create!(actor: @actor, event_type: "reservations_released", customer_visible: true)
         notify_customer("prescription_rejected", "تعذر اعتماد الروشتة", @customer_message)

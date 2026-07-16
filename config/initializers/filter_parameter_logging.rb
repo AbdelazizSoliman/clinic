@@ -6,5 +6,5 @@
 Rails.application.config.filter_parameters += [
   :passw, :email, :secret, :token, :_key, :crypt, :salt, :certificate, :otp, :ssn,
   :mobile, :address, :street, :building, :floor, :apartment, :landmark, :postal,
-  :delivery_notes, :prescription, :customer_notes
+  :delivery_notes, :prescription, :customer_notes, :code
 ]

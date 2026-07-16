@@ -1,7 +1,7 @@
 <article class="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
   <%= link_to product_path(product), class: "relative block bg-gradient-to-br from-slate-50 to-pharmacy-50 p-4", aria: { label: "عرض تفاصيل #{product.name}" } do %>
     <% if product.primary_image&.file&.attached? %><%= image_tag product.primary_image.file, alt: product.primary_image.alt_text, class: "aspect-square w-full rounded-xl bg-white object-contain shadow-inner" %><% else %><div class="grid aspect-square place-items-center rounded-xl bg-white text-6xl shadow-inner" aria-hidden="true">💊</div><% end %>
-    <% if product.discounted? %><span class="absolute right-3 top-3 rounded-full bg-rose-500 px-2.5 py-1 text-xs font-black text-white">خصم <%= product.discount_percentage %>٪</span><% end %>
+    <% if product.discounted? %><span class="absolute right-3 top-3 rounded-full bg-rose-500 px-2.5 py-1 text-xs font-black text-white">سعر عرض مرجعي <%= product.discount_percentage %>٪</span><% end %>
     <% if product.requires_prescription? %><span class="absolute bottom-3 right-3 rounded-lg bg-amber-100 px-2 py-1 text-xs font-bold text-amber-800">يتطلب روشتة</span><% end %>
   <% end %>
   <%= render "products/wishlist_control", product: %>

@@ -29,6 +29,7 @@ module Orders
         from = @order.status
         if %w[cancelled rejected].include?(@to_status)
           Inventory::ReleaseReservations.new(@order).call
+          Promotions::ReleaseRedemptions.call(@order)
         elsif @to_status == "ready_for_delivery"
           return failure("تعذر استهلاك الحجز لعدم كفاية المخزون") unless Inventory::ConsumeReservations.new(@order).call
         end

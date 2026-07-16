@@ -7,6 +7,7 @@ Rails.application.routes.draw do
     post :clear
     post :import_browser
   end
+  resource :coupon_application, only: %i[create destroy]
   resources :cart_items, only: %i[create update destroy]
   get "wishlist", to: "wishlists#show", as: :wishlist
   resource :wishlist, only: [] do
@@ -71,6 +72,13 @@ Rails.application.routes.draw do
       resources :images, only: %i[create destroy], controller: "product_images" do
         member { patch :set_primary }
       end
+    end
+    resources :promotions do
+      member do
+        patch :activate
+        patch :pause
+      end
+      resources :coupons, except: %i[index show]
     end
     resources :categories do
       member { patch :deactivate }

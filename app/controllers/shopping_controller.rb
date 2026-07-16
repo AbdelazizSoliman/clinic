@@ -11,6 +11,9 @@ class ShoppingController < ApplicationController
     @addresses = current_user.addresses.where(active: true).order(default: :desc, created_at: :desc)
     @selected_address = @addresses.find_by(id: params[:address_id]) || @addresses.find_by(default: true) || @addresses.first
     prepare_delivery_options
+    @pricing = Checkout::Totals.call(@cart&.valid_items || [], zone: @delivery_zone,
+      delivery_method: @delivery_methods.find { |method| method.code == @selected_delivery_method },
+      user: current_user, coupon: @cart&.applied_coupon)
     @readiness = Checkout::Readiness.new(user: current_user, cart: @cart, address: @selected_address,
       payment_method: "cash_on_delivery", delivery_method: @selected_delivery_method,
       delivery_slot: @selected_delivery_slot).call

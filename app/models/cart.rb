@@ -2,6 +2,7 @@ class Cart < ApplicationRecord
   belongs_to :user, optional: true
   has_many :items, class_name: "CartItem", dependent: :destroy, inverse_of: :cart
   has_one :order, dependent: :restrict_with_error
+  belongs_to :applied_coupon, class_name: "Coupon", optional: true
 
   enum :status, { active: 0, merged: 1, abandoned: 2, converting: 3, completed: 4 }, default: :active, validate: true
 
@@ -31,6 +32,14 @@ class Cart < ApplicationRecord
 
   def requires_prescription?
     valid_items.any? { |item| item.product.requires_prescription? }
+  end
+
+  def clear_coupon!
+    update!(applied_coupon: nil, applied_coupon_code_snapshot: nil)
+  end
+
+  def promotion_calculation(user: self.user, zone: nil, delivery_method: nil)
+    Promotions::Calculator.call(items: valid_items, user:, coupon: applied_coupon, zone:, delivery_method:)
   end
 
   private
