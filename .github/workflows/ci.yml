@@ -3,9 +3,40 @@ name: CI
 on:
   pull_request:
   push:
-    branches: [ main ]
+    branches: [ main, start-final-qa-deployment-launch ]
+  workflow_dispatch:
 
 jobs:
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build production image
+        run: docker build --tag clinic:${{ github.sha }} .
+
+      - name: Verify runtime image
+        run: |
+          image="clinic:${GITHUB_SHA}"
+          test "$(docker run --rm --entrypoint id "$image" -u)" != "0"
+          docker run --rm --entrypoint bundle "$image" check
+          ! docker run --rm --entrypoint bundle "$image" list | grep -E ' debug | capybara | selenium-webdriver | web-console '
+          docker run --rm --entrypoint ./bin/rails -e SECRET_KEY_BASE_DUMMY=1 "$image" runner 'Rails.application.eager_load!; puts "production_boot=ok"'
+
+      - name: Verify container health
+        run: |
+          image="clinic:${GITHUB_SHA}"
+          container=$(docker run --detach --publish 127.0.0.1:3000:3000 -e SECRET_KEY_BASE_DUMMY=1 "$image")
+          trap 'docker logs "$container"; docker rm --force "$container"' EXIT
+          for attempt in {1..30}; do
+            status=$(docker inspect --format='{{.State.Health.Status}}' "$container")
+            [ "$status" = healthy ] && exit 0
+            [ "$status" = unhealthy ] && exit 1
+            sleep 2
+          done
+          exit 1
+
   scan_ruby:
     runs-on: ubuntu-latest
 

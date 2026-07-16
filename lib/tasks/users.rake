@@ -11,6 +11,7 @@ namespace :users do
       first_name: ENV.fetch("ADMIN_FIRST_NAME"), last_name: ENV.fetch("ADMIN_LAST_NAME"),
       mobile_number: ENV.fetch("ADMIN_MOBILE"), role: :admin, active: true)
     UserAuditEvent.create!(user:, action: "bootstrap_admin", reason: "Bootstrap task")
-    puts "Admin created: #{user.email}"
+    SecurityEvent.record("bootstrap_admin_created", user:, metadata: { role: user.role, action: "bootstrap" })
+    puts "Bootstrap administrator created; immediate 2FA enrollment is required."
   end
 end

@@ -1,5 +1,5 @@
 Devise.setup do |config|
-  config.mailer_sender = "no-reply@seydalety.local"
+  config.mailer_sender = ENV.fetch("MAIL_FROM_EMAIL", "no-reply@seydalety.local")
   require "devise/orm/active_record"
   config.case_insensitive_keys = [ :email ]
   config.strip_whitespace_keys = [ :email ]

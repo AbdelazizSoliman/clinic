@@ -15,7 +15,8 @@ class SecurityEvent < ApplicationRecord
 
   def self.digest_ip(ip)
     return if ip.blank?
-    OpenSSL::HMAC.hexdigest("SHA256", Rails.application.secret_key_base, ip)
+    key = ENV.fetch("SECURITY_EVENT_DIGEST_KEY", Rails.application.secret_key_base)
+    OpenSSL::HMAC.hexdigest("SHA256", key, ip)
   end
 
   private

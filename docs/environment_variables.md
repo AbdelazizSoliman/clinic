@@ -1,12 +1,15 @@
 # Production environment variables
 
-Required: `DATABASE_URL`, `APP_HOST`, `ALLOWED_HOSTS`, `RAILS_MASTER_KEY` (or
-`SECRET_KEY_BASE` plus Active Record encryption configuration), `SMTP_ADDRESS`,
-`SMTP_USERNAME`, `SMTP_PASSWORD`, `STORAGE_ACCESS_KEY_ID`,
+Required: `RAILS_ENV=production`, `RAILS_SERVE_STATIC_FILES=true`,
+`DATABASE_URL`, `APP_HOST`, `ALLOWED_HOSTS`, `RAILS_MASTER_KEY` and/or
+`SECRET_KEY_BASE`, `SMTP_ADDRESS`, `SMTP_USERNAME`, `SMTP_PASSWORD`,
+`MAIL_FROM_EMAIL`, `MAIL_FROM_NAME`, `STORAGE_ACCESS_KEY_ID`,
 `STORAGE_SECRET_ACCESS_KEY`, `STORAGE_REGION`, and `STORAGE_BUCKET`.
 Also required are `ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY`,
 `ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY`, and
-`ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT` for encrypted TOTP secrets.
+`ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT` for encrypted TOTP secrets, plus
+`SECURITY_EVENT_DIGEST_KEY` for network-identifier digests. All of these are
+Render secret variables except non-secret mode/settings values.
 
 Optional/configurable: `SMTP_PORT` (587), `STORAGE_ENDPOINT`,
 `STORAGE_FORCE_PATH_STYLE`, `RAILS_MAX_THREADS` (3), `DATABASE_POOL`,
@@ -23,3 +26,7 @@ production protection.
 
 Values are never committed. Rate limiting and cache correctness require the
 shared Solid Cache database in production; memory stores are development-only.
+Rails credentials or the selected secret store must contain no development
+values. `ERROR_REPORTER_ADAPTER=logging` is an acceptable launch fallback only
+when log alerts and retention are configured. Analytics has no application
+variable in this release and should not be invented or configured.

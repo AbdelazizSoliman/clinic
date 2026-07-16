@@ -5,6 +5,10 @@ services:
     healthCheckPath: /up
     preDeployCommand: bin/rails db:prepare
     envVars: &environment
+      - key: RAILS_ENV
+        value: production
+      - key: RAILS_SERVE_STATIC_FILES
+        value: "true"
       - key: DATABASE_URL
         fromDatabase: { name: clinic-db, property: connectionString }
       - key: APP_HOST
@@ -13,11 +17,17 @@ services:
         sync: false
       - key: RAILS_MASTER_KEY
         sync: false
+      - key: SECRET_KEY_BASE
+        sync: false
       - key: SMTP_ADDRESS
         sync: false
       - key: SMTP_USERNAME
         sync: false
       - key: SMTP_PASSWORD
+        sync: false
+      - key: MAIL_FROM_EMAIL
+        sync: false
+      - key: MAIL_FROM_NAME
         sync: false
       - key: STORAGE_ACCESS_KEY_ID
         sync: false
@@ -26,6 +36,24 @@ services:
       - key: STORAGE_REGION
         sync: false
       - key: STORAGE_BUCKET
+        sync: false
+      - key: STORAGE_ENDPOINT
+        sync: false
+      - key: ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY
+        sync: false
+      - key: ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY
+        sync: false
+      - key: ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT
+        sync: false
+      - key: SECURITY_EVENT_DIGEST_KEY
+        sync: false
+      - key: MALWARE_SCANNER_ADAPTER
+        value: clamav
+      - key: CLAMAV_HOST
+        sync: false
+      - key: ERROR_REPORTER_ADAPTER
+        value: logging
+      - key: RELEASE_SHA
         sync: false
   - type: worker
     name: clinic-worker
