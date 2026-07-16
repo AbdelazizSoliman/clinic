@@ -29,7 +29,7 @@ gem "solid_queue"
 gem "solid_cache"
 # Private S3-compatible object storage and bounded image variants.
 gem "aws-sdk-s3", require: false
-gem "image_processing", "~> 1.2"
+gem "image_processing", "~> 2.0"
 # Build JSON APIs with ease [https://github.com/rails/jbuilder]
 gem "jbuilder"
 # CSV left Ruby's default gems in Ruby 3.4; reports require it explicitly.
