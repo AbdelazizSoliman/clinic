@@ -83,7 +83,7 @@ class AddressesWishlistCheckoutTest < ActionDispatch::IntegrationTest
     status = carts(:customer_cart).status
     get checkout_path, params: { address_id: addresses(:other_home).id }
     assert_response :success
-    assert_select "input[name='address_id'][value='#{addresses(:home).id}'][checked]"
+    assert_select "input[name='order[address_id]'][value='#{addresses(:home).id}'][checked]"
     assert_equal status, carts(:customer_cart).reload.status
   end
 
@@ -93,6 +93,6 @@ class AddressesWishlistCheckoutTest < ActionDispatch::IntegrationTest
     get checkout_path
     assert_response :success
     assert_includes response.body, "خارج نطاق التوصيل التجريبي"
-    assert_includes response.body, "لن يتم إنشاء طلب"
+    assert_includes response.body, "الدفع عند الاستلام"
   end
 end

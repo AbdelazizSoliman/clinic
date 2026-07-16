@@ -1,4 +1,7 @@
 module ApplicationHelper
+  def order_status_label(order) = I18n.t("orders.statuses.#{order.status}")
+  def payment_method_label(order) = I18n.t("orders.payment_methods.#{order.payment_method}")
+  def payment_status_label(order) = I18n.t("orders.payment_statuses.#{order.payment_status}")
   SORT_OPTIONS = [
     [ "موصى به", "recommended" ], [ "السعر: من الأقل للأعلى", "price_asc" ],
     [ "السعر: من الأعلى للأقل", "price_desc" ], [ "أعلى خصم", "discount_desc" ],

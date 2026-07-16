@@ -1,10 +1,9 @@
 import { Controller } from "@hotwired/stimulus"
 export default class extends Controller {
-  static targets = ["form", "completion"]
+  static targets = ["form", "submit"]
   submit(event) {
-    event.preventDefault()
-    if (!this.formTarget.checkValidity()) { this.formTarget.reportValidity(); return }
-    this.completionTarget.classList.remove("hidden"); document.body.classList.add("overflow-hidden"); this.completionTarget.querySelector("button").focus()
+    if (!this.formTarget.checkValidity()) { event.preventDefault(); this.formTarget.reportValidity(); return }
+    this.submitTarget.disabled = true
+    this.submitTarget.value = "جارٍ إرسال الطلب بأمان..."
   }
-  close() { this.completionTarget.classList.add("hidden"); document.body.classList.remove("overflow-hidden") }
 }

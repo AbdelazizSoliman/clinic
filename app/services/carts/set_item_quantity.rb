@@ -14,7 +14,7 @@ module Carts
 
       item = @cart.items.find_or_initialize_by(product: @product)
       requested += item.quantity.to_i if @additive
-      allowed = [ requested, CartItem::MAX_QUANTITY, @product.stock_quantity ].min
+      allowed = [ requested, CartItem::MAX_QUANTITY, @product.available_to_sell_quantity ].min
       item.quantity = allowed
       item.save!
       notice = @product.requires_prescription? ? "سيطلب الصيدلي مراجعة الروشتة قبل التأكيد" : nil

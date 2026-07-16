@@ -7,9 +7,10 @@ class ShoppingController < ApplicationController
     end
 
     @cart = current_cart
+    @cart&.ensure_checkout_submission_token!
     @addresses = current_user.addresses.where(active: true).order(default: :desc, created_at: :desc)
     @selected_address = @addresses.find_by(id: params[:address_id]) || @addresses.find_by(default: true) || @addresses.first
-    @readiness = Checkout::Readiness.new(user: current_user, cart: @cart, address: @selected_address, payment_method: params[:payment_method].presence || "cash").call
+    @readiness = Checkout::Readiness.new(user: current_user, cart: @cart, address: @selected_address, payment_method: "cash_on_delivery").call
     @cart_issues = cart_issues
     @recommendations = Product.includes(:brand, :category).discounted.available.limit(4)
   end
@@ -22,8 +23,8 @@ class ShoppingController < ApplicationController
     @cart.items.includes(:product).filter_map do |item|
       if !item.product.active? || !item.product.available?
         "#{item.product.name} لم يعد متاحًا؛ عدّل السلة قبل المتابعة"
-      elsif item.quantity > item.product.stock_quantity
-        "كمية #{item.product.name} تتجاوز المخزون الحالي (#{item.product.stock_quantity})"
+      elsif item.quantity > item.product.available_to_sell_quantity
+        "كمية #{item.product.name} تتجاوز المتاح للبيع حاليًا (#{item.product.available_to_sell_quantity})"
       end
     end
   end

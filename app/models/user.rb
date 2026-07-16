@@ -5,6 +5,8 @@ class User < ApplicationRecord
   has_many :addresses, dependent: :destroy
   has_many :wishlist_items, dependent: :destroy
   has_many :wishlist_products, through: :wishlist_items, source: :product
+  has_many :orders, dependent: :restrict_with_error
+  has_many :prescriptions, dependent: :restrict_with_error
 
   enum :role, { customer: 0, admin: 1 }, default: :customer, validate: true
 

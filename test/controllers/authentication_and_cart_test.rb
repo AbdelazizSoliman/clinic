@@ -76,7 +76,7 @@ class AuthenticationAndCartTest < ActionDispatch::IntegrationTest
     get checkout_url
     assert_response :success
     assert_select "form[data-checkout-target='form']"
-    assert_select "h2", /مراجعة الروشتة/
+    assert_select "h2", /إرسال الروشتة/
   end
 
   test "guest cart merges on sign in and persists across sign out" do

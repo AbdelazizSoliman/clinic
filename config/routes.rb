@@ -15,6 +15,9 @@ Rails.application.routes.draw do
   end
   resources :wishlist_items, only: %i[create destroy]
   get "checkout", to: "shopping#checkout", as: :checkout
+  resources :orders, only: %i[index show create], param: :number do
+    get "prescription_files/:attachment_id", to: "prescription_files#show", as: :prescription_file
+  end
   resource :account, only: %i[show edit update], controller: "account"
   namespace :account do
     resources :addresses, except: :show do

@@ -21,7 +21,7 @@ class ShoppingControllerTest < ActionDispatch::IntegrationTest
     sign_in users(:customer)
     get checkout_url
     assert_response :success
-    assert_select "h1", "تجهيز بيانات الطلب"
+    assert_select "h1", "إتمام الطلب"
     assert_select "form[data-checkout-target='form']"
   end
 

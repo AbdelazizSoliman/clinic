@@ -1,4 +1,7 @@
 ar:
+  time:
+    formats:
+      short: "%d/%m/%Y %H:%M"
   activerecord:
     models:
       user: "المستخدم"
@@ -45,3 +48,24 @@ ar:
     passwords:
       send_instructions: "ستصلك تعليمات إعادة تعيين كلمة المرور إذا كان البريد مسجلًا."
       updated: "تم تغيير كلمة المرور بنجاح."
+  orders:
+    statuses:
+      pending_prescription: "بانتظار مراجعة الروشتة"
+      submitted: "تم الاستلام"
+      confirmed: "مؤكد"
+      preparing: "قيد التجهيز"
+      ready_for_delivery: "جاهز للتوصيل"
+      out_for_delivery: "خرج للتوصيل"
+      delivered: "تم التسليم"
+      cancelled: "ملغي"
+      rejected: "مرفوض"
+    payment_methods:
+      cash_on_delivery: "الدفع عند الاستلام"
+      card_placeholder: "بطاقة بنكية — غير تشغيلية"
+      wallet_placeholder: "محفظة رقمية — غير تشغيلية"
+    payment_statuses:
+      unpaid: "غير مدفوع"
+      pending: "بانتظار الدفع"
+      paid: "مدفوع"
+      failed: "فشل الدفع"
+      refunded: "مسترد"

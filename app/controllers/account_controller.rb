@@ -4,6 +4,7 @@ class AccountController < ApplicationController
   def show
     @addresses = current_user.addresses.where(active: true)
     @default_address = @addresses.find_by(default: true)
+    @recent_orders = current_user.orders.order(submitted_at: :desc).limit(3)
   end
 
   def edit; end

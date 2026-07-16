@@ -2,6 +2,8 @@ class Product < ApplicationRecord
   belongs_to :category
   belongs_to :brand
   has_many :wishlist_items, dependent: :destroy
+  has_many :inventory_reservations, dependent: :restrict_with_error
+  has_many :order_items, dependent: :nullify
 
   scope :active, -> { where(active: true) }
   scope :featured, -> { active.where(featured: true) }
@@ -27,7 +29,15 @@ class Product < ApplicationRecord
     ((compare_at_price - price) / compare_at_price * 100).round
   end
 
-  def available? = stock_quantity.positive?
+  def active_reserved_quantity
+    inventory_reservations.active.sum(:quantity)
+  end
+
+  def available_to_sell_quantity
+    [ stock_quantity - active_reserved_quantity, 0 ].max
+  end
+
+  def available? = available_to_sell_quantity.positive?
 
   private
 
