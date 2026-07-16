@@ -1,6 +1,7 @@
 class Product < ApplicationRecord
   belongs_to :category
   belongs_to :brand
+  has_many :wishlist_items, dependent: :destroy
 
   scope :active, -> { where(active: true) }
   scope :featured, -> { active.where(featured: true) }

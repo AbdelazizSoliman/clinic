@@ -1,0 +1,7 @@
+customer_featured:
+  user: customer
+  product: featured
+
+other_skin:
+  user: other_customer
+  product: skin_product

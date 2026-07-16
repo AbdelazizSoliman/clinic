@@ -8,9 +8,22 @@ Rails.application.routes.draw do
     post :import_browser
   end
   resources :cart_items, only: %i[create update destroy]
-  get "wishlist", to: "shopping#wishlist", as: :wishlist
+  get "wishlist", to: "wishlists#show", as: :wishlist
+  resource :wishlist, only: [] do
+    delete :clear
+    post :import_browser
+  end
+  resources :wishlist_items, only: %i[create destroy]
   get "checkout", to: "shopping#checkout", as: :checkout
   resource :account, only: %i[show edit update], controller: "account"
+  namespace :account do
+    resources :addresses, except: :show do
+      member do
+        patch :set_default
+        patch :deactivate
+      end
+    end
+  end
 
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 

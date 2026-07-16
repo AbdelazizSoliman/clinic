@@ -1,7 +1,10 @@
 class AccountController < ApplicationController
   before_action :authenticate_user!
 
-  def show; end
+  def show
+    @addresses = current_user.addresses.where(active: true)
+    @default_address = @addresses.find_by(default: true)
+  end
 
   def edit; end
 

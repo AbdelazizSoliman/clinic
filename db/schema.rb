@@ -10,9 +10,36 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_07_16_010003) do
+ActiveRecord::Schema[7.2].define(version: 2026_07_16_020002) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
+
+  create_table "addresses", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "label", limit: 50, null: false
+    t.string "recipient_name", limit: 120, null: false
+    t.string "mobile_number", limit: 20, null: false
+    t.string "governorate", limit: 80, null: false
+    t.string "city", limit: 100, null: false
+    t.string "district", limit: 100
+    t.string "street", limit: 200, null: false
+    t.string "building_number", limit: 30, null: false
+    t.string "floor", limit: 30
+    t.string "apartment", limit: 30
+    t.string "landmark", limit: 200
+    t.text "delivery_notes"
+    t.string "postal_code", limit: 20
+    t.decimal "latitude", precision: 10, scale: 7
+    t.decimal "longitude", precision: 10, scale: 7
+    t.boolean "default", default: false, null: false
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_addresses_on_user_id"
+    t.index ["user_id"], name: "index_addresses_one_active_default", unique: true, where: "((active = true) AND (\"default\" = true))"
+    t.check_constraint "latitude IS NULL OR latitude >= '-90'::integer::numeric AND latitude <= 90::numeric", name: "addresses_latitude_range"
+    t.check_constraint "longitude IS NULL OR longitude >= '-180'::integer::numeric AND longitude <= 180::numeric", name: "addresses_longitude_range"
+  end
 
   create_table "brands", force: :cascade do |t|
     t.string "name", null: false
@@ -105,9 +132,22 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_16_010003) do
     t.check_constraint "role = ANY (ARRAY[0, 1])", name: "users_role_valid"
   end
 
+  create_table "wishlist_items", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "product_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["product_id"], name: "index_wishlist_items_on_product_id"
+    t.index ["user_id", "product_id"], name: "index_wishlist_items_on_user_id_and_product_id", unique: true
+    t.index ["user_id"], name: "index_wishlist_items_on_user_id"
+  end
+
+  add_foreign_key "addresses", "users", on_delete: :cascade
   add_foreign_key "cart_items", "carts", on_delete: :cascade
   add_foreign_key "cart_items", "products"
   add_foreign_key "carts", "users"
   add_foreign_key "products", "brands"
   add_foreign_key "products", "categories"
+  add_foreign_key "wishlist_items", "products", on_delete: :cascade
+  add_foreign_key "wishlist_items", "users", on_delete: :cascade
 end

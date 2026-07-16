@@ -2,6 +2,8 @@ ar:
   activerecord:
     models:
       user: "المستخدم"
+      address: "العنوان"
+      wishlist_item: "عنصر المفضلة"
     attributes:
       user:
         email: "البريد الإلكتروني"
@@ -11,6 +13,15 @@ ar:
         last_name: "اسم العائلة"
         mobile_number: "رقم الموبايل"
         current_password: "كلمة المرور الحالية"
+      address:
+        label: "اسم العنوان"
+        recipient_name: "اسم المستلم"
+        mobile_number: "رقم الموبايل"
+        governorate: "المحافظة"
+        city: "المدينة"
+        street: "الشارع"
+        building_number: "رقم المبنى"
+        default: "العنوان الافتراضي"
   errors:
     format: "%{attribute} %{message}"
     messages:

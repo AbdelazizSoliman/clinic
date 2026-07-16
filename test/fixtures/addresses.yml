@@ -1,0 +1,48 @@
+home:
+  user: customer
+  label: المنزل
+  recipient_name: أحمد محمد
+  mobile_number: "01012345678"
+  governorate: القاهرة
+  city: مدينة نصر
+  district: المنطقة السادسة
+  street: شارع مصطفى النحاس
+  building_number: "25"
+  default: true
+  active: true
+
+office:
+  user: customer
+  label: العمل
+  recipient_name: أحمد محمد
+  mobile_number: "01012345678"
+  governorate: الجيزة
+  city: الدقي
+  street: شارع التحرير
+  building_number: "10"
+  default: false
+  active: true
+
+other_home:
+  user: other_customer
+  label: المنزل
+  recipient_name: سارة علي
+  mobile_number: "01112345678"
+  governorate: الإسكندرية
+  city: سموحة
+  street: شارع فوزي معاذ
+  building_number: "8"
+  default: true
+  active: true
+
+inactive_address:
+  user: customer
+  label: عنوان قديم
+  recipient_name: أحمد محمد
+  mobile_number: "01012345678"
+  governorate: القاهرة
+  city: المعادي
+  street: شارع النصر
+  building_number: "1"
+  default: false
+  active: false

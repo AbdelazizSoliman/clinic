@@ -1,6 +1,7 @@
 require "test_helper"
 
 class ShoppingControllerTest < ActionDispatch::IntegrationTest
+  include Devise::Test::IntegrationHelpers
   test "cart page responds with empty state and product catalog" do
     get cart_url
     assert_response :success
@@ -17,16 +18,16 @@ class ShoppingControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "checkout page responds with mock form and prescription notice" do
+    sign_in users(:customer)
     get checkout_url
     assert_response :success
-    assert_select "h1", "إتمام بيانات الطلب"
-    assert_select "h2", /السلة فارغة/
-    assert_select "h2", /السلة فارغة/
+    assert_select "h1", "تجهيز بيانات الطلب"
+    assert_select "form[data-checkout-target='form']"
   end
 
   test "shopping routes use read-only GET requests" do
     assert_routing({ method: :get, path: "/cart" }, { controller: "carts", action: "show" })
-    assert_routing({ method: :get, path: "/wishlist" }, { controller: "shopping", action: "wishlist" })
+    assert_routing({ method: :get, path: "/wishlist" }, { controller: "wishlists", action: "show" })
     assert_routing({ method: :get, path: "/checkout" }, { controller: "shopping", action: "checkout" })
   end
 

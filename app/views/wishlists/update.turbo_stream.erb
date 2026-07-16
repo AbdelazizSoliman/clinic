@@ -1,0 +1,4 @@
+<%= turbo_stream.replace "wishlist_badge", partial: "wishlists/badge", locals: { count: current_user.wishlist_items.count } %>
+<%= turbo_stream.replace "wishlist_page_state", partial: "wishlists/page_state" %>
+<% if changed_product %><%= turbo_stream.replace_all "[data-wishlist-control-product-id='#{changed_product.id}']", partial: "products/wishlist_control", locals: { product: changed_product } %><% end %>
+<%= turbo_stream.replace "flash_messages", partial: "shared/flash" %>

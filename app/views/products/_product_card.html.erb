@@ -1,10 +1,10 @@
-<article class="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg" data-controller="wishlist" data-wishlist-product-id-value="<%= product.id %>">
+<article class="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
   <%= link_to product_path(product), class: "relative block bg-gradient-to-br from-slate-50 to-pharmacy-50 p-4", aria: { label: "عرض تفاصيل #{product.name}" } do %>
     <div class="grid aspect-square place-items-center rounded-xl bg-white text-6xl shadow-inner" aria-hidden="true">💊</div>
     <% if product.discounted? %><span class="absolute right-3 top-3 rounded-full bg-rose-500 px-2.5 py-1 text-xs font-black text-white">خصم <%= product.discount_percentage %>٪</span><% end %>
     <% if product.requires_prescription? %><span class="absolute bottom-3 right-3 rounded-lg bg-amber-100 px-2 py-1 text-xs font-bold text-amber-800">يتطلب روشتة</span><% end %>
   <% end %>
-  <button type="button" data-wishlist-target="button" data-action="wishlist#toggle" aria-pressed="false" class="absolute left-3 top-3 z-10 grid size-10 place-items-center rounded-full bg-white text-xl text-slate-500 shadow-sm hover:text-rose-500"><span data-wishlist-target="icon">♡</span></button>
+  <%= render "products/wishlist_control", product: %>
   <div class="flex flex-1 flex-col p-4">
     <p class="mb-1 text-xs font-bold text-pharmacy-600"><%= product.brand.name %></p>
     <h3 class="line-clamp-2 min-h-12 font-bold leading-6" title="<%= product.name %>"><%= link_to product.name, product_path(product), class: "hover:text-pharmacy-600" %></h3>
