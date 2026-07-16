@@ -13,6 +13,7 @@ class AccountController < ApplicationController
 
   def update
     attributes = account_params
+    DemoMode::SafetyPolicy.protect_demo_account!(current_user, attributes:)
     updated = if attributes[:email].present? && attributes[:email] != current_user.email
       current_user.update_with_password(attributes)
     else
@@ -25,6 +26,8 @@ class AccountController < ApplicationController
     else
       render :edit, status: :unprocessable_entity
     end
+  rescue DemoMode::SafetyPolicy::ProtectedActionError => error
+    redirect_to edit_account_path, alert: error.message, status: :see_other
   end
 
   private

@@ -10,6 +10,7 @@ module Admin
 
       def call
         return failure("غير مصرح") unless @actor&.can_manage_users?
+        DemoMode::SafetyPolicy.protect_demo_account!(@user, attributes: @attributes)
         sensitive = @attributes.keys.map(&:to_s).intersect?(PROTECTED)
         return failure("سبب التغيير مطلوب") if sensitive && @reason.blank?
         User.transaction do
@@ -24,6 +25,8 @@ module Admin
         Result.new(success?: true, user: @user, errors: [])
       rescue ActiveRecord::StaleObjectError
         failure("تم تعديل الحساب بواسطة مستخدم آخر؛ أعد تحميل الصفحة")
+      rescue DemoMode::SafetyPolicy::ProtectedActionError => error
+        failure(error.message)
       end
 
       private

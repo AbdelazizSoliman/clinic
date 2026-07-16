@@ -27,6 +27,15 @@ demo service without reviewing it. Demo mode is a presentation and policy
 signal, not a substitute for separate databases, storage buckets, SMTP
 sandboxes, scanner services, credentials, or network isolation.
 
+Demo data additionally accepts `DEMO_ACCOUNT_PASSWORD` as a shared fallback or
+role-specific `DEMO_ADMIN_PASSWORD`, `DEMO_PHARMACIST_PASSWORD`,
+`DEMO_ORDER_MANAGER_PASSWORD`, `DEMO_INVENTORY_MANAGER_PASSWORD`,
+`DEMO_CUSTOMER_PASSWORD`, `DEMO_PRESCRIPTION_CUSTOMER_PASSWORD`, and
+`DEMO_CANCELLED_CUSTOMER_PASSWORD`. Privileged accounts require
+`DEMO_TOTP_SECRET`. Non-development environments must provide these secrets.
+`DEMO_STORAGE_ISOLATED=true` is required before seeding in a production-mode
+demo deployment. `DEMO_SEED_TEST=true` is reserved for automated tests.
+
 Scanner: set `MALWARE_SCANNER_ADAPTER=clamav`, `CLAMAV_HOST`, optional
 `CLAMAV_PORT` (3310), and `SCANNER_TIMEOUT_SECONDS` (10). The scanner must be on
 a private network. `clean` is deterministic and forbidden as evidence of real

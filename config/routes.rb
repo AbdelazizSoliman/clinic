@@ -1,5 +1,5 @@
 Rails.application.routes.draw do
-  devise_for :users, controllers: { sessions: "users/sessions", registrations: "users/registrations" }
+  devise_for :users, controllers: { sessions: "users/sessions", registrations: "users/registrations", passwords: "users/passwords" }
   resource :two_factor_enrollment, only: %i[show create update]
   resource :two_factor_challenge, only: %i[show create]
   get "invitation/:token", to: "invitations#show", as: :invitation

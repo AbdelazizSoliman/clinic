@@ -3,7 +3,7 @@ require "test_helper"
 class OperationsIntegrityCheckTest < ActiveSupport::TestCase
   test "returns bounded structured safe findings without repairing" do
     user = users(:pharmacist)
-    user.update_columns(otp_secret_ciphertext: nil, otp_enabled_at: nil)
+    user.update_columns(otp_secret: nil, otp_enabled_at: nil)
     findings = Operations::IntegrityCheck.new.call
     finding = findings.find { |item| item.code == :privileged_without_two_factor }
     assert finding

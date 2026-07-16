@@ -2,7 +2,9 @@ class DemoController < ApplicationController
   before_action :authenticate_user!
   before_action :require_demo_mode
 
-  def show; end
+  def show
+    @demo_accounts = DemoData::Accounts::DEFINITIONS.values_at(:admin, :pharmacist, :order_manager, :inventory_manager, :customer)
+  end
 
   private
 

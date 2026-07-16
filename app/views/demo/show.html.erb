@@ -30,4 +30,19 @@
       </ul>
     </section>
   </div>
+
+  <section class="mt-6 rounded-3xl border bg-white p-6 shadow-sm" aria-labelledby="demo-accounts-title">
+    <h2 id="demo-accounts-title" class="text-xl font-black">حسابات العرض</h2>
+    <p class="mt-2 leading-7 text-slate-600">اختر الحساب المناسب للمسار المطلوب، ثم استخدم كلمة المرور التي يزوّدك بها مشغّل العرض. الحسابات ذات الصلاحيات التشغيلية تتطلب أيضًا رمز المصادقة الثنائية. لا تُعرض كلمات المرور أو أسرار المصادقة على هذه الصفحة.</p>
+    <div class="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <% role_names = { admin: "مدير النظام", pharmacist: "صيدلي", order_manager: "مدير الطلبات والتوصيل", inventory_manager: "مدير المخزون", customer: "عميل" } %>
+      <% @demo_accounts.each do |account| %>
+        <article class="rounded-2xl bg-slate-50 p-4">
+          <h3 class="font-black"><%= role_names.fetch(account[:role]) %></h3>
+          <p class="mt-2 break-all text-sm text-slate-600" dir="ltr"><%= account[:email] %></p>
+        </article>
+      <% end %>
+    </div>
+    <p class="mt-5 rounded-xl bg-amber-50 p-4 text-sm leading-7 text-amber-950">تُضبط كلمات المرور عبر متغيرات البيئة الخاصة بالعرض. اطلب بيانات الدخول من مشغّل العرض ولا تستخدم أي كلمة مرور شخصية.</p>
+  </section>
 </div>

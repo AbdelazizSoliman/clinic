@@ -5,7 +5,7 @@ class Phase14SecurityTest < ActionDispatch::IntegrationTest
 
   test "privileged user without two factor is redirected but customer is not" do
     admin = users(:admin)
-    admin.update_columns(otp_secret_ciphertext: nil, otp_enabled_at: nil)
+    admin.update_columns(otp_secret: nil, otp_enabled_at: nil)
     post user_session_path, params: { user: { email: admin.email, password: "password123" } }
     get admin_users_path, headers: { "X-Enforce-2FA" => "1" }
     assert_redirected_to two_factor_enrollment_path

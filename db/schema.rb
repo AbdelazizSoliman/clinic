@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_16_200000) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_16_210000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -891,7 +891,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_16_200000) do
     t.datetime "locked_at"
     t.string "mobile_number", null: false
     t.datetime "otp_enabled_at"
-    t.text "otp_secret_ciphertext"
+    t.text "otp_secret"
     t.jsonb "recovery_code_digests", default: [], null: false
     t.datetime "remember_created_at"
     t.datetime "reset_password_sent_at"
