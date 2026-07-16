@@ -10,12 +10,23 @@ class ShoppingController < ApplicationController
     @cart&.ensure_checkout_submission_token!
     @addresses = current_user.addresses.where(active: true).order(default: :desc, created_at: :desc)
     @selected_address = @addresses.find_by(id: params[:address_id]) || @addresses.find_by(default: true) || @addresses.first
-    @readiness = Checkout::Readiness.new(user: current_user, cart: @cart, address: @selected_address, payment_method: "cash_on_delivery").call
+    prepare_delivery_options
+    @readiness = Checkout::Readiness.new(user: current_user, cart: @cart, address: @selected_address,
+      payment_method: "cash_on_delivery", delivery_method: @selected_delivery_method,
+      delivery_slot: @selected_delivery_slot).call
     @cart_issues = cart_issues
     @recommendations = Product.includes(:brand, :category).discounted.available.limit(4)
   end
 
   private
+
+  def prepare_delivery_options
+    @delivery_zone = Delivery::ZoneMatcher.call(@selected_address).zone if @selected_address
+    @delivery_methods = @delivery_zone&.delivery_methods&.active&.ordered || DeliveryMethod.none
+    @selected_delivery_method = params[:delivery_method].presence_in(@delivery_methods.map(&:code)) || @delivery_methods.first&.code || "standard"
+    @delivery_slots = @delivery_zone&.delivery_slots&.available&.order(:delivery_date, :starts_at) || DeliverySlot.none
+    @selected_delivery_slot = @delivery_slots.find_by(id: params[:delivery_slot_id])
+  end
 
   def cart_issues
     return [] unless @cart

@@ -1,0 +1,70 @@
+cairo_standard:
+  delivery_zone: cairo
+  code: standard
+  name: توصيل قياسي
+  active: true
+  additional_fee_cents: 0
+  position: 1
+cairo_scheduled:
+  delivery_zone: cairo
+  code: scheduled
+  name: توصيل مجدول
+  active: true
+  additional_fee_cents: 1000
+  position: 2
+cairo_pickup:
+  delivery_zone: cairo
+  code: pharmacy_pickup
+  name: استلام من الصيدلية
+  active: true
+  additional_fee_cents: 0
+  position: 3
+giza_standard:
+  delivery_zone: giza
+  code: standard
+  name: توصيل قياسي
+  active: true
+  additional_fee_cents: 0
+  position: 1
+giza_scheduled:
+  delivery_zone: giza
+  code: scheduled
+  name: توصيل مجدول
+  active: true
+  additional_fee_cents: 1000
+  position: 2
+giza_pickup:
+  delivery_zone: giza
+  code: pharmacy_pickup
+  name: استلام من الصيدلية
+  active: true
+  additional_fee_cents: 0
+  position: 3
+shorouk_standard:
+  delivery_zone: cairo_shorouk
+  code: standard
+  name: توصيل قياسي
+  active: true
+  additional_fee_cents: 0
+  position: 1
+shorouk_scheduled:
+  delivery_zone: cairo_shorouk
+  code: scheduled
+  name: توصيل مجدول
+  active: true
+  additional_fee_cents: 1000
+  position: 2
+shorouk_pickup:
+  delivery_zone: cairo_shorouk
+  code: pharmacy_pickup
+  name: استلام من الصيدلية
+  active: true
+  additional_fee_cents: 0
+  position: 3
+maadi_standard:
+  delivery_zone: cairo_maadi
+  code: standard
+  name: توصيل قياسي
+  active: true
+  additional_fee_cents: 0
+  position: 1

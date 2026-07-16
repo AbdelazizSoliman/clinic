@@ -1,0 +1,8 @@
+cairo_tomorrow:
+  delivery_zone: cairo
+  delivery_date: <%= Date.current + 1.day %>
+  starts_at: "10:00:00"
+  ends_at: "12:00:00"
+  capacity: 5
+  booked_count: 0
+  active: true

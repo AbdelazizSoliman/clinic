@@ -1,1 +1,29 @@
-<!DOCTYPE html><html lang="ar" dir="rtl"><head><title><%= content_for(:title) || "عمليات صيدليتي" %></title><meta name="viewport" content="width=device-width,initial-scale=1"><%= csrf_meta_tags %><%= csp_meta_tag %><%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %><%= javascript_importmap_tags %></head><body class="min-h-screen bg-slate-100 text-slate-900"><header class="border-b bg-pharmacy-950 text-white"><nav class="mx-auto flex max-w-7xl flex-wrap items-center gap-4 px-4 py-4" aria-label="عمليات الصيدلية"><%= link_to "+ عمليات صيدليتي", staff_root_path, class: "text-xl font-black" %><div class="flex flex-wrap gap-4 text-sm font-bold"><%= link_to "الطلبات", staff_orders_path if current_user.staff? %><%= link_to "الروشتات", staff_prescriptions_path if current_user.can_review_prescriptions? %><%= link_to "المتابعات", staff_follow_ups_path %><%= link_to "الإشعارات (#{current_user.notifications.unread.count})", notifications_path %><%= link_to "المتجر", root_path %></div><span class="mr-auto text-sm"><%= current_user.full_name %> · <%= t("staff.roles.#{current_user.role}") %></span></nav></header><%= render "shared/flash" %><main><%= yield %><%= render "staff/orders/phase8_actions", order: @order if controller_name == "orders" && action_name == "show" && @order %></main></body></html>
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+  <head>
+    <title><%= content_for(:title) || "عمليات صيدليتي" %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <%= csrf_meta_tags %><%= csp_meta_tag %>
+    <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+  </head>
+  <body class="min-h-screen bg-slate-100 text-slate-900">
+    <header class="border-b bg-pharmacy-950 text-white">
+      <nav class="mx-auto flex max-w-7xl flex-wrap items-center gap-4 px-4 py-4" aria-label="عمليات الصيدلية">
+        <%= link_to "+ عمليات صيدليتي", staff_root_path, class: "text-xl font-black" %>
+        <div class="flex flex-wrap gap-4 text-sm font-bold">
+          <%= link_to "الطلبات", staff_orders_path if current_user.staff? %>
+          <%= link_to "الروشتات", staff_prescriptions_path if current_user.can_review_prescriptions? %>
+          <%= link_to "المتابعات", staff_follow_ups_path %>
+          <%= link_to "التوصيل", staff_fulfilments_path if current_user.can_manage_delivery? %>
+          <%= link_to "مناطق التوصيل", staff_delivery_zones_path if current_user.can_manage_delivery? %>
+          <%= link_to "الإشعارات (#{current_user.notifications.unread.count})", notifications_path %>
+          <%= link_to "المتجر", root_path %>
+        </div>
+        <span class="mr-auto text-sm"><%= current_user.full_name %> · <%= t("staff.roles.#{current_user.role}") %></span>
+      </nav>
+    </header>
+    <%= render "shared/flash" %>
+    <main><%= yield %><%= render "staff/orders/phase8_actions", order: @order if controller_name == "orders" && action_name == "show" && @order %></main>
+  </body>
+</html>

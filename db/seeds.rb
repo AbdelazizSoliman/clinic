@@ -77,4 +77,28 @@ products.each_with_index do |(name, slug, short_description, price, compare_at_p
   end
 end
 
-puts "Seeded #{Category.count} categories, #{Brand.count} brands, and #{Product.count} products."
+delivery_zones = [
+  { code: "cai-nasr", name: "مدينة نصر والقاهرة الشرقية", governorate: "القاهرة", city: "مدينة نصر", districts: [ "المنطقة السادسة", "مدينة نصر" ], fee: 2500 },
+  { code: "giz-central", name: "الجيزة المركزية", governorate: "الجيزة", city: "الدقي", districts: [ "الدقي", "المهندسين", "العجوزة" ], fee: 3000 }
+]
+delivery_zones.each_with_index do |attributes, position|
+  zone = DeliveryZone.find_or_initialize_by(code: attributes[:code])
+  zone.update!(name: attributes[:name], governorate: attributes[:governorate], city: attributes[:city], active: true,
+    delivery_fee_cents: attributes[:fee], free_delivery_threshold_cents: 100_000, minimum_order_cents: 5_000,
+    estimated_min_minutes: 60, estimated_max_minutes: 180, same_day_available: true,
+    scheduled_delivery_available: true, cash_on_delivery_available: true, position:)
+  attributes[:districts].each do |name|
+    normalized_name = Delivery::Normalizer.call(name)
+    zone.districts.find_or_create_by!(normalized_name:) { |district| district.name = name }
+  end
+  [ [ "standard", "توصيل عادي", 0 ], [ "scheduled", "توصيل مجدول", 1000 ], [ "pharmacy_pickup", "استلام من الصيدلية", 0 ] ].each_with_index do |(code, name, additional_fee), method_position|
+    zone.delivery_methods.find_or_initialize_by(code:).update!(name:, additional_fee_cents: additional_fee, active: true, position: method_position)
+  end
+  3.times do |day_offset|
+    date = Date.current + day_offset + 1
+    slot = zone.delivery_slots.find_or_initialize_by(delivery_date: date, starts_at: "10:00", ends_at: "14:00")
+    slot.update!(capacity: 12, active: true) unless slot.persisted? && slot.booked_count.positive?
+  end
+end
+
+puts "Seeded #{Category.count} categories, #{Brand.count} brands, #{Product.count} products, and #{DeliveryZone.count} delivery zones."

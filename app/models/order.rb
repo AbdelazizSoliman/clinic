@@ -9,6 +9,9 @@ class Order < ApplicationRecord
   has_many :follow_ups, class_name: "OrderFollowUp", dependent: :destroy
   has_many :notifications, as: :notifiable, dependent: :destroy
   belongs_to :cancelled_by, class_name: "User", optional: true
+  belongs_to :delivery_zone, optional: true
+  belongs_to :delivery_slot, optional: true
+  has_one :fulfilment, dependent: :destroy
 
   enum :status, { pending_prescription: 0, submitted: 1, confirmed: 2, preparing: 3, ready_for_delivery: 4, out_for_delivery: 5, delivered: 6, cancelled: 7, rejected: 8 }, validate: true
   enum :payment_method, { cash_on_delivery: 0, card_placeholder: 1, wallet_placeholder: 2 }, validate: true

@@ -1,0 +1,70 @@
+cairo:
+  name: القاهرة الشرقية
+  code: cairo-east
+  governorate: القاهرة
+  city: مدينة نصر
+  active: true
+  delivery_fee_cents: 0
+  free_delivery_threshold_cents: 50000
+  estimated_min_minutes: 60
+  estimated_max_minutes: 120
+  same_day_available: true
+  scheduled_delivery_available: true
+  cash_on_delivery_available: true
+  position: 1
+
+giza:
+  name: الجيزة المركزية
+  code: giza-central
+  governorate: الجيزة
+  city: الدقي
+  active: true
+  delivery_fee_cents: 3000
+  estimated_min_minutes: 90
+  estimated_max_minutes: 180
+  same_day_available: true
+  scheduled_delivery_available: true
+  cash_on_delivery_available: true
+  position: 2
+
+inactive_zone:
+  name: منطقة موقوفة
+  code: inactive-zone
+  governorate: الإسكندرية
+  city: سموحة
+  active: false
+  delivery_fee_cents: 4000
+  estimated_min_minutes: 120
+  estimated_max_minutes: 240
+  same_day_available: false
+  scheduled_delivery_available: false
+  cash_on_delivery_available: true
+  position: 3
+
+cairo_shorouk:
+  name: القاهرة - الشروق
+  code: cairo-shorouk
+  governorate: القاهرة
+  city: الشروق
+  active: true
+  delivery_fee_cents: 3500
+  estimated_min_minutes: 90
+  estimated_max_minutes: 180
+  same_day_available: true
+  scheduled_delivery_available: true
+  cash_on_delivery_available: true
+  position: 4
+
+cairo_maadi:
+  name: القاهرة - المعادي
+  code: cairo-maadi
+  governorate: القاهرة
+  city: المعادي
+  active: true
+  delivery_fee_cents: 0
+  estimated_min_minutes: 60
+  estimated_max_minutes: 120
+  same_day_available: true
+  scheduled_delivery_available: true
+  cash_on_delivery_available: true
+  position: 5

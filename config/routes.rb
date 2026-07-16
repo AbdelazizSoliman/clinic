@@ -46,6 +46,16 @@ Rails.application.routes.draw do
     resources :follow_ups, only: %i[index create] do
       member { patch :resolve }
     end
+    resources :delivery_zones do
+      member { patch :deactivate }
+      resources :delivery_slots, only: %i[create destroy]
+    end
+    resources :fulfilments, only: %i[index show] do
+      member do
+        patch :assign
+        patch :transition
+      end
+    end
     resources :prescriptions, only: %i[index show] do
       member { patch :review }
       get "files/:attachment_id", to: "prescription_files#show", as: :file

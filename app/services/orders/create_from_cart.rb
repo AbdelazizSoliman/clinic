@@ -4,7 +4,7 @@ module Orders
     OPERATIONAL_PAYMENT_METHOD = "cash_on_delivery"
     DELIVERY_METHODS = Order.delivery_methods.keys.freeze
 
-    def initialize(user:, cart:, address_id:, delivery_method:, payment_method:, submission_token:, prescription_files: [], prescription_notes: nil, delivery_notes: nil)
+    def initialize(user:, cart:, address_id:, delivery_method:, payment_method:, submission_token:, delivery_slot_id: nil, prescription_files: [], prescription_notes: nil, delivery_notes: nil)
       @user = user
       @cart = cart
       @address_id = address_id
@@ -14,6 +14,7 @@ module Orders
       @prescription_files = Array(prescription_files).compact_blank
       @prescription_notes = prescription_notes
       @delivery_notes = delivery_notes
+      @delivery_slot_id = delivery_slot_id
     end
 
     def call
@@ -40,7 +41,9 @@ module Orders
           raise ActiveRecord::Rollback
         end
 
-        totals = Checkout::Totals.call(items)
+        lock_delivery_slot!(transaction_errors)
+        raise ActiveRecord::Rollback if transaction_errors.any?
+        totals = Checkout::Totals.call(items, zone: @delivery_zone, delivery_method: @delivery_method_record)
         prescription_required = totals.lines.any? { |line| line.product.requires_prescription? }
         if prescription_required
           transaction_errors.concat(Prescriptions::AttachmentValidator.call(@prescription_files))
@@ -51,6 +54,7 @@ module Orders
         order.events.create!(event_type: "order_submitted", to_status: order.status, customer_visible: true)
         create_items_and_reservations!(order, totals)
         create_address_snapshot!(order)
+        order.create_fulfilment!(delivery_zone: @delivery_zone, delivery_slot: @delivery_slot, status: :unassigned)
         create_prescription!(order) if prescription_required
         @cart.update!(status: :completed)
       end
@@ -82,7 +86,14 @@ module Orders
       errors << "رمز إرسال الطلب غير صحيح" if @submission_token.blank? || @cart&.checkout_submission_token != @submission_token
       @address = @user&.addresses&.where(active: true)&.find_by(id: @address_id)
       errors << "اختر عنوانًا نشطًا تابعًا لحسابك" unless @address
-      errors << "العنوان خارج نطاق التوصيل الحالي" if @address && !Checkout::DeliveryAreaPolicy.supported?(@address)
+      match = Delivery::ZoneMatcher.call(@address) if @address
+      @delivery_zone = match&.zone
+      errors << (match&.error || "العنوان خارج نطاق التوصيل الحالي") if @address && !match&.matched?
+      @delivery_method_record = @delivery_zone&.delivery_methods&.active&.find_by(code: @delivery_method)
+      errors << "طريقة التوصيل غير متاحة في المنطقة المحددة" if @delivery_zone && !@delivery_method_record
+      @delivery_slot = @delivery_zone&.delivery_slots&.find_by(id: @delivery_slot_id) if @delivery_method == "scheduled"
+      errors << "اختر موعد توصيل متاحًا" if @delivery_method == "scheduled" && !@delivery_slot&.available?
+      errors << "الطلب أقل من الحد الأدنى لمنطقة التوصيل" if @delivery_zone&.minimum_order_cents && @cart && @cart.subtotal_cents < @delivery_zone.minimum_order_cents
       errors
     end
 
@@ -106,6 +117,11 @@ module Orders
         payment_method: @payment_method, payment_status: :unpaid, delivery_method: @delivery_method,
         currency: @cart.currency, subtotal_cents: totals.subtotal_cents, discount_cents: totals.discount_cents,
         delivery_fee_cents: totals.delivery_fee_cents, total_cents: totals.total_cents,
+        delivery_zone: @delivery_zone, delivery_slot: @delivery_slot, delivery_zone_code: @delivery_zone.code,
+        delivery_zone_name: @delivery_zone.name, delivery_method_name: @delivery_method_record.name,
+        delivery_estimated_min_minutes: @delivery_zone.estimated_min_minutes,
+        delivery_estimated_max_minutes: @delivery_zone.estimated_max_minutes,
+        scheduled_for: @delivery_slot&.scheduled_at,
         customer_email: @user.email, customer_mobile_number: @user.mobile_number,
         customer_first_name: @user.first_name, customer_last_name: @user.last_name,
         delivery_notes: @delivery_notes.to_s.squish.presence, prescription_required:, submitted_at: Time.current
@@ -130,6 +146,16 @@ module Orders
     def create_address_snapshot!(order)
       fields = %i[label recipient_name mobile_number governorate city district street building_number floor apartment landmark postal_code delivery_notes latitude longitude]
       order.create_order_address!(@address.attributes.symbolize_keys.slice(*fields))
+    end
+
+    def lock_delivery_slot!(errors)
+      return unless @delivery_method == "scheduled"
+      @delivery_slot.lock!
+      unless @delivery_slot.available? && @delivery_slot.delivery_zone_id == @delivery_zone.id
+        errors << "موعد التوصيل لم يعد متاحًا"
+        return
+      end
+      @delivery_slot.update!(booked_count: @delivery_slot.booked_count + 1)
     end
 
     def create_prescription!(order)

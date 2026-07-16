@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_07_16_060002) do
+ActiveRecord::Schema[7.2].define(version: 2026_07_16_070002) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -142,6 +142,99 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_16_060002) do
     t.check_constraint "\"position\" >= 0", name: "categories_position_nonnegative"
   end
 
+  create_table "delivery_methods", force: :cascade do |t|
+    t.bigint "delivery_zone_id", null: false
+    t.string "code", null: false
+    t.string "name", null: false
+    t.boolean "active", default: true, null: false
+    t.integer "additional_fee_cents", default: 0, null: false
+    t.integer "position", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["delivery_zone_id", "code"], name: "index_delivery_methods_on_delivery_zone_id_and_code", unique: true
+    t.index ["delivery_zone_id"], name: "index_delivery_methods_on_delivery_zone_id"
+    t.check_constraint "additional_fee_cents >= 0 AND \"position\" >= 0", name: "delivery_methods_values_valid"
+  end
+
+  create_table "delivery_slots", force: :cascade do |t|
+    t.bigint "delivery_zone_id", null: false
+    t.date "delivery_date", null: false
+    t.time "starts_at", null: false
+    t.time "ends_at", null: false
+    t.integer "capacity", null: false
+    t.integer "booked_count", default: 0, null: false
+    t.boolean "active", default: true, null: false
+    t.integer "lock_version", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["delivery_zone_id", "delivery_date", "starts_at"], name: "index_delivery_slots_unique_window", unique: true
+    t.index ["delivery_zone_id"], name: "index_delivery_slots_on_delivery_zone_id"
+    t.check_constraint "capacity > 0 AND booked_count >= 0 AND booked_count <= capacity", name: "delivery_slots_capacity_valid"
+    t.check_constraint "ends_at > starts_at", name: "delivery_slots_window_valid"
+  end
+
+  create_table "delivery_zone_districts", force: :cascade do |t|
+    t.bigint "delivery_zone_id", null: false
+    t.string "name", null: false
+    t.string "normalized_name", null: false
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["delivery_zone_id", "normalized_name"], name: "index_zone_districts_on_zone_and_normalized_name", unique: true
+    t.index ["delivery_zone_id"], name: "index_delivery_zone_districts_on_delivery_zone_id"
+    t.index ["normalized_name"], name: "index_delivery_zone_districts_on_normalized_name"
+  end
+
+  create_table "delivery_zones", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "code", null: false
+    t.string "governorate", null: false
+    t.string "city", null: false
+    t.boolean "active", default: true, null: false
+    t.integer "delivery_fee_cents", default: 0, null: false
+    t.integer "free_delivery_threshold_cents"
+    t.integer "minimum_order_cents"
+    t.integer "estimated_min_minutes", null: false
+    t.integer "estimated_max_minutes", null: false
+    t.boolean "same_day_available", default: false, null: false
+    t.boolean "scheduled_delivery_available", default: true, null: false
+    t.boolean "cash_on_delivery_available", default: true, null: false
+    t.integer "position", default: 0, null: false
+    t.integer "lock_version", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["active", "position"], name: "index_delivery_zones_on_active_and_position"
+    t.index ["code"], name: "index_delivery_zones_on_code", unique: true
+    t.index ["governorate", "city", "name"], name: "index_delivery_zones_on_governorate_and_city_and_name", unique: true
+    t.check_constraint "\"position\" >= 0", name: "delivery_zones_position_nonnegative"
+    t.check_constraint "delivery_fee_cents >= 0 AND (free_delivery_threshold_cents IS NULL OR free_delivery_threshold_cents >= 0) AND (minimum_order_cents IS NULL OR minimum_order_cents >= 0)", name: "delivery_zones_money_nonnegative"
+    t.check_constraint "estimated_min_minutes > 0 AND estimated_max_minutes >= estimated_min_minutes", name: "delivery_zones_estimate_valid"
+  end
+
+  create_table "fulfilments", force: :cascade do |t|
+    t.bigint "order_id", null: false
+    t.bigint "delivery_zone_id"
+    t.bigint "delivery_slot_id"
+    t.bigint "assigned_to_id"
+    t.bigint "assigned_by_id"
+    t.integer "status", default: 0, null: false
+    t.datetime "assigned_at"
+    t.datetime "picked_at"
+    t.datetime "dispatched_at"
+    t.datetime "delivered_at"
+    t.text "internal_notes"
+    t.integer "lock_version", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["assigned_by_id"], name: "index_fulfilments_on_assigned_by_id"
+    t.index ["assigned_to_id"], name: "index_fulfilments_on_assigned_to_id"
+    t.index ["delivery_slot_id"], name: "index_fulfilments_on_delivery_slot_id"
+    t.index ["delivery_zone_id"], name: "index_fulfilments_on_delivery_zone_id"
+    t.index ["order_id"], name: "index_fulfilments_on_order_id", unique: true
+    t.index ["status", "created_at"], name: "index_fulfilments_on_status_and_created_at"
+    t.check_constraint "status >= 0 AND status <= 5", name: "fulfilments_status_valid"
+  end
+
   create_table "inventory_movements", force: :cascade do |t|
     t.bigint "product_id", null: false
     t.bigint "actor_id"
@@ -238,7 +331,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_16_060002) do
     t.index ["event_type"], name: "index_order_events_on_event_type"
     t.index ["order_id", "created_at"], name: "index_order_events_on_order_id_and_created_at"
     t.index ["order_id"], name: "index_order_events_on_order_id"
-    t.check_constraint "event_type::text = ANY (ARRAY['order_submitted'::character varying, 'prescription_review_started'::character varying, 'prescription_approved'::character varying, 'prescription_partially_approved'::character varying, 'prescription_rejected'::character varying, 'order_confirmed'::character varying, 'preparation_started'::character varying, 'order_ready'::character varying, 'out_for_delivery'::character varying, 'delivered'::character varying, 'cancelled'::character varying, 'rejected'::character varying, 'reservations_released'::character varying, 'reservations_consumed'::character varying, 'follow_up_opened'::character varying, 'customer_responded'::character varying, 'follow_up_resolved'::character varying, 'customer_cancelled'::character varying, 'staff_cancelled'::character varying, 'system_cancelled'::character varying, 'reservations_extended'::character varying, 'reservations_expired'::character varying, 'notification_sent'::character varying]::text[])", name: "order_events_type_valid"
+    t.check_constraint "event_type::text = ANY (ARRAY['order_submitted'::character varying, 'prescription_review_started'::character varying, 'prescription_approved'::character varying, 'prescription_partially_approved'::character varying, 'prescription_rejected'::character varying, 'order_confirmed'::character varying, 'preparation_started'::character varying, 'order_ready'::character varying, 'out_for_delivery'::character varying, 'delivered'::character varying, 'cancelled'::character varying, 'rejected'::character varying, 'reservations_released'::character varying, 'reservations_consumed'::character varying, 'follow_up_opened'::character varying, 'customer_responded'::character varying, 'follow_up_resolved'::character varying, 'customer_cancelled'::character varying, 'staff_cancelled'::character varying, 'system_cancelled'::character varying, 'reservations_extended'::character varying, 'reservations_expired'::character varying, 'notification_sent'::character varying, 'fulfilment_assigned'::character varying, 'delivery_scheduled'::character varying, 'fulfilment_picking'::character varying, 'fulfilment_packed'::character varying, 'delivery_dispatched'::character varying, 'delivery_completed'::character varying]::text[])", name: "order_events_type_valid"
   end
 
   create_table "order_follow_up_messages", force: :cascade do |t|
@@ -327,8 +420,18 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_16_060002) do
     t.bigint "cancelled_by_id"
     t.text "cancellation_reason"
     t.integer "cancellation_source"
+    t.bigint "delivery_zone_id"
+    t.bigint "delivery_slot_id"
+    t.string "delivery_zone_code"
+    t.string "delivery_zone_name"
+    t.string "delivery_method_name"
+    t.integer "delivery_estimated_min_minutes"
+    t.integer "delivery_estimated_max_minutes"
+    t.datetime "scheduled_for"
     t.index ["cancelled_by_id"], name: "index_orders_on_cancelled_by_id"
     t.index ["cart_id"], name: "index_orders_on_cart_id", unique: true
+    t.index ["delivery_slot_id"], name: "index_orders_on_delivery_slot_id"
+    t.index ["delivery_zone_id"], name: "index_orders_on_delivery_zone_id"
     t.index ["number"], name: "index_orders_on_number", unique: true
     t.index ["user_id", "submitted_at"], name: "index_orders_on_user_id_and_submitted_at"
     t.index ["user_id"], name: "index_orders_on_user_id"
@@ -473,6 +576,14 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_16_060002) do
   add_foreign_key "cart_items", "carts", on_delete: :cascade
   add_foreign_key "cart_items", "products"
   add_foreign_key "carts", "users"
+  add_foreign_key "delivery_methods", "delivery_zones"
+  add_foreign_key "delivery_slots", "delivery_zones"
+  add_foreign_key "delivery_zone_districts", "delivery_zones"
+  add_foreign_key "fulfilments", "delivery_slots"
+  add_foreign_key "fulfilments", "delivery_zones"
+  add_foreign_key "fulfilments", "orders"
+  add_foreign_key "fulfilments", "users", column: "assigned_by_id"
+  add_foreign_key "fulfilments", "users", column: "assigned_to_id"
   add_foreign_key "inventory_movements", "products"
   add_foreign_key "inventory_movements", "users", column: "actor_id"
   add_foreign_key "inventory_reservations", "order_items", on_delete: :cascade
@@ -492,6 +603,8 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_16_060002) do
   add_foreign_key "order_items", "orders", on_delete: :cascade
   add_foreign_key "order_items", "products", on_delete: :nullify
   add_foreign_key "orders", "carts"
+  add_foreign_key "orders", "delivery_slots"
+  add_foreign_key "orders", "delivery_zones"
   add_foreign_key "orders", "users"
   add_foreign_key "orders", "users", column: "cancelled_by_id"
   add_foreign_key "prescriptions", "orders", on_delete: :cascade
