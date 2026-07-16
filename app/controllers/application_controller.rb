@@ -8,7 +8,7 @@ class ApplicationController < ActionController::Base
   before_action :enforce_privileged_two_factor
   before_action :enforce_maintenance_mode
 
-  helper_method :wishlist_item_for, :wishlist_count
+  helper_method :wishlist_item_for, :wishlist_count, :demo_mode?
 
   # Only allow modern browsers supporting webp images, web push, badges, import maps, CSS nesting, and CSS :has.
   allow_browser versions: :modern
@@ -28,6 +28,14 @@ class ApplicationController < ActionController::Base
   end
 
   private
+
+  def demo_mode?
+    DemoMode.enabled?
+  end
+
+  def enforce_demo_safety!(action)
+    DemoMode::SafetyPolicy.enforce!(action)
+  end
 
   def enforce_session_version
     return unless user_signed_in?

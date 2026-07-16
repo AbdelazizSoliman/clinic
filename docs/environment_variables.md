@@ -19,6 +19,14 @@ Optional/configurable: `SMTP_PORT` (587), `STORAGE_ENDPOINT`,
 `REPORT_EXPORT_RETENTION_DAYS`.
 `REPORT_EXPORT_MAX_ACTIVE` defaults to 3.
 
+Demo mode: `DEMO_MODE=false` is the safe default in every environment. Normal
+local development should leave it unset or explicitly false. An isolated,
+on-request demo deployment may set `DEMO_MODE=true`. A production deployment
+must set it explicitly to false and must not copy an environment group from a
+demo service without reviewing it. Demo mode is a presentation and policy
+signal, not a substitute for separate databases, storage buckets, SMTP
+sandboxes, scanner services, credentials, or network isolation.
+
 Scanner: set `MALWARE_SCANNER_ADAPTER=clamav`, `CLAMAV_HOST`, optional
 `CLAMAV_PORT` (3310), and `SCANNER_TIMEOUT_SECONDS` (10). The scanner must be on
 a private network. `clean` is deterministic and forbidden as evidence of real

@@ -1,0 +1,7 @@
+<% if user_signed_in? && demo_mode? %>
+  <aside class="border-b border-amber-300 bg-amber-50 px-4 py-2 text-center text-sm font-bold text-amber-950" role="status" aria-label="تنبيه النسخة التجريبية">
+    <span aria-hidden="true">◆</span>
+    نسخة تجريبية — البيانات المعروضة مخصصة للعرض فقط
+    <%= link_to "معلومات النسخة", demo_path, class: "mr-2 whitespace-nowrap underline decoration-2 underline-offset-4 hover:text-amber-700" %>
+  </aside>
+<% end %>

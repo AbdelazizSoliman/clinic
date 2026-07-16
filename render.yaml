@@ -9,6 +9,8 @@ services:
         value: production
       - key: RAILS_SERVE_STATIC_FILES
         value: "true"
+      - key: DEMO_MODE
+        value: "false"
       - key: DATABASE_URL
         fromDatabase: { name: clinic-db, property: connectionString }
       - key: APP_HOST

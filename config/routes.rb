@@ -5,6 +5,7 @@ Rails.application.routes.draw do
   get "invitation/:token", to: "invitations#show", as: :invitation
   patch "invitation/:token", to: "invitations#update"
   root "home#index"
+  get "demo", to: "demo#show", as: :demo
   resources :products, only: %i[index show]
   resources :categories, only: :show
   resource :cart, only: :show do
