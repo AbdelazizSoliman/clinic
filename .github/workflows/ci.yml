@@ -54,7 +54,7 @@ jobs:
         run: bin/brakeman --no-pager
 
       - name: Audit resolved Ruby dependencies
-        run: bundle audit check --update
+        run: bundle exec bundler-audit check --update
 
   scan_js:
     runs-on: ubuntu-latest
