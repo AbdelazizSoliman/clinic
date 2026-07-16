@@ -1,0 +1,5 @@
+<div data-cart-control-product-id="<%= product.id %>" class="mt-auto">
+  <% if !product.active? || !product.available? %><button type="button" disabled class="w-full cursor-not-allowed rounded-xl bg-slate-100 px-4 py-3 text-sm font-bold text-slate-400">غير متوفر</button>
+  <% elsif quantity.positive? %><div class="flex items-center justify-between rounded-xl border border-pharmacy-200 bg-pharmacy-50 px-3 py-2"><span class="text-sm font-black">في السلة: <%= quantity %></span><%= link_to "تعديل", cart_path, class: "text-xs font-bold text-pharmacy-700" %></div>
+  <% else %><%= button_to "أضف إلى السلة", cart_items_path, params: { cart_item: { product_id: product.id, quantity: 1 } }, class: "w-full rounded-xl bg-pharmacy-600 px-4 py-3 text-sm font-bold text-white hover:bg-pharmacy-700", form: { data: { turbo_stream: true } } %><% end %>
+</div>

@@ -1,0 +1,14 @@
+customer_cart:
+  user: customer
+  status: 0
+  currency: EGP
+
+other_cart:
+  user: other_customer
+  status: 0
+  currency: EGP
+
+guest_cart:
+  guest_token: secure-guest-token
+  status: 0
+  currency: EGP

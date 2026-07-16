@@ -1,0 +1,14 @@
+customer_item:
+  cart: customer_cart
+  product: featured
+  quantity: 2
+
+other_item:
+  cart: other_cart
+  product: skin_product
+  quantity: 1
+
+guest_item:
+  cart: guest_cart
+  product: featured
+  quantity: 3

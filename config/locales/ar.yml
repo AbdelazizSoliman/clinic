@@ -1,0 +1,36 @@
+ar:
+  activerecord:
+    models:
+      user: "المستخدم"
+    attributes:
+      user:
+        email: "البريد الإلكتروني"
+        password: "كلمة المرور"
+        password_confirmation: "تأكيد كلمة المرور"
+        first_name: "الاسم الأول"
+        last_name: "اسم العائلة"
+        mobile_number: "رقم الموبايل"
+        current_password: "كلمة المرور الحالية"
+  errors:
+    format: "%{attribute} %{message}"
+    messages:
+      blank: "مطلوب"
+      invalid: "غير صحيح"
+      taken: "مستخدم بالفعل"
+      confirmation: "غير مطابق"
+      too_short: "قصير جدًا (الحد الأدنى %{count})"
+  devise:
+    failure:
+      inactive_account: "هذا الحساب غير نشط. تواصل مع خدمة العملاء."
+      invalid: "البريد الإلكتروني أو كلمة المرور غير صحيحة."
+      unauthenticated: "يرجى تسجيل الدخول للمتابعة."
+      not_found_in_database: "البريد الإلكتروني أو كلمة المرور غير صحيحة."
+    sessions:
+      signed_in: "تم تسجيل الدخول بنجاح."
+      signed_out: "تم تسجيل الخروج بنجاح."
+    registrations:
+      signed_up: "تم إنشاء حسابك بنجاح."
+      updated: "تم تحديث الحساب بنجاح."
+    passwords:
+      send_instructions: "ستصلك تعليمات إعادة تعيين كلمة المرور إذا كان البريد مسجلًا."
+      updated: "تم تغيير كلمة المرور بنجاح."

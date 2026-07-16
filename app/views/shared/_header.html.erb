@@ -11,7 +11,7 @@
       <%= form.button "بحث", class: "rounded-l-xl bg-pharmacy-600 px-5 py-3 text-sm font-bold text-white hover:bg-pharmacy-700" %>
     <% end %>
     <div class="mr-auto flex items-center gap-2">
-      <button type="button" class="rounded-xl p-2 text-sm font-bold text-slate-700 hover:bg-slate-100" aria-label="حسابي">👤 <span class="hidden lg:inline">حسابي</span></button>
+      <% if user_signed_in? %><%= link_to account_path, class: "rounded-xl p-2 text-sm font-bold text-slate-700 hover:bg-slate-100", aria: { label: "حساب #{current_user.full_name}" } do %>👤 <span class="hidden lg:inline"><%= current_user.first_name %></span><% end %><%= button_to "خروج", destroy_user_session_path, method: :delete, class: "hidden text-xs font-bold text-slate-600 sm:block" %><% else %><%= link_to "دخول", new_user_session_path, class: "rounded-xl p-2 text-sm font-bold text-slate-700 hover:bg-slate-100" %><%= link_to "حساب جديد", new_user_registration_path, class: "hidden text-xs font-bold text-pharmacy-700 sm:block" %><% end %>
       <%= link_to wishlist_path, data: { controller: "shopping-count", shopping_count_type_value: "wishlist" }, class: "relative rounded-xl p-2 text-sm font-bold text-slate-700 hover:bg-slate-100", aria: { label: "المفضلة، 0 منتجات" } do %>♥ <span class="hidden lg:inline">المفضلة</span><span data-shopping-count-target="badge" class="absolute -left-1 -top-1 grid size-5 place-items-center rounded-full bg-rose-500 text-xs text-white opacity-0 transition-opacity">0</span><% end %>
       <%= render "shared/cart_drawer" %>
     </div>

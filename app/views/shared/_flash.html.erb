@@ -1,0 +1,1 @@
+<div id="flash_messages" class="fixed inset-x-4 top-28 z-[85] mx-auto max-w-xl" aria-live="polite"><% flash.each do |type, message| %><div class="mb-2 rounded-xl border-r-4 bg-white p-4 text-sm font-bold shadow-xl <%= type.to_s == "alert" ? "border-rose-500 text-rose-800" : "border-pharmacy-500 text-pharmacy-800" %>"><%= message %></div><% end %></div>

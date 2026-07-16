@@ -1,10 +1,16 @@
 Rails.application.routes.draw do
+  devise_for :users, controllers: { sessions: "users/sessions", registrations: "users/registrations" }
   root "home#index"
   resources :products, only: %i[index show]
   resources :categories, only: :show
-  get "cart", to: "shopping#cart", as: :cart
+  resource :cart, only: :show do
+    post :clear
+    post :import_browser
+  end
+  resources :cart_items, only: %i[create update destroy]
   get "wishlist", to: "shopping#wishlist", as: :wishlist
   get "checkout", to: "shopping#checkout", as: :checkout
+  resource :account, only: %i[show edit update], controller: "account"
 
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 

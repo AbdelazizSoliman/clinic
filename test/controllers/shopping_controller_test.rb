@@ -5,8 +5,7 @@ class ShoppingControllerTest < ActionDispatch::IntegrationTest
     get cart_url
     assert_response :success
     assert_select "h1", "سلة التسوق"
-    assert_select "[data-cart-page-target='empty']", /سلة التسوق فارغة/
-    assert_select "script#product-catalog", /#{products(:featured).name}/
+    assert_select "#cart_page_state", /سلة التسوق فارغة/
   end
 
   test "wishlist page responds with reusable product cards" do
@@ -21,13 +20,12 @@ class ShoppingControllerTest < ActionDispatch::IntegrationTest
     get checkout_url
     assert_response :success
     assert_select "h1", "إتمام بيانات الطلب"
-    assert_select "form[data-checkout-target='form']"
-    assert_select "[data-checkout-target='prescription']", /مراجعة الروشتة/
-    assert_select "button[type='submit']", /محاكاة إتمام الطلب/
+    assert_select "h2", /السلة فارغة/
+    assert_select "h2", /السلة فارغة/
   end
 
   test "shopping routes use read-only GET requests" do
-    assert_routing({ method: :get, path: "/cart" }, { controller: "shopping", action: "cart" })
+    assert_routing({ method: :get, path: "/cart" }, { controller: "carts", action: "show" })
     assert_routing({ method: :get, path: "/wishlist" }, { controller: "shopping", action: "wishlist" })
     assert_routing({ method: :get, path: "/checkout" }, { controller: "shopping", action: "checkout" })
   end
@@ -35,7 +33,7 @@ class ShoppingControllerTest < ActionDispatch::IntegrationTest
   test "product pages include shopping controls and recently viewed shell" do
     get product_url(products(:featured))
     assert_response :success
-    assert_select "[data-controller~='product-purchase']"
+    assert_select "form[action='#{cart_items_path}']"
     assert_select "[data-controller='recently-viewed']"
     assert_select "[data-recently-viewed-target='section']", /شوهدت مؤخرًا/
   end

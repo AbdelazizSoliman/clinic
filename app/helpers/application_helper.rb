@@ -43,15 +43,4 @@ module ApplicationHelper
     pages = [ 1, @pagy.page - 1, @pagy.page, @pagy.page + 1, @pagy.last ].select { |page| page.between?(1, @pagy.last) }.uniq.sort
     pages.each_cons(2).flat_map { |first, second| second - first > 1 ? [ first, :gap ] : [ first ] } << pages.last
   end
-
-  def storefront_catalog
-    Product.active.includes(:brand).index_by(&:id).transform_values do |product|
-      {
-        id: product.id, name: product.name, brand: product.brand.name,
-        priceCents: (product.price * 100).round, available: product.available?,
-        stockQuantity: product.stock_quantity, prescription: product.requires_prescription?,
-        url: product_path(product)
-      }
-    end
-  end
 end

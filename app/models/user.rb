@@ -1,0 +1,21 @@
+class User < ApplicationRecord
+  devise :database_authenticatable, :registerable, :recoverable, :rememberable, :validatable
+
+  has_many :carts, dependent: :restrict_with_error
+
+  enum :role, { customer: 0, admin: 1 }, default: :customer, validate: true
+
+  validates :first_name, :last_name, presence: true, length: { maximum: 60 }
+  validates :mobile_number, presence: true, format: { with: /\A[+0-9][0-9 ]{7,14}\z/ }
+  validates :active, inclusion: { in: [ true, false ] }
+
+  def full_name = "#{first_name} #{last_name}"
+
+  def active_for_authentication?
+    super && active?
+  end
+
+  def inactive_message
+    active? ? super : :inactive_account
+  end
+end

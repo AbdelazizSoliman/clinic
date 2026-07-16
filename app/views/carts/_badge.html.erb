@@ -1,0 +1,4 @@
+<span id="cart_badge" class="absolute -left-1 -top-1 grid size-5 place-items-center rounded-full bg-rose-500 text-xs text-white <%= "opacity-0" if cart.blank? || cart.total_quantity.zero? %>" aria-live="polite">
+  <span aria-hidden="true"><%= cart&.total_quantity.to_i %></span>
+  <span class="sr-only"><%= cart&.total_quantity.to_i %> عناصر في سلة التسوق</span>
+</span>

@@ -1,0 +1,6 @@
+<%= turbo_stream.replace "cart_badge", partial: "carts/badge", locals: { cart: @cart } %>
+<%= turbo_stream.replace "cart_drawer_count", partial: "carts/drawer_count", locals: { cart: @cart } %>
+<%= turbo_stream.replace "cart_drawer_content", partial: "carts/drawer_content", locals: { cart: @cart } %>
+<%= turbo_stream.replace "cart_page_state", partial: "carts/page_state", locals: { cart: @cart } %>
+<% if @changed_product %><%= turbo_stream.replace_all "[data-cart-control-product-id='#{@changed_product.id}']", partial: "products/cart_control", locals: { product: @changed_product, quantity: cart_quantity_for(@changed_product) } %><% end %>
+<%= turbo_stream.replace "flash_messages", partial: "shared/flash" %>

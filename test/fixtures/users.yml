@@ -1,0 +1,35 @@
+customer:
+  email: customer@example.com
+  encrypted_password: <%= Devise::Encryptor.digest(User, "password123") %>
+  first_name: أحمد
+  last_name: محمد
+  mobile_number: "01012345678"
+  role: 0
+  active: true
+
+other_customer:
+  email: other@example.com
+  encrypted_password: <%= Devise::Encryptor.digest(User, "password123") %>
+  first_name: سارة
+  last_name: علي
+  mobile_number: "01112345678"
+  role: 0
+  active: true
+
+inactive:
+  email: inactive@example.com
+  encrypted_password: <%= Devise::Encryptor.digest(User, "password123") %>
+  first_name: مستخدم
+  last_name: موقوف
+  mobile_number: "01212345678"
+  role: 0
+  active: false
+
+admin:
+  email: admin@example.com
+  encrypted_password: <%= Devise::Encryptor.digest(User, "password123") %>
+  first_name: مدير
+  last_name: النظام
+  mobile_number: "01099999999"
+  role: 1
+  active: true
