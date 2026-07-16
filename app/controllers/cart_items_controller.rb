@@ -2,8 +2,17 @@ class CartItemsController < ApplicationController
   before_action :set_owned_item, only: %i[update destroy]
 
   def create
+    unless user_signed_in? || PharmacySetting.current.guest_cart_enabled?
+      store_location_for(:user, request.referer.presence || products_path)
+      redirect_to new_user_session_path, alert: "سلة الضيف متوقفة حاليًا؛ سجّل الدخول لإضافة المنتجات"
+      return
+    end
     cart = resolve_cart!
     product = Product.find_by(id: cart_item_params[:product_id])
+    if product&.requires_prescription? && !PharmacySetting.current.prescription_review_enabled?
+      redirect_back fallback_location: products_path, alert: "إضافة المنتجات التي تتطلب روشتة متوقفة مؤقتًا"
+      return
+    end
     result = Carts::SetItemQuantity.new(cart:, product:, quantity: cart_item_params[:quantity], additive: true).call
     @changed_product = product
     respond_result(result)

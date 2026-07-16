@@ -1,0 +1,5 @@
+مرحبًا <%= @user.first_name %>
+
+دعاك فريق <%= @setting.pharmacy_name %> للانضمام بدور <%= I18n.t("staff.roles.#{@user.role}") %>.
+اختر كلمة المرور وفعّل الحساب: <%= invitation_url(token: @token) %>
+ينتهي الرابط خلال 72 ساعة ويعمل مرة واحدة فقط.

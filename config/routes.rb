@@ -1,5 +1,7 @@
 Rails.application.routes.draw do
   devise_for :users, controllers: { sessions: "users/sessions", registrations: "users/registrations" }
+  get "invitation/:token", to: "invitations#show", as: :invitation
+  patch "invitation/:token", to: "invitations#update"
   root "home#index"
   resources :products, only: %i[index show]
   resources :categories, only: :show
@@ -63,6 +65,15 @@ Rails.application.routes.draw do
     end
   end
   namespace :admin do
+    resources :users, except: :destroy do
+      member do
+        patch :activate
+        patch :deactivate
+        patch :unlock
+        patch :resend_invitation
+      end
+    end
+    resource :pharmacy_setting, only: %i[edit update]
     namespace :reports do
       root "dashboard#index"
       resources :sales, only: :index

@@ -10,6 +10,8 @@ module Clinic
   class Application < Rails::Application
     # Initialize configuration defaults for originally generated Rails version.
     config.load_defaults 7.2
+    # Invitation links are secrets; mail bodies must not be copied into application logs.
+    config.action_mailer.logger = nil
     config.i18n.default_locale = :ar
     config.i18n.available_locales = %i[ar en]
 

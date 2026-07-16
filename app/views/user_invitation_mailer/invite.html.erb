@@ -1,0 +1,1 @@
+<div dir="rtl"><h1>مرحبًا <%= @user.first_name %></h1><p>دعاك فريق <%= @setting.pharmacy_name %> للانضمام بدور <%= I18n.t("staff.roles.#{@user.role}") %>.</p><p><%= link_to "اختيار كلمة المرور وتفعيل الحساب", invitation_url(token: @token) %></p><p>ينتهي هذا الرابط خلال 72 ساعة، ويعمل مرة واحدة فقط.</p></div>

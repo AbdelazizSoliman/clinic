@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_07_16_090001) do
+ActiveRecord::Schema[7.2].define(version: 2026_07_16_130001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -500,6 +500,39 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_16_090001) do
     t.check_constraint "subtotal_cents >= 0 AND discount_cents >= 0 AND delivery_fee_cents >= 0 AND total_cents >= 0", name: "orders_money_nonnegative"
   end
 
+  create_table "pharmacy_settings", force: :cascade do |t|
+    t.integer "singleton_key", default: 1, null: false
+    t.string "pharmacy_name", default: "صيدليتي", null: false
+    t.string "legal_name"
+    t.string "support_email"
+    t.string "support_mobile"
+    t.text "address_summary"
+    t.string "support_hours"
+    t.text "footer_text"
+    t.string "default_currency", default: "EGP", null: false
+    t.string "default_locale", default: "ar", null: false
+    t.string "time_zone", default: "Africa/Cairo", null: false
+    t.string "order_number_prefix", default: "PH", null: false
+    t.boolean "prescription_review_enabled", default: true, null: false
+    t.boolean "guest_cart_enabled", default: true, null: false
+    t.boolean "customer_registration_enabled", default: true, null: false
+    t.integer "default_low_stock_threshold", default: 5, null: false
+    t.integer "default_maximum_order_quantity", default: 10, null: false
+    t.integer "default_reservation_minutes", default: 30, null: false
+    t.integer "pending_prescription_reservation_hours", default: 24, null: false
+    t.string "sender_email"
+    t.string "sender_name"
+    t.boolean "maintenance_mode", default: false, null: false
+    t.text "maintenance_message"
+    t.integer "lock_version", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["singleton_key"], name: "index_pharmacy_settings_on_singleton_key", unique: true
+    t.check_constraint "default_low_stock_threshold >= 0 AND default_maximum_order_quantity >= 1 AND default_maximum_order_quantity <= 100", name: "pharmacy_settings_product_defaults"
+    t.check_constraint "default_reservation_minutes >= 5 AND default_reservation_minutes <= 1440 AND pending_prescription_reservation_hours >= 1 AND pending_prescription_reservation_hours <= 168", name: "pharmacy_settings_reservation_defaults"
+    t.check_constraint "singleton_key = 1", name: "pharmacy_settings_singleton"
+  end
+
   create_table "prescriptions", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.bigint "order_id", null: false
@@ -730,6 +763,50 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_16_090001) do
     t.check_constraint "report_type::text = ANY (ARRAY['sales'::character varying, 'orders'::character varying, 'products'::character varying, 'inventory'::character varying, 'promotions'::character varying, 'customers'::character varying, 'prescriptions'::character varying, 'fulfilments'::character varying]::text[])", name: "report_export_events_type_valid"
   end
 
+  create_table "settings_audit_events", force: :cascade do |t|
+    t.bigint "actor_id", null: false
+    t.string "action", default: "updated", null: false
+    t.jsonb "old_values", default: {}, null: false
+    t.jsonb "new_values", default: {}, null: false
+    t.text "reason"
+    t.datetime "created_at", null: false
+    t.index ["actor_id"], name: "index_settings_audit_events_on_actor_id"
+    t.index ["created_at"], name: "index_settings_audit_events_on_created_at"
+  end
+
+  create_table "user_audit_events", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "actor_id"
+    t.string "action", null: false
+    t.jsonb "old_values", default: {}, null: false
+    t.jsonb "new_values", default: {}, null: false
+    t.text "reason"
+    t.jsonb "metadata", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.index ["actor_id"], name: "index_user_audit_events_on_actor_id"
+    t.index ["user_id", "created_at"], name: "index_user_audit_events_on_user_id_and_created_at"
+    t.index ["user_id"], name: "index_user_audit_events_on_user_id"
+    t.check_constraint "action::text = ANY (ARRAY['invited'::character varying, 'invitation_resent'::character varying, 'invitation_revoked'::character varying, 'invitation_accepted'::character varying, 'activated'::character varying, 'deactivated'::character varying, 'role_changed'::character varying, 'profile_updated_by_admin'::character varying, 'account_unlocked'::character varying, 'password_reset_requested_by_admin'::character varying, 'bootstrap_admin'::character varying]::text[])", name: "user_audit_events_action_valid"
+  end
+
+  create_table "user_invitations", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "invited_by_id", null: false
+    t.string "token_digest", null: false
+    t.datetime "sent_at", null: false
+    t.datetime "accepted_at"
+    t.datetime "expires_at", null: false
+    t.datetime "revoked_at"
+    t.integer "attempts_count", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["expires_at"], name: "index_user_invitations_on_expires_at"
+    t.index ["invited_by_id"], name: "index_user_invitations_on_invited_by_id"
+    t.index ["token_digest"], name: "index_user_invitations_on_token_digest", unique: true
+    t.index ["user_id"], name: "index_user_invitations_on_user_id"
+    t.check_constraint "attempts_count >= 0", name: "user_invitations_attempts_nonnegative"
+  end
+
   create_table "users", force: :cascade do |t|
     t.string "email", default: "", null: false
     t.string "encrypted_password", default: "", null: false
@@ -743,8 +820,17 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_16_090001) do
     t.boolean "active", default: true, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "failed_attempts", default: 0, null: false
+    t.string "unlock_token"
+    t.datetime "locked_at"
+    t.datetime "last_sign_in_at"
+    t.integer "sign_in_count", default: 0, null: false
+    t.integer "session_version", default: 0, null: false
     t.index ["email"], name: "index_users_on_email", unique: true
+    t.index ["last_sign_in_at"], name: "index_users_on_last_sign_in_at"
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
+    t.index ["role", "active"], name: "index_users_on_role_and_active"
+    t.index ["unlock_token"], name: "index_users_on_unlock_token", unique: true
     t.check_constraint "role = ANY (ARRAY[0, 1, 2, 3, 4])", name: "users_role_valid"
   end
 
@@ -827,6 +913,11 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_16_090001) do
   add_foreign_key "promotions", "users", column: "created_by_id"
   add_foreign_key "promotions", "users", column: "updated_by_id"
   add_foreign_key "report_export_events", "users"
+  add_foreign_key "settings_audit_events", "users", column: "actor_id"
+  add_foreign_key "user_audit_events", "users"
+  add_foreign_key "user_audit_events", "users", column: "actor_id"
+  add_foreign_key "user_invitations", "users"
+  add_foreign_key "user_invitations", "users", column: "invited_by_id"
   add_foreign_key "wishlist_items", "products", on_delete: :cascade
   add_foreign_key "wishlist_items", "users", on_delete: :cascade
 end

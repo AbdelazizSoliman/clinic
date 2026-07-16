@@ -1,5 +1,6 @@
 class User < ApplicationRecord
-  devise :database_authenticatable, :registerable, :recoverable, :rememberable, :validatable
+  devise :database_authenticatable, :registerable, :recoverable, :rememberable, :validatable,
+    :lockable, unlock_strategy: :none, maximum_attempts: 5
 
   has_many :carts, dependent: :restrict_with_error
   has_many :addresses, dependent: :destroy
@@ -9,6 +10,8 @@ class User < ApplicationRecord
   has_many :prescriptions, dependent: :restrict_with_error
   has_many :notifications, dependent: :destroy
   has_many :opened_follow_ups, class_name: "OrderFollowUp", foreign_key: :opened_by_id, dependent: :restrict_with_exception
+  has_many :user_invitations, dependent: :destroy
+  has_many :user_audit_events, dependent: :restrict_with_error
 
   enum :role, { customer: 0, admin: 1, pharmacist: 2, order_manager: 3, inventory_manager: 4 }, default: :customer, validate: true
 
@@ -30,6 +33,8 @@ class User < ApplicationRecord
   def can_view_prescription_reports? = admin? || pharmacist?
   def can_view_fulfilment_reports? = admin? || order_manager?
   def can_export_reports? = admin? || inventory_manager? || order_manager? || pharmacist?
+  def can_manage_users? = admin?
+  def can_manage_application_settings? = admin?
 
   def active_for_authentication?
     super && active?

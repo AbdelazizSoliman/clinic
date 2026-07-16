@@ -3,6 +3,8 @@ class ApplicationController < ActionController::Base
   include CurrentCart
 
   before_action :configure_permitted_parameters, if: :devise_controller?
+  before_action :enforce_active_session
+  before_action :enforce_maintenance_mode
 
   helper_method :wishlist_item_for, :wishlist_count
 
@@ -24,6 +26,18 @@ class ApplicationController < ActionController::Base
   end
 
   private
+
+  def enforce_active_session
+    return unless user_signed_in? && !current_user.active?
+    sign_out current_user
+    redirect_to new_user_session_path, alert: I18n.t("devise.failure.inactive_account")
+  end
+
+  def enforce_maintenance_mode
+    return unless PharmacySetting.current.maintenance_mode?
+    return if current_user&.admin? || devise_controller? || controller_name == "invitations"
+    render "shared/maintenance", layout: false, status: :service_unavailable
+  end
 
   def wishlist_item_for(product)
     return unless user_signed_in?
