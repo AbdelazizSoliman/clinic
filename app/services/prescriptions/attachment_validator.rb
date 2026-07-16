@@ -10,6 +10,7 @@ module Prescriptions
         errors << "امتداد ملف الروشتة غير مدعوم" unless Prescription::ALLOWED_EXTENSIONS.include?(File.extname(file.original_filename).downcase)
         errors << "حجم ملف الروشتة يجب ألا يتجاوز 8 ميجابايت" if file.size > Prescription::MAX_FILE_SIZE
         errors << "ملف الروشتة فارغ" if file.size.zero?
+        errors << "محتوى ملف الروشتة لا يطابق نوعه" unless Uploads::FileSignature.valid?(file.tempfile, file.content_type)
       end
       errors.uniq
     end

@@ -6,6 +6,9 @@ require "active_support/core_ext/integer/time"
 # and recreated between test runs. Don't rely on the data there!
 
 Rails.application.configure do
+  config.active_record.encryption.primary_key = "test-primary-key-that-is-not-a-secret"
+  config.active_record.encryption.deterministic_key = "test-deterministic-key-not-a-secret"
+  config.active_record.encryption.key_derivation_salt = "test-key-derivation-salt-not-secret"
   # Settings specified here will take precedence over those in config/application.rb.
 
   # While tests run files are not watched, reloading is not necessary.

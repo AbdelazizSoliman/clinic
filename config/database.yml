@@ -81,11 +81,16 @@ test:
 # for a full overview on how database connection configuration can be specified.
 #
 production:
-  <<: *default
-  url: <%= ENV["DATABASE_URL"] %>
-  database: <%= ENV.fetch("POSTGRES_DB", "clinic") %>
-  username: <%= ENV["POSTGRES_USER"] %>
-  password: <%= ENV["POSTGRES_PASSWORD"] %>
-  host: <%= ENV["POSTGRES_HOST"] %>
-  sslmode: <%= ENV.fetch("POSTGRES_SSLMODE", "require") %>
-  port: <%= ENV.fetch("POSTGRES_PORT", 5432) %>
+  primary: &primary_production
+    <<: *default
+    url: <%= ENV["DATABASE_URL"] %>
+    variables:
+      statement_timeout: <%= ENV.fetch("DB_STATEMENT_TIMEOUT", "15s") %>
+      lock_timeout: <%= ENV.fetch("DB_LOCK_TIMEOUT", "3s") %>
+      idle_in_transaction_session_timeout: <%= ENV.fetch("DB_IDLE_TRANSACTION_TIMEOUT", "30s") %>
+  queue:
+    <<: *primary_production
+    migrations_paths: db/queue_migrate
+  cache:
+    <<: *primary_production
+    migrations_paths: db/cache_migrate

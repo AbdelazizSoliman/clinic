@@ -1,5 +1,7 @@
 Rails.application.routes.draw do
   devise_for :users, controllers: { sessions: "users/sessions", registrations: "users/registrations" }
+  resource :two_factor_enrollment, only: %i[show create update]
+  resource :two_factor_challenge, only: %i[show create]
   get "invitation/:token", to: "invitations#show", as: :invitation
   patch "invitation/:token", to: "invitations#update"
   root "home#index"
@@ -27,6 +29,9 @@ Rails.application.routes.draw do
   end
   resources :notifications, only: %i[index update] do
     collection { patch :mark_all_read }
+  end
+  resources :report_exports, only: %i[index create] do
+    member { get :download }
   end
   resource :account, only: %i[show edit update], controller: "account"
   namespace :account do
@@ -65,12 +70,17 @@ Rails.application.routes.draw do
     end
   end
   namespace :admin do
+    resource :security, only: :show, controller: "security"
+    resources :email_deliveries, only: :index do
+      member { patch :retry }
+    end
     resources :users, except: :destroy do
       member do
         patch :activate
         patch :deactivate
         patch :unlock
         patch :resend_invitation
+        patch :revoke_sessions
       end
     end
     resource :pharmacy_setting, only: %i[edit update]
@@ -119,6 +129,7 @@ Rails.application.routes.draw do
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
   # Can be used by load balancers and uptime monitors to verify that the app is live.
   get "up" => "rails/health#show", as: :rails_health_check
+  get "health/ready" => "health#ready", as: :readiness_check
 
   # Render dynamic PWA files from app/views/pwa/*
   get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker

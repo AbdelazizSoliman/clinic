@@ -1,5 +1,7 @@
 class PharmacySetting < ApplicationRecord
-  has_one_attached :logo
+  has_one_attached :logo do |attachable|
+    attachable.variant :header, resize_to_fill: [ 96, 96 ], preprocessed: true
+  end
 
   validates :singleton_key, inclusion: { in: [ 1 ] }, uniqueness: true
   validates :pharmacy_name, :default_currency, :default_locale, :time_zone, :order_number_prefix, presence: true

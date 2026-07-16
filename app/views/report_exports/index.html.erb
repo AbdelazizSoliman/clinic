@@ -1,0 +1,15 @@
+<main class="mx-auto max-w-5xl p-4 sm:p-6" dir="rtl">
+  <h1 class="text-2xl font-bold"><%= t("reports.exports.title") %></h1>
+  <div class="mt-6 space-y-3" aria-live="polite">
+    <% @report_exports.each do |export| %>
+      <article class="rounded-xl border bg-white p-4 shadow-sm">
+        <h2 class="font-semibold"><%= export.report_type %></h2>
+        <p><%= t("reports.exports.statuses.#{export.status}") %></p>
+        <% if export.downloadable_by?(current_user) %>
+          <%= link_to t("reports.exports.download"), download_report_export_path(export), class: "mt-2 inline-block rounded bg-emerald-700 px-4 py-2 text-white" %>
+        <% end %>
+      </article>
+    <% end %>
+    <% if @report_exports.empty? %><p><%= t("reports.exports.empty") %></p><% end %>
+  </div>
+</main>

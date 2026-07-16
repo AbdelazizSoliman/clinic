@@ -8,16 +8,17 @@ class ProductsController < ApplicationController
   end
 
   def show
-    @related_products = Product.includes(:brand).publicly_available.where(category: @product.category).where.not(id: @product.id).limit(4)
+    @related_products = Product.includes(:brand, :inventory_reservations, images: { file_attachment: :blob }).publicly_available.where(category: @product.category).where.not(id: @product.id).limit(4)
     category_products = Product.publicly_available.where(category: @product.category).order(:name)
     @previous_product = category_products.where("products.name < ?", @product.name).last
     @next_product = category_products.where("products.name > ?", @product.name).first
-    @recent_candidates = Product.includes(:brand).publicly_available.where.not(id: @product.id).limit(24)
+    @recent_candidates = Product.includes(:brand, :inventory_reservations, images: { file_attachment: :blob }).publicly_available.where.not(id: @product.id).limit(24)
   end
 
   private
 
   def set_product
-    @product = Product.publicly_available.includes(:brand, :category).find_by!(slug: params[:id])
+    @product = Product.publicly_available.includes(:brand, :category, :inventory_reservations,
+      images: { file_attachment: :blob }).find_by!(slug: params[:id])
   end
 end

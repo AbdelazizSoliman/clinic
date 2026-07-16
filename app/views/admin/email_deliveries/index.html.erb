@@ -1,0 +1,14 @@
+<main class="p-4 sm:p-6" dir="rtl">
+  <h1 class="text-2xl font-bold">حالة الرسائل المهمة</h1>
+  <div class="mt-6 overflow-x-auto">
+    <table class="min-w-full bg-white text-right">
+      <thead><tr><th class="p-3">المستخدم</th><th class="p-3">النوع</th><th class="p-3">الحالة</th><th class="p-3">المحاولات</th><th class="p-3">الإجراء</th></tr></thead>
+      <tbody>
+        <% @deliveries.each do |delivery| %>
+          <tr class="border-t"><td class="p-3"><%= delivery.user_id %></td><td class="p-3"><%= delivery.action %></td><td class="p-3"><%= delivery.status %></td><td class="p-3"><%= delivery.attempts_count %></td><td class="p-3"><% if delivery.failed? && delivery.mailer == "NotificationMailer" %><%= button_to "إعادة المحاولة", retry_admin_email_delivery_path(delivery), method: :patch, class: "rounded bg-emerald-700 px-3 py-2 text-white" %><% end %></td></tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+  <% if @deliveries.empty? %><p class="mt-6">لا توجد سجلات إرسال.</p><% end %>
+</main>

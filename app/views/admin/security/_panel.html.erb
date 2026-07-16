@@ -1,0 +1,4 @@
+<section class="rounded-xl border bg-white p-4">
+  <h2 class="text-lg font-bold"><%= title %></h2>
+  <% if items.any? %><ul class="mt-3 space-y-2"><% items.each do |item| %><li class="break-words"><%= item %></li><% end %></ul><% else %><p class="mt-3 text-slate-600">لا توجد عناصر.</p><% end %>
+</section>

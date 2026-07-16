@@ -1,6 +1,10 @@
 require "active_support/core_ext/integer/time"
 
 Rails.application.configure do
+  # Local-only deterministic keys. Production must supply credentials-backed keys.
+  config.active_record.encryption.primary_key = "development-primary-key-not-for-production"
+  config.active_record.encryption.deterministic_key = "development-deterministic-key-not-production"
+  config.active_record.encryption.key_derivation_salt = "development-derivation-salt-not-production"
   config.action_mailer.default_url_options = { host: "localhost", port: 3000 }
   config.action_mailer.delivery_method = :file
   config.action_mailer.file_settings = { location: Rails.root.join("tmp", "mails") }

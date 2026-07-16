@@ -2,7 +2,7 @@
   <div class="bg-pharmacy-700 px-4 py-2 text-center text-xs font-medium text-white sm:text-sm">توصيل مجاني للطلبات أكثر من 500 ج.م داخل القاهرة والجيزة</div>
   <nav aria-label="التنقل الرئيسي" class="mx-auto flex max-w-7xl flex-wrap items-center gap-4 px-4 py-4 sm:px-6 lg:px-8">
     <%= link_to root_path, class: "flex shrink-0 items-center gap-2", aria: { label: "#{PharmacySetting.current.pharmacy_name} - الرئيسية" } do %>
-      <% if PharmacySetting.current.logo.attached? %><%= image_tag PharmacySetting.current.logo, class: "size-10 rounded-xl object-cover", alt: "شعار #{PharmacySetting.current.pharmacy_name}" %><% else %><span class="grid size-10 place-items-center rounded-xl bg-pharmacy-600 text-2xl font-black text-white" aria-hidden="true">+</span><% end %>
+      <% if PharmacySetting.current.logo.attached? %><%= image_tag PharmacySetting.current.logo.variant(:header), class: "size-10 rounded-xl object-cover", alt: "شعار #{PharmacySetting.current.pharmacy_name}" %><% else %><span class="grid size-10 place-items-center rounded-xl bg-pharmacy-600 text-2xl font-black text-white" aria-hidden="true">+</span><% end %>
       <span class="text-xl font-black text-pharmacy-900"><%= PharmacySetting.current.pharmacy_name %></span>
     <% end %>
     <%= form_with url: products_path, method: :get, class: "order-3 flex w-full flex-1 sm:order-none sm:w-auto", role: "search" do |form| %>

@@ -10,6 +10,9 @@ class Prescription < ApplicationRecord
   has_many_attached :images
 
   enum :status, { submitted: 0, under_review: 1, approved: 2, partially_approved: 3, rejected: 4 }, default: :submitted, validate: true
+  enum :scan_status, { pending: 0, clean: 1, infected: 2, failed: 3 }, prefix: :scan, validate: true
+  before_validation { self.scan_status = :pending if new_record? }
+  after_create_commit { ScanPrescriptionJob.perform_later(id) }
   validates :submitted_at, presence: true
   validates :rejection_reason, presence: true, if: :rejected?
   validates :customer_message, presence: true, if: :partially_approved?

@@ -1,0 +1,9 @@
+<main class="mx-auto max-w-lg p-6 text-right" dir="rtl">
+  <h1 class="text-2xl font-bold"><%= t("security.two_factor.scan_title") %></h1>
+  <div class="mt-5 bg-white p-4" role="img" aria-label="<%= t("security.two_factor.qr_description") %>"><%= @qr.as_svg(module_size: 5).html_safe %></div>
+  <%= form_with url: two_factor_enrollment_path, method: :patch, class: "mt-6 space-y-4" do |form| %>
+    <%= form.label :otp_code, t("security.two_factor.code"), class: "block" %>
+    <%= form.text_field :otp_code, required: true, inputmode: "numeric", autocomplete: "one-time-code", class: "w-full rounded border p-3" %>
+    <%= form.submit t("security.two_factor.confirm"), class: "rounded bg-emerald-700 px-5 py-3 text-white" %>
+  <% end %>
+</main>

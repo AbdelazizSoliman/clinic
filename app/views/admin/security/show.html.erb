@@ -1,0 +1,14 @@
+<main class="p-4 sm:p-6" dir="rtl">
+  <h1 class="text-2xl font-bold">الأمن وسلامة التشغيل</h1>
+  <div class="mt-6 grid gap-4 lg:grid-cols-2">
+    <%= render "panel", title: "تحذيرات الإعداد", items: @configuration_warnings %>
+    <%= render "panel", title: "مستخدمون مميزون دون تحقق بخطوتين", items: @missing_two_factor.map { |u| "مستخدم رقم #{u.id} — #{u.role}" } %>
+    <%= render "panel", title: "حسابات مميزة مقفلة", items: @locked_accounts.map { |u| "مستخدم رقم #{u.id} — #{u.role}" } %>
+    <%= render "panel", title: "مشكلات فحص الملفات", items: @scan_issues.map { |p| "طلب #{p.order.number} — #{p.scan_status}" } %>
+    <%= render "panel", title: "مشكلات التصدير", items: @export_issues.map { |e| "تصدير رقم #{e.id} — #{e.status}" } %>
+    <%= render "panel", title: "فشل البريد", items: @email_failures.map { |d| "سجل رقم #{d.id} — #{d.last_error_class}" } %>
+    <%= render "panel", title: "نبض الوظائف", items: @heartbeats.map { |h| "#{h.job_name} — #{h.last_succeeded_at || 'لم تنجح بعد'}" } %>
+    <%= render "panel", title: "نتائج فحص السلامة", items: @integrity_findings.map { |f| "#{f.code} — #{f.severity} — #{f.count}" } %>
+  </div>
+  <section class="mt-6 rounded-xl border bg-white p-4"><h2 class="text-lg font-bold">أحداث الأمن الحديثة</h2><ul class="mt-3 space-y-2"><% @security_events.each do |event| %><li><%= event.event_type %> — <%= l(event.created_at, format: :short) %></li><% end %></ul><% if @security_events.empty? %><p class="mt-3">لا توجد أحداث.</p><% end %></section>
+</main>

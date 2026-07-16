@@ -1,5 +1,5 @@
 class Notification < ApplicationRecord
-  KINDS = %w[follow_up_requested follow_up_response_received prescription_approved prescription_rejected prescription_partial order_confirmed order_preparing order_ready order_out_for_delivery order_delivered order_cancelled reservation_expiring reservation_expired product_low_stock product_out_of_stock delivery_assigned delivery_scheduled].freeze
+  KINDS = %w[follow_up_requested follow_up_response_received prescription_approved prescription_rejected prescription_partial order_confirmed order_preparing order_ready order_out_for_delivery order_delivered order_cancelled reservation_expiring reservation_expired product_low_stock product_out_of_stock delivery_assigned delivery_scheduled report_export_completed report_export_failed].freeze
 
   belongs_to :user
   belongs_to :actor, class_name: "User", optional: true

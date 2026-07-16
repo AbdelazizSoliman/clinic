@@ -42,7 +42,7 @@ class UserAdministrationControllerTest < ActionDispatch::IntegrationTest
     result = Admin::Users::Invite.new(actor: users(:admin), attributes: { first_name: "مدير", last_name: "طلب",
       email: "accept@example.com", mobile_number: "01044445555", role: "order_manager" }).call
     patch invitation_path(token: result.token), params: { password: "password123", password_confirmation: "password123", role: "admin" }
-    assert_redirected_to account_path
+    assert_redirected_to two_factor_enrollment_path
     assert result.user.reload.order_manager?
 
     get invitation_path(token: "invalid-secret")

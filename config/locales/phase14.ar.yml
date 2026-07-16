@@ -1,0 +1,15 @@
+ar:
+  reports:
+    exports:
+      title: "ملفات التقارير"
+      queued: "تمت إضافة التقرير إلى قائمة المعالجة."
+      unauthorized: "غير مصرح بهذا التقرير."
+      too_many_active: "لديك بالفعل الحد الأقصى من التقارير قيد المعالجة."
+      download: "تنزيل الملف"
+      empty: "لا توجد ملفات تقارير حتى الآن."
+      statuses:
+        pending: "في الانتظار"
+        processing: "جارٍ الإنشاء"
+        completed: "جاهز"
+        failed: "فشل"
+        expired: "انتهت صلاحيته"

@@ -9,7 +9,9 @@ Bundler.require(*Rails.groups)
 module Clinic
   class Application < Rails::Application
     # Initialize configuration defaults for originally generated Rails version.
-    config.load_defaults 7.2
+    config.load_defaults 8.1
+    config.middleware.use Rack::Attack
+    config.active_job.log_arguments = false
     # Invitation links are secrets; mail bodies must not be copied into application logs.
     config.action_mailer.logger = nil
     config.i18n.default_locale = :ar

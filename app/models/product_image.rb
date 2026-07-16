@@ -3,7 +3,11 @@ class ProductImage < ApplicationRecord
   MAX_SIZE = 8.megabytes
 
   belongs_to :product, inverse_of: :images
-  has_one_attached :file
+  has_one_attached :file do |attachable|
+    attachable.variant :card, resize_to_limit: [ 480, 480 ], preprocessed: true
+    attachable.variant :detail, resize_to_limit: [ 1_000, 1_000 ]
+    attachable.variant :admin_thumbnail, resize_to_fill: [ 160, 160 ]
+  end
   validates :alt_text, presence: true
   validates :position, numericality: { only_integer: true, greater_than_or_equal_to: 0 }, uniqueness: { scope: :product_id }
   validates :primary, inclusion: { in: [ true, false ] }, uniqueness: { scope: :product_id }, if: :primary?

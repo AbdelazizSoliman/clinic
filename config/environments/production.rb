@@ -1,6 +1,10 @@
 require "active_support/core_ext/integer/time"
+require Rails.root.join("lib/structured_log_formatter")
 
 Rails.application.configure do
+  config.active_record.encryption.primary_key = ENV["ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY"] if ENV["ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY"].present?
+  config.active_record.encryption.deterministic_key = ENV["ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY"] if ENV["ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY"].present?
+  config.active_record.encryption.key_derivation_salt = ENV["ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT"] if ENV["ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT"].present?
   # Settings specified here will take precedence over those in config/application.rb.
 
   # Code is not reloaded between requests.
@@ -37,7 +41,8 @@ Rails.application.configure do
   # config.action_dispatch.x_sendfile_header = "X-Accel-Redirect" # for NGINX
 
   # Store uploaded files on the local file system (see config/storage.yml for options).
-  config.active_storage.service = :local
+  config.active_storage.service = ENV["SECRET_KEY_BASE_DUMMY"] ? :test : :production
+  config.active_storage.service_urls_expire_in = 5.minutes
 
   # Mount Action Cable outside main process or domain.
   # config.action_cable.mount_path = nil
@@ -46,7 +51,7 @@ Rails.application.configure do
 
   # Assume all access to the app is happening through a SSL-terminating reverse proxy.
   # Can be used together with config.force_ssl for Strict-Transport-Security and secure cookies.
-  # config.assume_ssl = true
+  config.assume_ssl = true
 
   # Force all access to the app over SSL, use Strict-Transport-Security, and use secure cookies.
   config.force_ssl = true
@@ -56,7 +61,7 @@ Rails.application.configure do
 
   # Log to STDOUT by default
   config.logger = ActiveSupport::Logger.new(STDOUT)
-    .tap  { |logger| logger.formatter = ::Logger::Formatter.new }
+    .tap  { |logger| logger.formatter = StructuredLogFormatter.new }
     .then { |logger| ActiveSupport::TaggedLogging.new(logger) }
 
   # Prepend all log lines with the following tags.
@@ -68,15 +73,24 @@ Rails.application.configure do
   config.log_level = ENV.fetch("RAILS_LOG_LEVEL", "info")
 
   # Use a different cache store in production.
-  # config.cache_store = :mem_cache_store
+  config.cache_store = :solid_cache_store
 
   # Use a real queuing backend for Active Job (and separate queues per environment).
-  # config.active_job.queue_adapter = :resque
-  # config.active_job.queue_name_prefix = "clinic_production"
+  config.active_job.queue_adapter = :solid_queue
+  config.solid_queue.connects_to = { database: { writing: :queue } }
+  config.active_job.queue_name_prefix = "clinic_production"
 
   # Disable caching for Action Mailer templates even if Action Controller
   # caching is enabled.
   config.action_mailer.perform_caching = false
+  config.action_mailer.delivery_method = :smtp
+  config.action_mailer.raise_delivery_errors = true
+  config.action_mailer.default_url_options = { host: ENV.fetch("APP_HOST", "localhost"), protocol: "https" }
+  config.action_mailer.smtp_settings = {
+    address: ENV.fetch("SMTP_ADDRESS", "localhost"), port: ENV.fetch("SMTP_PORT", 587),
+    user_name: ENV.fetch("SMTP_USERNAME", "dummy"), password: ENV.fetch("SMTP_PASSWORD", "dummy"),
+    authentication: :plain, enable_starttls_auto: true
+  }
 
   # Ignore bad email addresses and do not raise email delivery errors.
   # Set this to true and configure the email server for immediate delivery to raise delivery errors.
@@ -96,7 +110,9 @@ Rails.application.configure do
   config.active_record.attributes_for_inspect = [ :id ]
 
   # Enable DNS rebinding protection and other `Host` header attacks.
-  # config.hosts = [
+  ENV.fetch("ALLOWED_HOSTS", ENV.fetch("APP_HOST", "")).split(",").filter_map { |host| host.strip.presence }.each do |host|
+    config.hosts << host
+  end
   #   "example.com",     # Allow requests from example.com
   #   /.*\.example\.com/ # Allow requests from subdomains like `www.example.com`
   # ]

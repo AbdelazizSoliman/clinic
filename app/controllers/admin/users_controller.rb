@@ -2,7 +2,7 @@ module Admin
   class UsersController < ApplicationController
     before_action :authenticate_user!
     before_action :authorize_users!
-    before_action :set_user, only: %i[show edit update activate deactivate unlock resend_invitation]
+    before_action :set_user, only: %i[show edit update activate deactivate unlock resend_invitation revoke_sessions]
     layout "admin"
 
     def index
@@ -54,6 +54,12 @@ module Admin
       else
         redirect_to admin_user_path(@user), alert: "لا يمكن إعادة الدعوة لهذا الحساب", status: :see_other
       end
+    end
+
+    def revoke_sessions
+      @user.increment!(:session_version)
+      SecurityEvent.record("sessions_revoked", user: @user, actor: current_user, request: request)
+      redirect_to admin_user_path(@user), notice: t("security.sessions_revoked")
     end
 
     private

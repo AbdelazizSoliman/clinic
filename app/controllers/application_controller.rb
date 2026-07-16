@@ -4,6 +4,8 @@ class ApplicationController < ActionController::Base
 
   before_action :configure_permitted_parameters, if: :devise_controller?
   before_action :enforce_active_session
+  before_action :enforce_session_version
+  before_action :enforce_privileged_two_factor
   before_action :enforce_maintenance_mode
 
   helper_method :wishlist_item_for, :wishlist_count
@@ -27,9 +29,28 @@ class ApplicationController < ActionController::Base
 
   private
 
+  def enforce_session_version
+    return unless user_signed_in?
+    session[:session_version] ||= current_user.session_version
+    return if ActiveSupport::SecurityUtils.secure_compare(session[:session_version].to_s, current_user.session_version.to_s)
+    sign_out current_user
+    reset_session
+    redirect_to new_user_session_path, alert: I18n.t("security.session_stale")
+  end
+
+  def enforce_privileged_two_factor
+    return if Rails.env.test? && request.headers["X-Enforce-2FA"] != "1"
+    return unless user_signed_in? && current_user.privileged? && !current_user.two_factor_enabled?
+    return if controller_name == "two_factor_enrollments" || devise_controller?
+    return unless request.path.start_with?("/admin", "/staff")
+    store_location_for(current_user, request.fullpath) if request.get? || request.head?
+    redirect_to two_factor_enrollment_path, alert: I18n.t("security.two_factor.required")
+  end
+
   def enforce_active_session
     return unless user_signed_in? && !current_user.active?
     sign_out current_user
+    reset_session
     redirect_to new_user_session_path, alert: I18n.t("devise.failure.inactive_account")
   end
 

@@ -4,6 +4,7 @@ module Staff
 
     def show
       prescription = Prescription.find(params[:prescription_id])
+      return head :locked unless prescription.scan_clean?
       attachment = prescription.images_attachments.find(params[:attachment_id])
       disposition = attachment.content_type.start_with?("image/") ? "inline" : "attachment"
       send_data attachment.blob.download, filename: attachment.filename.to_s, type: attachment.content_type, disposition:

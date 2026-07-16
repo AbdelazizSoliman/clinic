@@ -1,7 +1,7 @@
 source "https://rubygems.org"
 
 # Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"
-gem "rails", "~> 7.2.3", ">= 7.2.3.1"
+gem "rails", "~> 8.1.3"
 # The original asset pipeline for Rails [https://github.com/rails/sprockets-rails]
 gem "sprockets-rails"
 # Use postgresql as the database for Active Record
@@ -20,6 +20,16 @@ gem "tailwindcss-rails"
 gem "pagy"
 # Customer authentication
 gem "devise"
+# Privileged-user TOTP and provisioning QR codes.
+gem "rotp"
+gem "rqrcode"
+# Shared production security limits and durable PostgreSQL-backed jobs.
+gem "rack-attack"
+gem "solid_queue"
+gem "solid_cache"
+# Private S3-compatible object storage and bounded image variants.
+gem "aws-sdk-s3", require: false
+gem "image_processing", "~> 1.2"
 # Build JSON APIs with ease [https://github.com/rails/jbuilder]
 gem "jbuilder"
 # CSV left Ruby's default gems in Ruby 3.4; reports require it explicitly.
@@ -48,6 +58,9 @@ group :development, :test do
 
   # Static analysis for security vulnerabilities [https://brakemanscanner.org/]
   gem "brakeman", require: false
+
+  # Audit the resolved Ruby dependency graph in Gemfile.lock.
+  gem "bundler-audit", require: false
 
   # Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/]
   gem "rubocop-rails-omakase", require: false

@@ -1,1 +1,6 @@
-<%= link_to "تصدير CSV", url_for(request.query_parameters.merge(format: :csv)), class: "rounded-xl border border-pharmacy-600 px-4 py-2 font-bold text-pharmacy-800", data: { turbo: false } %>
+<div class="flex flex-wrap gap-2">
+  <%= link_to "تصدير CSV مباشر", url_for(request.query_parameters.merge(format: :csv)), class: "rounded-xl border border-pharmacy-600 px-4 py-2 font-bold text-pharmacy-800", data: { turbo: false } %>
+  <%= button_to "إنشاء ملف في الخلفية", report_exports_path,
+    params: { report_type: controller_name, filters: request.query_parameters },
+    class: "rounded-xl bg-pharmacy-700 px-4 py-2 font-bold text-white" %>
+</div>

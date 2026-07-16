@@ -19,7 +19,6 @@ module Admin
           old = @user.slice(:first_name, :last_name, :email, :mobile_number, :role, :active)
           @user.assign_attributes(@attributes)
           return Result.new(success?: false, user: @user, errors: @user.errors.full_messages) unless @user.save
-          @user.increment!(:session_version) if sensitive
           create_audits(old)
         end
         Result.new(success?: true, user: @user, errors: [])
