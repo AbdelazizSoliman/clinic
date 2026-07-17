@@ -20,7 +20,7 @@ class DemoAccountsPageTest < ActionDispatch::IntegrationTest
     get demo_path
 
     assert_response :success
-    assert_select "h2", "حسابات العرض"
+    assert_select "h2", "رحلات العرض حسب الدور"
     assert_includes response.body, "admin@example.test"
     assert_includes response.body, "pharmacist@example.test"
     assert_includes response.body, "staff@example.test"

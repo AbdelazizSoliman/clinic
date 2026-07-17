@@ -50,7 +50,7 @@ class DemoModeTest < ActionDispatch::IntegrationTest
     get demo_path
     assert_response :success
     assert_select "html[lang='ar'][dir='rtl']"
-    assert_select "h1", "عن النسخة التجريبية"
+    assert_select "h1", "استكشف منصة صيدلية عربية متكاملة"
 
     Rails.application.config.x.demo_mode = false
     get demo_path
