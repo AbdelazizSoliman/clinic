@@ -1,0 +1,20 @@
+<article class="rounded-3xl border-2 bg-white p-6 shadow-sm <%= active ? "border-pharmacy-500 ring-4 ring-pharmacy-100" : "border-slate-200" %>" data-demo-role="<%= journey.role %>" <% if active %>aria-current="step"<% end %>>
+  <header class="flex flex-wrap items-start justify-between gap-3">
+    <div><p class="text-sm font-bold <%= active ? "text-pharmacy-700" : "text-slate-500" %>"><%= active ? "رحلتك الحالية" : "يتطلب حسابًا آخر" %></p><h3 class="mt-1 text-2xl font-black"><%= journey.title %></h3></div>
+    <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700"><%= journey.duration %></span>
+  </header>
+  <p class="mt-3 leading-7 text-slate-600"><%= journey.summary %></p>
+  <dl class="mt-4 grid gap-2 text-sm sm:grid-cols-2">
+    <div class="rounded-xl bg-slate-50 p-3"><dt class="font-bold text-slate-500">الحساب</dt><dd class="mt-1 break-all font-semibold" dir="ltr"><%= journey.email %></dd></div>
+    <div class="rounded-xl bg-slate-50 p-3"><dt class="font-bold text-slate-500">المصادقة</dt><dd class="mt-1 font-semibold"><%= journey.two_factor_required ? "كلمة مرور + TOTP" : "كلمة مرور فقط" %></dd></div>
+  </dl>
+  <ol class="mt-5 space-y-3">
+    <% journey.steps.each_with_index do |step, index| %>
+      <% path = active ? catalog.path_for(step) : nil %>
+      <li class="rounded-2xl border border-slate-200 p-4">
+        <div class="flex gap-3"><span class="grid size-7 shrink-0 place-items-center rounded-full bg-pharmacy-100 text-sm font-black text-pharmacy-800"><%= index + 1 %></span><div class="min-w-0 flex-1"><div class="flex flex-wrap items-center gap-2"><h4 class="font-black"><%= step.title %></h4><span class="rounded bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-600"><%= step.mode == :view ? "مشاهدة مثال" : "استكشاف" %></span></div><p class="mt-1 text-sm leading-6 text-slate-600"><%= step.description %></p><% if path %><%= link_to "انتقل إلى هذه الخطوة", path, class: "mt-3 inline-block font-black text-pharmacy-700 underline decoration-2 underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2" %><% end %></div></div>
+      </li>
+    <% end %>
+  </ol>
+  <% unless active %><p class="mt-4 text-sm font-bold text-slate-500">سجّل الخروج وادخل بالبريد الموضح لفتح روابط هذه الرحلة بصلاحياتها الصحيحة.</p><% end %>
+</article>

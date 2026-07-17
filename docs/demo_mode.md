@@ -70,3 +70,41 @@ append-only audit records, and globally scoped relational graph require a
 separately reviewed deletion manifest and ordering before selective removal can
 be guaranteed. Never use `db:drop`, `db:reset`, or `db:seed:replant`, and never
 place real production records in the demo database.
+
+## Guided journeys
+
+After signing in, `/demo` is the Arabic control center for the demonstration.
+It identifies the current role and enables only that role's guided links. The
+recommended order is customer, pharmacist, order manager, inventory manager,
+then administrator. Scenario links resolve stable order numbers, product slugs,
+coupon/promotion references, and account emails at request time; database IDs
+are never part of the guide configuration.
+
+Switching journeys means signing out and signing in normally with the other
+account. There is no impersonation, passwordless entry, or 2FA bypass. Send the
+temporary password privately. For a privileged account, the operator also
+provides a current TOTP code without disclosing the shared enrollment secret in
+the browser, documentation, or chat transcript.
+
+Use the [demo operator checklist](demo_operator_checklist.md) before, during,
+and after every temporary environment. The [Arabic presentation script](demo_presentation_script.md)
+provides a focused 10–15 minute route through the seeded scenarios.
+
+## Temporary access lifecycle
+
+1. Start an isolated, disposable environment with its own database, private
+   storage, SMTP sandbox, cache, queue, encryption keys, and scanner.
+2. Set `DEMO_MODE=true`, configure every demo password and `DEMO_TOTP_SECRET`
+   through the environment's secret store, migrate, and run `demo:seed`.
+3. Verify customer sign-in and privileged password → TOTP sign-in before
+   privately issuing only the accounts needed for the appointment.
+4. After the appointment, revoke sessions, rotate demo credentials, inspect
+   sanitized logs, stop the service, and delete temporary infrastructure when
+   it is no longer required.
+
+Known limitations: demo data is not automatically reset; historical examples
+should normally be viewed rather than mutated. The application has no real
+payment, SMS, or courier integration. Email, object storage, and malware
+scanning require separately isolated demo services when those workflows are
+shown. A real-browser run also requires a supported browser installed in the
+verification environment.

@@ -1,0 +1,9 @@
+<% if demo_mode? %>
+  <aside class="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950" aria-label="تلميح للنسخة التجريبية">
+    <p class="font-black"><%= local_assigns.fetch(:title, "تلميح للعرض") %></p>
+    <p class="mt-1 leading-6"><%= body %></p>
+    <% if local_assigns[:link_path] %>
+      <%= link_to local_assigns.fetch(:link_label, "افتح المثال"), link_path, class: "mt-2 inline-block font-black underline decoration-2 underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2" %>
+    <% end %>
+  </aside>
+<% end %>

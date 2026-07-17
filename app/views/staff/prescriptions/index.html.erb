@@ -1,6 +1,7 @@
 <% content_for :title, "قائمة مراجعة الروشتات" %>
 <div class="mx-auto max-w-7xl px-4 py-10">
   <h1 class="text-3xl font-black">قائمة مراجعة الروشتات</h1>
+  <%= render "shared/demo_hint", body: "ابحث عن الطلب DEMO-PRESCRIPTION-REVIEW لمشاهدة حالة قيد المراجعة. الأمثلة المعروضة خيالية ولا تتطلب قرارًا طبيًا حقيقيًا.", link_path: staff_prescriptions_path(q: "DEMO-PRESCRIPTION-REVIEW"), link_label: "عرض مثال قيد المراجعة" %>
   <%= form_with url: staff_prescriptions_path, method: :get, class: "mt-6 grid gap-3 rounded-2xl bg-white p-4 sm:grid-cols-2 lg:grid-cols-5" do |form| %>
     <%= form.search_field :q, value: params[:q], placeholder: "رقم الطلب", aria: { label: "رقم الطلب" }, class: "rounded-xl border px-3 py-2" %>
     <%= form.select :status, options_for_select([["كل الحالات", ""]] + Prescription.statuses.keys.map { |status| [t("staff.prescription_statuses.#{status}"), status] }, params[:status]), {}, aria: { label: "حالة الروشتة" }, class: "rounded-xl border px-3 py-2" %>

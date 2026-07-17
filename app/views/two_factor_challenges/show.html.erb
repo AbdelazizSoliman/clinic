@@ -1,5 +1,6 @@
 <main class="mx-auto max-w-lg p-6 text-right" dir="rtl">
   <h1 class="text-2xl font-bold"><%= t("security.two_factor.challenge_title") %></h1>
+  <%= render "shared/demo_hint", title: "التحقق في العرض", body: "يقدّم مشغّل العرض رمز TOTP الحالي بصورة خاصة. لا يوجد تجاوز للمصادقة الثنائية، ولا يظهر سر الإعداد في هذه الصفحة." %>
   <%= form_with url: two_factor_challenge_path, class: "mt-6 space-y-4" do |form| %>
     <%= form.label :code, t("security.two_factor.code"), class: "block" %>
     <%= form.text_field :code, inputmode: "numeric", autocomplete: "one-time-code", class: "w-full rounded border p-3" %>
