@@ -1,0 +1,32 @@
+flowchart LR
+  customer[Customer browser\nArabic RTL storefront]
+  pharmacist[Pharmacist browser\nPrescription review]
+  operations[Order and inventory staff\nOperations interfaces]
+  admin[Administrator browser\nSettings, reports, security]
+
+  subgraph app[Saydaliyati Rails modular monolith]
+    web[Web process\nRails + Hotwire]
+    jobs[Worker process\nSolid Queue]
+    cache[Solid Cache]
+  end
+
+  postgres[(PostgreSQL\nBusiness data + queue + cache)]
+  storage[(Private object storage\nUploads, variants, exports)]
+  smtp[SMTP boundary\nSandbox for demo]
+  clamav[ClamAV boundary\nPrivate scanner]
+  errors[Optional error reporter\nSanitized events]
+
+  customer -->|HTTPS| web
+  pharmacist -->|HTTPS + TOTP| web
+  operations -->|HTTPS + TOTP| web
+  admin -->|HTTPS + TOTP| web
+  web <--> postgres
+  web <--> cache
+  web -->|enqueue| jobs
+  jobs <--> postgres
+  web <--> storage
+  jobs <--> storage
+  jobs --> smtp
+  jobs --> clamav
+  web -.-> errors
+  jobs -.-> errors

@@ -1,6 +1,7 @@
-# Render deployment plan (Phase 15 executes it)
+# Render deployment plan (not deployed)
 
-This phase does not deploy. Create one Docker web service, one Docker worker,
+No Render service is currently guaranteed to exist. A future approved deployment
+would create one Docker web service, one Docker worker,
 managed PostgreSQL, and private S3-compatible object storage. Build with the
 Dockerfile, run `bin/rails db:prepare` as pre-deploy, start web with the image
 default command, worker with `bin/jobs start`, and probe `/up`. `/health/ready`

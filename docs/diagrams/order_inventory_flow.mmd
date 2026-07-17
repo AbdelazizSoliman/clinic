@@ -1,0 +1,24 @@
+flowchart TD
+  cart[Active cart]
+  checkout[Checkout validation and row locks]
+  reserve[Create order snapshots\nand active reservations]
+  rx{Prescription required?}
+  scan[Private upload + malware scan]
+  review{Pharmacist decision}
+  submitted[Submitted order]
+  operate[Confirm and prepare]
+  consume[Ready for delivery\nconsume reservation + append movement]
+  deliver[Dispatch and delivery]
+  stop[Cancel or reject]
+  release[Release active reservation\nand eligible redemption]
+  reports[Events, notifications, reports]
+
+  cart --> checkout --> reserve --> rx
+  rx -->|No| submitted
+  rx -->|Yes| scan --> review
+  review -->|Approve| submitted
+  review -->|Reject| stop
+  submitted --> operate --> consume --> deliver --> reports
+  reserve -->|Eligible cancellation| stop
+  operate -->|Eligible cancellation before consumption| stop
+  stop --> release --> reports

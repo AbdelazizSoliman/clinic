@@ -29,22 +29,24 @@ operator must confirm Egyptian and every operating-market privacy, pharmacy,
 e-commerce, and medical-data requirements. Technical controls alone do not
 establish legal compliance.
 
-## Known launch gates
+## External deployment gates
 
-The scanner boundary, asynchronous exports/delivery tracking dashboard, detailed
-operations dashboard, static Arabic error pages, and measured production-like
-performance/concurrency exercise remain launch gates if not completed before
-Phase 15. A configured adapter is not evidence that backups, scanning, mail, or
-monitoring actually operate; Phase 15 must verify each external service.
+The scanner boundary, asynchronous exports, delivery tracking, operations
+dashboard, and static Arabic error pages are implemented. They do not prove that
+external infrastructure is operating. Before any real launch, independently
+verify a real private bucket, SMTP account, ClamAV service, shared database-backed
+queue/cache, backups and restore, monitoring, domain/TLS, and production-shaped
+performance. A configured adapter is not evidence that the provider works.
 
 ## Local verification limits
 
-The existing `test:system` task completed successfully but contains zero system
-tests. No Chrome/Chromium executable is installed in the current WSL environment,
-so real-browser desktop/390px, keyboard, overflow, and end-to-end TOTP QR checks
-were not performed. They remain mandatory Phase 15 launch checks. Docker is also
-unavailable in this WSL integration; the Dockerfile was reviewed and production
-asset/boot smoke checks passed, but an image build must run in CI or Phase 15.
+The existing `test:system` task contains zero committed system tests. No
+Chrome/Chromium executable is installed in the current local environment, so a
+local real-browser desktop/390px, keyboard, overflow, and end-to-end TOTP QR run
+has not been completed. GitHub Actions installs Chrome for the system-test task.
+The production Docker image, non-root runtime, eager load, assets, and container
+health check have been verified in GitHub Actions; external services were not
+contacted by that verification.
 
 Database-backed services retain existing locking/idempotency protections for
 checkout reservations, promotion redemptions, delivery-slot counters, and the
