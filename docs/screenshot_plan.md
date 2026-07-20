@@ -1,8 +1,8 @@
 # Screenshot plan
 
-Screenshots are deferred to the visual portfolio phase. Capture them from one
-fresh deterministic demo seed, using fictional data only. Do not add image links
-to the README until the corresponding files exist.
+Phase 15E captured this plan from one isolated deterministic demo database using
+fictional data only. The reviewed images live under `docs/images/portfolio/` and
+are presented in the [visual gallery](visual_gallery.md).
 
 Recommended viewports:
 
@@ -51,3 +51,59 @@ Recommended viewports:
 Never capture real personal/medical data, passwords, TOTP/recovery codes,
 developer consoles, SMTP/storage configuration, stack traces, or a public
 prescription object URL.
+
+## Capture manifest
+
+All retained files are PNGs captured at 100% browser zoom. Stable identifiers
+describe reproducibility; database primary keys are intentionally omitted.
+
+| File | Role | Stable scenario | Result |
+| --- | --- | --- | --- |
+| `desktop/01-arabic-storefront.png` | Customer | Storefront home | Captured |
+| `desktop/02-product-search.png` | Customer | Demo catalog search | Captured |
+| `desktop/03-prescription-product.png` | Customer | SKU `RX-A100` | Captured |
+| `desktop/04-cart-coupon.png` | Customer | Active cart / `DEMO10` | Captured |
+| `desktop/05-checkout-delivery.png` | Customer | Seeded address and delivery zone | Captured |
+| `desktop/06-delivered-order.png` | Customer | `DEMO-DELIVERED-OLD` | Captured |
+| `desktop/07-prescription-order.png` | Customer | Seeded prescription order | Captured |
+| `desktop/08-pharmacist-queue.png` | Pharmacist | `DEMO-PRESCRIPTION-REVIEW` | Captured |
+| `desktop/09-prescription-review.png` | Pharmacist | `DEMO-PRESCRIPTION-REVIEW` | Captured |
+| `desktop/10-fulfilment-workflow.png` | Order manager | Preparing/ready/dispatched demo orders | Captured |
+| `desktop/11-inventory-dashboard.png` | Inventory manager | Deterministic stock summary | Captured |
+| `desktop/12-inventory-movements.png` | Inventory manager | Opening and consumption movements | Captured |
+| `desktop/13-promotions-coupon.png` | Administrator | `demo:active-cart` / `DEMO10` | Captured |
+| `desktop/14-reports-dashboard.png` | Administrator | Last 30 days | Captured |
+| `desktop/15-admin-users.png` | Administrator | Fictional `example.test` users | Captured |
+| `desktop/16-guided-demo.png` | Customer | `/demo` customer journey | Captured |
+| `mobile/17-mobile-storefront.png` | Customer | Storefront home | Captured |
+| `mobile/18-mobile-products.png` | Customer | Demo catalog | Captured |
+| `mobile/19-mobile-cart.png` | Customer | Active cart / `DEMO10` | Captured |
+| `mobile/20-mobile-demo.png` | Customer | `/demo` customer journey | Captured |
+| `mobile/21-mobile-pharmacist.png` | Pharmacist | `DEMO-PRESCRIPTION-REVIEW` | Captured |
+
+## Capture verification
+
+- Isolated database: `clinic_phase15e_demo`; `demo:seed` returned the same typed
+  manifest on two consecutive runs.
+- Delivery/storage boundaries: local Active Storage, file mail delivery,
+  logging-only error reporting, and deterministic clean scanner adapter. No
+  production or shared service was contacted.
+- Authentication: customer password flow and privileged password-plus-current
+  TOTP flow were used; no bypass was added.
+- Browser: installed Windows Chrome was controlled from WSL through the Chrome
+  DevTools protocol because no supported Linux browser executable was available
+  and Selenium Manager's bounded download did not complete.
+- Browser observations: retained journeys reported zero JavaScript console
+  errors, zero failed network loads, `dir="rtl"`, and no document-level overflow
+  at 1440 or 390 CSS pixels after narrow fixes.
+- Sanitization: reviewed captures contain no password, OTP, recovery code,
+  token, signed storage URL, Rails exception page, developer UI, real personal
+  data, or prescription content. Fictional demo names/emails appear only in
+  intended workflow and administration views.
+- Optimization: the 21 RGB PNG files total approximately 1.7 MB. No PNG
+  optimizer or metadata utility was available, so no lossy or unverified rewrite
+  was performed.
+
+Tablet and Safari/iPhone-specific captures remain deferred because those browser
+environments were unavailable. The 390-pixel Chrome captures provide the mobile
+evidence for this phase.

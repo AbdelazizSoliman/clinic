@@ -4,6 +4,10 @@ This guide provides a high-signal path through the repository. Start with the
 [README](../README.md), then use the sequence below rather than reading every
 controller or migration.
 
+For a visual orientation before reading code, open the
+[real-application gallery](visual_gallery.md). Its captions identify the role,
+stable fictional scenario, and business behavior behind each capture.
+
 ## 1. Architecture and scope
 
 - [`docs/architecture.md`](architecture.md) explains the deployed boundaries,

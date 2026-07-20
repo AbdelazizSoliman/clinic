@@ -4,12 +4,13 @@
     <title><%= content_for(:title) || "عمليات صيدليتي" %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <%= csrf_meta_tags %><%= csp_meta_tag %>
+    <link rel="icon" href="/icon.png" type="image/png">
     <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
   </head>
   <body class="min-h-screen bg-slate-100 text-slate-900">
     <%= render "shared/demo_banner" %>
-    <header class="border-b bg-pharmacy-950 text-white">
+    <header class="border-b bg-pharmacy-900 text-white">
       <nav class="mx-auto flex max-w-7xl flex-wrap items-center gap-4 px-4 py-4" aria-label="عمليات الصيدلية">
         <%= link_to "+ عمليات صيدليتي", staff_root_path, class: "text-xl font-black" %>
         <div class="flex flex-wrap gap-4 text-sm font-bold">

@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
-  <head><title><%= content_for(:title) || "إدارة الكتالوج" %></title><meta name="viewport" content="width=device-width,initial-scale=1"><%= csrf_meta_tags %><%= csp_meta_tag %><%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %><%= javascript_importmap_tags %><style>html{overflow-x:hidden}</style></head>
+  <head><title><%= content_for(:title) || "إدارة الكتالوج" %></title><meta name="viewport" content="width=device-width,initial-scale=1"><%= csrf_meta_tags %><%= csp_meta_tag %><link rel="icon" href="/icon.png" type="image/png"><%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %><%= javascript_importmap_tags %><style>html{overflow-x:hidden}</style></head>
   <body class="min-h-screen overflow-x-hidden bg-slate-100 text-slate-900">
     <%= render "shared/demo_banner" %>
     <header class="bg-slate-950 text-white"><nav class="mx-auto flex max-w-7xl flex-wrap items-center gap-5 px-4 py-4" aria-label="إدارة الصيدلية">
