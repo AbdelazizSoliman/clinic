@@ -4,7 +4,9 @@ module Staff
     before_action :set_prescription, only: %i[show review]
 
     def index
-      scope = Prescription.includes(order: :items).order(Arel.sql("CASE status WHEN 0 THEN 0 WHEN 1 THEN 1 ELSE 2 END"), submitted_at: :asc)
+      scope = Prescription.includes(order: :items).order(
+        Arel.sql("CASE prescriptions.status WHEN 0 THEN 0 WHEN 1 THEN 1 ELSE 2 END"), submitted_at: :asc
+      )
       scope = scope.where(status: params[:status]) if Prescription.statuses.key?(params[:status])
       scope = scope.joins(:order).where("orders.number ILIKE ?", "%#{Prescription.sanitize_sql_like(params[:q])}%") if params[:q].present?
       scope = scope.where(submitted_at: parsed_date(params[:date_from])..) if parsed_date(params[:date_from])

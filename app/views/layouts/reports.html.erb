@@ -1,1 +1,33 @@
-<!DOCTYPE html><html lang="ar" dir="rtl"><head><title><%= content_for(:title) || "تقارير صيدليتي" %></title><meta name="viewport" content="width=device-width,initial-scale=1"><%= csrf_meta_tags %><%= csp_meta_tag %><%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %><%= javascript_importmap_tags %><style>html{overflow-x:hidden}</style></head><body class="min-h-screen overflow-x-hidden bg-slate-100 text-slate-900"><%= render "shared/demo_banner" %><header class="bg-slate-950 text-white"><nav class="mx-auto flex max-w-7xl flex-wrap items-center gap-4 px-4 py-4" aria-label="التقارير"><%= link_to "+ تقارير صيدليتي", admin_reports_root_path, class: "text-xl font-black" %><%= link_to "المبيعات", admin_reports_sales_path if current_user.can_view_business_reports? %><%= link_to "الطلبات", admin_reports_orders_path if current_user.can_view_business_reports? %><%= link_to "المنتجات", admin_reports_products_path if current_user.can_view_business_reports? || current_user.can_view_inventory_reports? %><%= link_to "المخزون", admin_reports_inventory_index_path if current_user.can_view_inventory_reports? %><%= link_to "العروض", admin_reports_promotions_path if current_user.admin? %><%= link_to "العملاء", admin_reports_customers_path if current_user.admin? %><%= link_to "الروشتات", admin_reports_prescriptions_path if current_user.can_view_prescription_reports? %><%= link_to "التوصيل", admin_reports_fulfilments_path if current_user.can_view_fulfilment_reports? %><%= link_to "عن النسخة التجريبية", demo_path if demo_mode? %><%= link_to "المتجر", root_path, class: "mr-auto" %></nav></header><%= render "shared/flash" %><main><%= yield %></main></body></html>
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+  <head>
+    <title><%= content_for(:title) || "تقارير صيدليتي" %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+    <link rel="icon" href="/icon.png" type="image/png">
+    <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+    <style>html{overflow-x:hidden}</style>
+  </head>
+  <body class="min-h-screen overflow-x-hidden bg-slate-100 text-slate-900">
+    <%= render "shared/demo_banner" %>
+    <header class="bg-slate-950 text-white">
+      <nav class="mx-auto flex max-w-7xl flex-wrap items-center gap-4 px-4 py-4" aria-label="التقارير">
+        <%= link_to "+ تقارير صيدليتي", admin_reports_root_path, class: "text-xl font-black" %>
+        <%= link_to "المبيعات", admin_reports_sales_path if current_user.can_view_business_reports? %>
+        <%= link_to "الطلبات", admin_reports_orders_path if current_user.can_view_business_reports? %>
+        <%= link_to "المنتجات", admin_reports_products_path if current_user.can_view_business_reports? || current_user.can_view_inventory_reports? %>
+        <%= link_to "المخزون", admin_reports_inventory_index_path if current_user.can_view_inventory_reports? %>
+        <%= link_to "العروض", admin_reports_promotions_path if current_user.admin? %>
+        <%= link_to "العملاء", admin_reports_customers_path if current_user.admin? %>
+        <%= link_to "الروشتات", admin_reports_prescriptions_path if current_user.can_view_prescription_reports? %>
+        <%= link_to "التوصيل", admin_reports_fulfilments_path if current_user.can_view_fulfilment_reports? %>
+        <%= link_to "عن النسخة التجريبية", demo_path if demo_mode? %>
+        <%= link_to "المتجر", root_path, class: "mr-auto" %>
+      </nav>
+    </header>
+    <%= render "shared/flash" %>
+    <main><%= yield %></main>
+  </body>
+</html>

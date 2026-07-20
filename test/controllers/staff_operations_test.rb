@@ -14,6 +14,9 @@ class StaffOperationsRequestTest < ActionDispatch::IntegrationTest
     assert_response :success
     get staff_prescriptions_path
     assert_response :success
+    get staff_prescriptions_path(q: "DEMO-PRESCRIPTION-REVIEW")
+    assert_response :success
+    assert_no_match(/Translation missing/, response.body)
     sign_out users(:pharmacist)
 
     sign_in users(:order_manager)

@@ -13,7 +13,7 @@
   <div class="mt-5 grid gap-4">
     <% @prescriptions.each do |prescription| %>
       <%= link_to staff_prescription_path(prescription), class: "grid gap-2 rounded-2xl bg-white p-5 shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-pharmacy-600 sm:grid-cols-4" do %>
-        <strong><%= prescription.order.number %></strong><span><%= prescription.order.customer_first_name %> <%= prescription.order.customer_last_name %></span><span><%= t("staff.prescription_statuses.#{prescription.status}") %></span><span><%= prescription.images.count %> ملفات · منذ <%= time_ago_in_words(prescription.submitted_at) %></span>
+        <strong><%= prescription.order.number %></strong><span><%= prescription.order.customer_first_name %> <%= prescription.order.customer_last_name %></span><span><%= t("staff.prescription_statuses.#{prescription.status}") %></span><span><%= prescription.images.count %> ملفات · <%= l(prescription.submitted_at, format: :short) %></span>
       <% end %>
     <% end %>
   </div>

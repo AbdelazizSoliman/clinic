@@ -147,10 +147,28 @@ and [operator checklist](docs/demo_operator_checklist.md).
 
 ## Screenshots
 
-Screenshots will be captured from the deterministic demo dataset in a later
-visual phase. Until then, the repository keeps a non-breaking
-[screenshot plan](docs/screenshot_plan.md) covering desktop, mobile, customer,
-staff, and administration views; no placeholder image URLs are embedded here.
+All images below come from the real application and deterministic fictional demo
+dataset.
+
+| Arabic storefront | Cart and coupon |
+| --- | --- |
+| ![Arabic RTL pharmacy storefront with search, categories, and promotional hero](docs/images/portfolio/desktop/01-arabic-storefront.png) | ![Arabic cart with seeded products, active coupon, and calculated totals](docs/images/portfolio/desktop/04-cart-coupon.png) |
+
+| Pharmacist review | Fulfilment workflow |
+| --- | --- |
+| ![Pharmacist prescription review with explicit scan and decision states](docs/images/portfolio/desktop/09-prescription-review.png) | ![Arabic staff fulfilment board with multiple order states](docs/images/portfolio/desktop/10-fulfilment-workflow.png) |
+
+| Inventory visibility | Operational reports |
+| --- | --- |
+| ![Arabic inventory dashboard separating physical, reserved, and available stock](docs/images/portfolio/desktop/11-inventory-dashboard.png) | ![Arabic reports dashboard with sales and operational summaries](docs/images/portfolio/desktop/14-reports-dashboard.png) |
+
+| Guided demo | Mobile storefront |
+| --- | --- |
+| ![Role-aware Arabic guided demo center](docs/images/portfolio/desktop/16-guided-demo.png) | ![Arabic storefront adapted to a 390-pixel viewport](docs/images/portfolio/mobile/17-mobile-storefront.png) |
+
+See the [full visual gallery](docs/visual_gallery.md) and
+[capture manifest](docs/screenshot_plan.md) for roles, stable scenarios, and
+sanitization notes.
 
 ## Local setup
 

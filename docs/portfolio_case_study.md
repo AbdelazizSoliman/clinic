@@ -52,6 +52,11 @@ direction-aware layouts, Tailwind responsive utilities, and small Stimulus
 controllers. Hotwire preserves quick navigation and form updates without
 creating a second client-side application or duplicated authorization layer.
 
+![Arabic RTL storefront with search, categories, cart, and promotional hero](images/portfolio/desktop/01-arabic-storefront.png)
+
+*The storefront keeps Arabic discovery, commerce navigation, and promotional
+content in a direction-aware server-rendered layout.*
+
 ### Role isolation and privileged authentication
 
 Devise supplies the account lifecycle. Capability methods and scoped controller
@@ -70,6 +75,11 @@ pending, failed, or infected files remain unavailable for review. This is a
 defense boundary, not a claim that scanning works without an operator-configured
 real scanner.
 
+![Pharmacist review detail with explicit scan and workflow state](images/portfolio/desktop/09-prescription-review.png)
+
+*The pharmacist view exposes the state required for a decision without making
+the private prescription document part of the portfolio image.*
+
 ### Inventory correctness
 
 Checkout does not immediately decrement stock. It locks products and creates
@@ -79,6 +89,11 @@ locks the relevant records, decrements physical stock, marks reservations
 consumed, and writes append-only, arithmetically validated movements.
 Cancellation or rejection releases active reservations rather than adding stock
 that was never removed.
+
+![Inventory dashboard separating physical, reserved, and available stock](images/portfolio/desktop/11-inventory-dashboard.png)
+
+*Operational visibility reflects the same physical/reserved/available model
+enforced by the transaction services.*
 
 ### Commercial history and concurrency
 
@@ -99,6 +114,11 @@ external job execution while seeding, and refuses unsafe environments.
 The guided demo resolves those stable identifiers under the current user's
 normal permissions. The project intentionally uses normal password/TOTP login
 instead of impersonation or a demo bypass.
+
+![Role-aware Arabic guided demo center](images/portfolio/desktop/16-guided-demo.png)
+
+*The guide turns deterministic records into reviewable role journeys while
+preserving normal authentication and authorization.*
 
 ## Notable implementation decisions
 
@@ -188,9 +208,10 @@ claimed.
 - Supplier purchasing, lots/batches, expiry/FEFO, POS, returns, loyalty,
   substitution, and drug-safety rules are not implemented.
 - There is no SMS, courier, payment-gateway, or public API integration.
-- Local browser verification depends on an installed supported browser. CI has
-  the browser dependency and system-test command, but no committed end-to-end
-  system tests currently exercise the guided demo journeys.
+- Linux browser installation was unavailable in the Phase 15E environment.
+  Real-browser journeys and captures were instead run against local Rails using
+  installed Chrome through the DevTools protocol. The repository still has no
+  committed Selenium system-test suite for these guided journeys.
 - Technical safeguards do not replace legal, privacy, pharmacy, security, or
   accessibility review for a real operating market.
 
