@@ -10,6 +10,25 @@ temporary, on-request demonstrations. A permanently available public deployment
 is not guaranteed. The customer and pharmacy workflows are implemented through
 Phase 15; supplier, purchasing, and later advanced modules remain roadmap work.
 
+Start with the [reviewer and presentation index](docs/deliverables_index.md) to
+choose a recruiter, engineering, client, demo, or interview review path.
+
+## Contents
+
+- [Capabilities](#capabilities)
+- [Roles](#roles)
+- [Connected workflow](#connected-workflow)
+- [Technical stack](#technical-stack)
+- [Architecture highlights](#architecture-highlights)
+- [Security and integrity scope](#security-and-integrity-scope)
+- [Demo experience](#demo-experience)
+- [Screenshots](#screenshots)
+- [Local setup](#local-setup)
+- [Docker](#docker)
+- [Tests and quality checks](#tests-and-quality-checks)
+- [Documentation](#documentation)
+- [Roadmap](#roadmap-phases-1627)
+
 ## Capabilities
 
 ### Customer commerce
@@ -239,12 +258,14 @@ the test and audit jobs against PostgreSQL.
 
 ## Documentation
 
+- [Reviewer and presentation index](docs/deliverables_index.md)
 - [Architecture](docs/architecture.md)
 - [Portfolio engineering case study](docs/portfolio_case_study.md)
 - [Feature matrix and roadmap](docs/feature_matrix.md)
 - [Technical reviewer guide](docs/reviewer_guide.md)
-- [Screenshot plan](docs/screenshot_plan.md)
+- [Visual gallery](docs/visual_gallery.md) and [screenshot plan](docs/screenshot_plan.md)
 - [Demo mode](docs/demo_mode.md) and [demo operator checklist](docs/demo_operator_checklist.md)
+- [Presentation and marketplace package](docs/presentation_messaging.md)
 - [Production readiness](docs/production_readiness.md)
 - [Security operations](docs/security_operations.md)
 - [Environment variables](docs/environment_variables.md)

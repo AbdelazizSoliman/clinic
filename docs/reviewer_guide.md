@@ -1,8 +1,9 @@
 # Technical reviewer guide
 
-This guide provides a high-signal path through the repository. Start with the
-[README](../README.md), then use the sequence below rather than reading every
-controller or migration.
+This guide provides a high-signal technical path through the repository. Start
+with the [reviewer and presentation index](deliverables_index.md) if you need a
+different audience path; otherwise use the sequence below rather than reading
+every controller or migration.
 
 For a visual orientation before reading code, open the
 [real-application gallery](visual_gallery.md). Its captions identify the role,
