@@ -7,9 +7,9 @@ administration.
 
 The repository is a software engineering portfolio project and supports
 temporary, on-request demonstrations. A permanently available public deployment
-is not guaranteed. The customer, pharmacy, supplier, and purchasing workflows
-are implemented through Phase 16; batch/lot and later advanced modules remain
-roadmap work.
+is not guaranteed. The customer, pharmacy, supplier, purchasing, batch/lot,
+expiry, and FEFO workflows are implemented through Phase 17. See
+[`docs/batch_inventory.md`](docs/batch_inventory.md).
 
 Start with the [reviewer and presentation index](docs/deliverables_index.md) to
 choose a recruiter, engineering, client, demo, or interview review path.

@@ -7,6 +7,7 @@ class Product < ApplicationRecord
   has_many :images, -> { order(primary: :desc, position: :asc) }, class_name: "ProductImage", dependent: :destroy, inverse_of: :product
   has_many :price_changes, class_name: "ProductPriceChange", dependent: :restrict_with_error
   has_many :inventory_movements, dependent: :restrict_with_error
+  has_many :inventory_batches, dependent: :restrict_with_error
 
   scope :active, -> { where(active: true) }
   scope :featured, -> { active.where(featured: true) }
@@ -45,8 +46,10 @@ class Product < ApplicationRecord
     inventory_reservations.active.sum(:quantity)
   end
 
+  def batch_stock_quantity = inventory_batches.sum(:on_hand_quantity)
+
   def available_to_sell_quantity
-    [ stock_quantity - active_reserved_quantity, 0 ].max
+    inventory_batches.allocatable.sum("on_hand_quantity - reserved_quantity")
   end
 
   def available? = available_to_sell_quantity.positive?

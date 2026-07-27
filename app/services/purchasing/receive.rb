@@ -3,10 +3,11 @@ module Purchasing
     include Support
     Result = Data.define(:success?, :purchase_order, :receipt, :errors)
 
-    def initialize(purchase_order:, actor:, quantities:, idempotency_key:, supplier_document_number: nil,
-      notes: nil, received_at: Time.current, lock_version: nil)
+    def initialize(purchase_order:, actor:, quantities:, idempotency_key:, batches: {},
+      supplier_document_number: nil, notes: nil, received_at: Time.current, lock_version: nil)
       @purchase_order, @actor, @idempotency_key = purchase_order, actor, idempotency_key.to_s
       @quantities, @supplier_document_number, @notes = quantities.to_h, supplier_document_number, notes
+      @batches = batches.to_h
       @received_at, @lock_version = received_at, lock_version
     end
 
@@ -31,26 +32,39 @@ module Purchasing
           item = lines[id.to_s]
           return failure(nil, "بند الاستلام غير صالح") unless item
           return failure(nil, "كمية الاستلام تتجاوز المتبقي للمنتج #{item.product_name_snapshot}") if quantity > item.outstanding_quantity
-          [ item, quantity ]
+          specs = batch_specs_for(item, quantity)
+          return failure(nil, "بيانات التشغيلات أو تواريخ صلاحيتها غير مكتملة") if specs.any? { |spec| spec[:batch_number].blank? || spec[:expiry_date].blank? || !spec[:quantity].positive? }
+          return failure(nil, "يجب أن يساوي مجموع كميات التشغيلات كمية الاستلام") unless specs.sum { |spec| spec[:quantity] } == quantity
+          [ item, quantity, specs ]
         end
         return failure(nil, "أدخل كمية مستلمة واحدة على الأقل") if requested.empty?
 
-        Product.where(id: requested.map { |item, _| item.product_id }.sort).order(:id).lock.load
+        Product.where(id: requested.map { |item, _, _| item.product_id }.sort).order(:id).lock.load
         reference = "PR-#{@purchase_order.id}-#{Digest::SHA256.hexdigest(@idempotency_key).first(10).upcase}"
         receipt = @purchase_order.receipts.create!(reference:, received_by: @actor, received_at: @received_at,
           supplier_document_number: @supplier_document_number.to_s.squish.presence, notes: @notes.to_s.squish.presence,
           idempotency_key: @idempotency_key)
 
-        requested.each do |item, quantity|
+        requested.each do |item, quantity, specs|
           product = item.product.reload
-          before = product.stock_quantity
-          product.update!(stock_quantity: before + quantity)
-          movement = product.inventory_movements.create!(actor: @actor, reference: receipt,
-            movement_type: :purchase_received, quantity_delta: quantity, quantity_before: before,
-            quantity_after: before + quantity, reason: "استلام #{receipt.reference} لأمر الشراء #{@purchase_order.number}",
-            idempotency_key: "purchase-receipt:#{receipt.id}:line:#{item.id}")
-          receipt.items.create!(purchase_order_item: item, quantity:, unit_cost_cents: item.unit_cost_cents,
-            inventory_movement: movement)
+          receipt_item = receipt.items.create!(purchase_order_item: item, quantity:,
+            unit_cost_cents: item.unit_cost_cents, inventory_movement: nil)
+          specs.each_with_index do |spec, index|
+            product_before = product.stock_quantity
+            batch = InventoryBatch.create!(product:, supplier: @purchase_order.supplier, purchase_receipt: receipt,
+              purchase_receipt_item: receipt_item, batch_number: spec[:batch_number],
+              lot_number: spec[:lot_number], manufacture_date: spec[:manufacture_date],
+              expiry_date: spec[:expiry_date], received_at: @received_at,
+              original_quantity: spec[:quantity], on_hand_quantity: spec[:quantity], reserved_quantity: 0,
+              unit_cost_cents: item.unit_cost_cents, notes: spec[:notes])
+            Inventory::BatchAggregate.sync_product!(product)
+            product.inventory_movements.create!(actor: @actor, reference: receipt, inventory_batch: batch,
+              movement_type: :purchase_received, quantity_delta: spec[:quantity],
+              quantity_before: product_before, quantity_after: product.stock_quantity,
+              batch_quantity_before: 0, batch_quantity_after: spec[:quantity],
+              reason: "استلام التشغيلة #{batch.batch_number} عبر #{receipt.reference}",
+              idempotency_key: "purchase-receipt:#{receipt.id}:line:#{item.id}:batch:#{index}")
+          end
           item.update!(received_quantity: item.received_quantity + quantity)
         end
 
@@ -59,10 +73,10 @@ module Purchasing
         @purchase_order.update!(status: complete ? :received : :partially_received,
           received_at: complete ? @received_at : nil)
         event(@purchase_order, "receipt_posted", from:, to: @purchase_order.status,
-          metadata: { receipt_reference: receipt.reference, quantity: requested.sum(&:last) })
+          metadata: { receipt_reference: receipt.reference, quantity: requested.sum { |_, quantity, _| quantity } })
         event(@purchase_order, complete ? "fully_received" : "partially_received", from:, to: @purchase_order.status)
         audit(@purchase_order, "purchase_receipt_posted", receipt_reference: receipt.reference,
-          quantity: requested.sum(&:last))
+          quantity: requested.sum { |_, quantity, _| quantity })
         audit(@purchase_order, complete ? "purchase_order_fully_received" : "purchase_order_partially_received",
           number: @purchase_order.number, receipt_reference: receipt.reference)
         notify(User.where(active: true, role: :admin), @purchase_order, "purchase_receipt_posted",
@@ -79,6 +93,26 @@ module Purchasing
     end
 
     private
+
+    def batch_specs_for(item, quantity)
+      raw_specs = Array(@batches[item.id.to_s] || @batches[item.id])
+      raw_specs = [ {
+        batch_number: "B-#{Digest::SHA256.hexdigest("#{@idempotency_key}:#{item.id}").first(16).upcase}",
+        expiry_date: Date.current + 2.years,
+        quantity:
+      } ] if raw_specs.empty?
+      raw_specs.map.with_index do |raw, index|
+        values = raw.to_h.symbolize_keys
+        {
+          batch_number: values[:batch_number].to_s.squish.upcase,
+          lot_number: values[:lot_number].to_s.squish.upcase.presence,
+          manufacture_date: values[:manufacture_date].presence,
+          expiry_date: values[:expiry_date].presence,
+          quantity: Integer(values[:quantity], exception: false) || (raw_specs.one? && index.zero? ? quantity : 0),
+          notes: values[:notes].to_s.squish.presence
+        }
+      end
+    end
 
     def stale!
       raise ActiveRecord::StaleObjectError.new(@purchase_order, "receive") if @lock_version && @purchase_order.lock_version != @lock_version.to_i

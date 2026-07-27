@@ -163,5 +163,13 @@ public deployment or external scanner/SMTP/storage provider is currently active.
   reads purchasing activity and received cost history.
 
 Look for: admin-only approval, frozen submitted lines, deterministic locks,
-outstanding-quantity validation, receipt idempotency, one referenced inventory
-movement per received line, and no batch/expiry or selling-price side effect.
+outstanding-quantity validation, receipt idempotency, batch-linked inventory
+movements, and no selling-price side effect.
+
+## Phase 17 batch review
+
+Inventory managers and administrators can open **التشغيلات والصلاحية** to inspect
+batch provenance, expiry, quarantine, movements, reservations, orders, and
+customers. The batch report demonstrates FEFO-ready availability and
+received-cost valuation. The deterministic demo includes expired, near-expiry,
+and quarantined examples.

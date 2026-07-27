@@ -114,7 +114,6 @@ authorization.
 
 ## Phase 17 boundary
 
-Receiving increases product-level physical stock only. Batch/lot identifiers,
-expiry dates, FEFO allocation, quarantine, recall, batch-specific returns, and
-expiry reporting belong to Phase 17 and are not implied by Phase 16.
-
+Phase 17 extends each immutable receipt line with one or more batches, mandatory
+expiry, batch-linked movements, FEFO reservation allocations, and
+expiry/quarantine reporting. See [Batch inventory](batch_inventory.md).

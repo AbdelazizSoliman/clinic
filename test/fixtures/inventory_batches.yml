@@ -1,0 +1,21 @@
+featured_primary:
+  product: featured
+  batch_number: TEST-BATCH-FEATURED
+  lot_number: TEST-LOT-FEATURED
+  expiry_date: <%= Date.current + 2.years %>
+  received_at: <%= 1.month.ago %>
+  original_quantity: 20
+  on_hand_quantity: 20
+  reserved_quantity: 0
+  unit_cost_cents: 4000
+
+skin_primary:
+  product: skin_product
+  batch_number: TEST-BATCH-SKIN
+  lot_number: TEST-LOT-SKIN
+  expiry_date: <%= Date.current + 18.months %>
+  received_at: <%= 2.months.ago %>
+  original_quantity: 5
+  on_hand_quantity: 5
+  reserved_quantity: 0
+  unit_cost_cents: 15000

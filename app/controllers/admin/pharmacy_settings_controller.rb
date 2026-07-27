@@ -28,7 +28,7 @@ module Admin
         :address_summary, :support_hours, :footer_text, :default_currency, :default_locale, :time_zone,
         :order_number_prefix, :prescription_review_enabled, :guest_cart_enabled, :customer_registration_enabled,
         :default_low_stock_threshold, :default_maximum_order_quantity, :default_reservation_minutes,
-        :pending_prescription_reservation_hours, :sender_email, :sender_name, :maintenance_mode,
+        :pending_prescription_reservation_hours, :near_expiry_threshold_days, :sender_email, :sender_name, :maintenance_mode,
         :maintenance_message, :logo, :lock_version)
     end
   end

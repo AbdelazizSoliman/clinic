@@ -253,8 +253,8 @@ or global database reset is introduced.
 
 - One globally scoped pharmacy; no multi-branch or multi-tenant boundary.
 - Cash on delivery is the only operational payment method.
-- No batch/lot, expiry, FEFO, purchasing returns, supplier invoices/payments, or
-  POS module.
+- No purchasing returns, supplier invoices/payments, or POS module. Batch/lot,
+  expiry, quarantine, and FEFO are implemented through Phase 17.
 - No per-item substitution workflow or drug-safety rules engine.
 - No SMS, courier, payment-gateway, or public API integration.
 - No permanent public demo is guaranteed.
@@ -263,3 +263,12 @@ or global database reset is introduced.
 
 For implementation status and planned phases, see the
 [feature matrix](feature_matrix.md).
+
+## Batch inventory aggregate
+
+`InventoryBatch` is the stock aggregate root. Receipt movements, reservation
+allocations, and fulfilment consumption reference batches.
+`products.stock_quantity` remains a synchronized compatibility aggregate. FEFO
+locks eligible batches and sorts by expiry, receipt time, and stable ID;
+expired and quarantined stock is excluded. See
+[`batch_inventory.md`](batch_inventory.md).

@@ -45,9 +45,13 @@ class CatalogInventoryAdministrationTest < ActiveSupport::TestCase
     order = create_order(@product)
     assert Inventory::ConsumeReservations.new(order).call
     reservation = order.inventory_reservations.first
-    assert_equal 1, InventoryMovement.where(idempotency_key: "reservation-consumed-#{reservation.id}").count
+    assert_equal reservation.reservation_allocations.count,
+      InventoryMovement.where(reference_type: "InventoryReservationAllocation",
+        reference_id: reservation.reservation_allocation_ids).count
     assert_not Inventory::ConsumeReservations.new(order).call
-    assert_equal 1, InventoryMovement.where(idempotency_key: "reservation-consumed-#{reservation.id}").count
+    assert_equal reservation.reservation_allocations.count,
+      InventoryMovement.where(reference_type: "InventoryReservationAllocation",
+        reference_id: reservation.reservation_allocation_ids).count
   end
 
   test "public scope excludes inactive category and brand" do

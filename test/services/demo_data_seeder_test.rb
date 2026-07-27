@@ -92,8 +92,9 @@ class DemoDataSeederTest < ActiveSupport::TestCase
     end
     Order.where(number: %w[DEMO-READY DEMO-OUT-FOR-DELIVERY DEMO-DELIVERED-OLD]).find_each do |order|
       assert order.inventory_reservations.all?(&:consumed?)
-      assert_equal order.inventory_reservations.count,
-        InventoryMovement.where(reference_type: "InventoryReservation", reference_id: order.inventory_reservation_ids).count
+      allocations = InventoryReservationAllocation.where(inventory_reservation_id: order.inventory_reservation_ids)
+      assert_equal allocations.count,
+        InventoryMovement.where(reference_type: "InventoryReservationAllocation", reference_id: allocations.ids).count
     end
     assert Order.find_by!(number: "DEMO-CANCELLED").inventory_reservations.all?(&:released?)
   end

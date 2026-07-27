@@ -1,5 +1,11 @@
 # Demo mode foundation
 
+Phase 17 adds stable `DEMO-BATCH-EXPIRED`, `DEMO-BATCH-NEAR`, and
+`DEMO-BATCH-QUARANTINE` scenarios, receipt-created supplier batches, and
+batch-linked reservation consumption. Inventory-manager guidance links to the
+Arabic batch inventory screen. Second-run seeding reuses the same fictional
+batch numbers and movement keys.
+
 Set `DEMO_MODE=true` only on an isolated demonstration deployment. The default
 is false. Application code queries `DemoMode.enabled?` (or `demo_mode?` in
 controllers and views); it must not read `DEMO_MODE` directly.

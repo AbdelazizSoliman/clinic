@@ -97,7 +97,8 @@ class PurchasingTest < ActiveSupport::TestCase
       quantity: 1, unit_cost_cents: 600)
     assert_not cross_order.valid?
     assert_includes cross_order.errors[:purchase_order_item], "لا ينتمي إلى أمر الشراء الخاص بالإيصال"
-    assert cross_order.errors[:inventory_movement_id].any?
+    assert_nil receipt.items.first.inventory_movement
+    assert_equal receipt.items.first.quantity, receipt.items.first.inventory_batches.sum(:original_quantity)
   end
 
   test "same receipt key cannot be reused by another order" do

@@ -12,6 +12,7 @@ class PharmacySetting < ApplicationRecord
   validates :default_maximum_order_quantity, numericality: { only_integer: true, in: 1..100 }
   validates :default_reservation_minutes, numericality: { only_integer: true, in: 5..1440 }
   validates :pending_prescription_reservation_hours, numericality: { only_integer: true, in: 1..168 }
+  validates :near_expiry_threshold_days, numericality: { only_integer: true, in: 1..730 }
   validates :support_email, allow_blank: true, format: { with: URI::MailTo::EMAIL_REGEXP }
   validate :acceptable_logo
 
