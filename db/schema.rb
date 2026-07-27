@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_16_230000) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_27_200000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -127,6 +127,28 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_16_230000) do
     t.index ["user_id"], name: "index_one_active_cart_per_user", unique: true, where: "((status = 0) AND (user_id IS NOT NULL))"
     t.check_constraint "(user_id IS NOT NULL) <> (guest_token IS NOT NULL)", name: "carts_exactly_one_owner"
     t.check_constraint "status = ANY (ARRAY[0, 1, 2, 3, 4])", name: "carts_status_valid"
+  end
+
+  create_table "cashier_sessions", force: :cascade do |t|
+    t.bigint "cash_difference_cents"
+    t.datetime "closed_at"
+    t.bigint "closing_cash_counted_cents"
+    t.datetime "created_at", null: false
+    t.bigint "expected_cash_cents"
+    t.string "identifier", null: false
+    t.integer "lock_version", default: 0, null: false
+    t.text "notes"
+    t.datetime "opened_at", null: false
+    t.bigint "opening_cash_cents", default: 0, null: false
+    t.integer "status", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["identifier"], name: "index_cashier_sessions_on_identifier", unique: true
+    t.index ["user_id"], name: "index_cashier_sessions_on_user_id"
+    t.index ["user_id"], name: "index_cashier_sessions_one_open_per_user", unique: true, where: "(status = 0)"
+    t.check_constraint "opening_cash_cents >= 0", name: "cashier_sessions_opening_cash_nonnegative"
+    t.check_constraint "status = 0 AND closed_at IS NULL AND expected_cash_cents IS NULL AND closing_cash_counted_cents IS NULL AND cash_difference_cents IS NULL OR status = 1 AND closed_at IS NOT NULL AND expected_cash_cents >= 0 AND closing_cash_counted_cents >= 0 AND cash_difference_cents = (closing_cash_counted_cents - expected_cash_cents)", name: "cashier_sessions_close_consistent"
+    t.check_constraint "status = ANY (ARRAY[0, 1])", name: "cashier_sessions_status_valid"
   end
 
   create_table "categories", force: :cascade do |t|
@@ -272,7 +294,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_16_230000) do
     t.index ["actor_id"], name: "index_inventory_batch_events_on_actor_id"
     t.index ["inventory_batch_id", "created_at"], name: "idx_on_inventory_batch_id_created_at_27dad0d21b"
     t.index ["inventory_batch_id"], name: "index_inventory_batch_events_on_inventory_batch_id"
-    t.check_constraint "event_type::text = ANY (ARRAY['created'::character varying, 'quarantined'::character varying, 'quarantine_released'::character varying, 'adjusted'::character varying]::text[])", name: "inventory_batch_events_type_valid"
+    t.check_constraint "event_type::text = ANY (ARRAY['created'::character varying::text, 'quarantined'::character varying::text, 'quarantine_released'::character varying::text, 'adjusted'::character varying::text])", name: "inventory_batch_events_type_valid"
   end
 
   create_table "inventory_batches", force: :cascade do |t|
@@ -335,6 +357,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_16_230000) do
     t.index ["product_id"], name: "index_inventory_movements_on_product_id"
     t.index ["reference_type", "reference_id"], name: "index_inventory_movements_on_reference"
     t.check_constraint "inventory_batch_id IS NULL AND batch_quantity_before IS NULL AND batch_quantity_after IS NULL OR inventory_batch_id IS NOT NULL AND batch_quantity_before >= 0 AND batch_quantity_after >= 0 AND batch_quantity_after = (batch_quantity_before + quantity_delta)", name: "inventory_movements_batch_quantities_valid"
+    t.check_constraint "movement_type = ANY (ARRAY[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])", name: "inventory_movements_type_valid"
     t.check_constraint "quantity_before >= 0 AND quantity_after >= 0", name: "inventory_movements_quantities_nonnegative"
     t.check_constraint "quantity_delta <> 0", name: "inventory_movements_delta_nonzero"
   end
@@ -614,6 +637,99 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_16_230000) do
     t.check_constraint "default_reservation_minutes >= 5 AND default_reservation_minutes <= 1440 AND pending_prescription_reservation_hours >= 1 AND pending_prescription_reservation_hours <= 168", name: "pharmacy_settings_reservation_defaults"
     t.check_constraint "near_expiry_threshold_days >= 1 AND near_expiry_threshold_days <= 730", name: "pharmacy_settings_near_expiry_threshold_valid"
     t.check_constraint "singleton_key = 1", name: "pharmacy_settings_singleton"
+  end
+
+  create_table "pos_payments", force: :cascade do |t|
+    t.bigint "amount_cents", null: false
+    t.bigint "change_cents", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.string "external_reference"
+    t.integer "payment_method", null: false
+    t.bigint "pos_sale_id", null: false
+    t.bigint "tendered_cents"
+    t.datetime "updated_at", null: false
+    t.index ["pos_sale_id"], name: "index_pos_payments_on_pos_sale_id"
+    t.check_constraint "amount_cents > 0", name: "pos_payments_amount_positive"
+    t.check_constraint "payment_method = 0 AND tendered_cents >= amount_cents AND change_cents = (tendered_cents - amount_cents) OR payment_method = 1 AND tendered_cents IS NULL AND change_cents = 0", name: "pos_payments_tender_consistent"
+    t.check_constraint "payment_method = ANY (ARRAY[0, 1])", name: "pos_payments_method_valid"
+  end
+
+  create_table "pos_sale_batch_allocations", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "inventory_batch_id", null: false
+    t.bigint "inventory_movement_id"
+    t.bigint "pos_sale_item_id", null: false
+    t.integer "quantity", null: false
+    t.bigint "unit_cost_cents"
+    t.datetime "updated_at", null: false
+    t.index ["inventory_batch_id"], name: "index_pos_sale_batch_allocations_on_inventory_batch_id"
+    t.index ["inventory_movement_id"], name: "index_pos_sale_batch_allocations_on_inventory_movement_id"
+    t.index ["pos_sale_item_id", "inventory_batch_id"], name: "index_pos_allocations_unique_batch", unique: true
+    t.index ["pos_sale_item_id"], name: "index_pos_sale_batch_allocations_on_pos_sale_item_id"
+    t.check_constraint "quantity > 0", name: "pos_allocations_quantity_positive"
+    t.check_constraint "unit_cost_cents IS NULL OR unit_cost_cents >= 0", name: "pos_allocations_cost_nonnegative"
+  end
+
+  create_table "pos_sale_items", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "discount_cents", default: 0, null: false
+    t.bigint "line_total_cents", null: false
+    t.integer "lock_version", default: 0, null: false
+    t.bigint "original_unit_price_cents", null: false
+    t.bigint "pos_sale_id", null: false
+    t.text "prescription_approval_reason"
+    t.datetime "prescription_approved_at"
+    t.bigint "prescription_approved_by_id"
+    t.string "product_barcode"
+    t.bigint "product_id", null: false
+    t.string "product_name", null: false
+    t.string "product_sku"
+    t.integer "quantity", null: false
+    t.boolean "requires_prescription", default: false, null: false
+    t.bigint "unit_price_cents", null: false
+    t.datetime "updated_at", null: false
+    t.index ["pos_sale_id", "product_id"], name: "index_pos_sale_items_on_pos_sale_id_and_product_id", unique: true
+    t.index ["pos_sale_id"], name: "index_pos_sale_items_on_pos_sale_id"
+    t.index ["prescription_approved_by_id"], name: "index_pos_sale_items_on_prescription_approved_by_id"
+    t.index ["product_id"], name: "index_pos_sale_items_on_product_id"
+    t.check_constraint "original_unit_price_cents >= 0 AND unit_price_cents >= 0 AND discount_cents >= 0 AND line_total_cents >= 0", name: "pos_sale_items_money_nonnegative"
+    t.check_constraint "quantity > 0", name: "pos_sale_items_quantity_positive"
+  end
+
+  create_table "pos_sales", force: :cascade do |t|
+    t.bigint "automatic_discount_cents", default: 0, null: false
+    t.bigint "cashier_id", null: false
+    t.bigint "cashier_session_id", null: false
+    t.datetime "completed_at"
+    t.string "completion_idempotency_key"
+    t.datetime "created_at", null: false
+    t.string "currency", default: "EGP", null: false
+    t.datetime "discount_approved_at"
+    t.bigint "discount_approved_by_id"
+    t.integer "lock_version", default: 0, null: false
+    t.bigint "manual_discount_cents", default: 0, null: false
+    t.text "manual_discount_reason"
+    t.string "number", null: false
+    t.string "pricing_calculation_version"
+    t.integer "status", default: 0, null: false
+    t.bigint "subtotal_cents", default: 0, null: false
+    t.bigint "tax_cents", default: 0, null: false
+    t.bigint "total_cents", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.text "void_reason"
+    t.datetime "voided_at"
+    t.bigint "voided_by_id"
+    t.index ["cashier_id"], name: "index_pos_sales_on_cashier_id"
+    t.index ["cashier_session_id"], name: "index_pos_sales_on_cashier_session_id"
+    t.index ["completion_idempotency_key"], name: "index_pos_sales_on_completion_key", unique: true, where: "(completion_idempotency_key IS NOT NULL)"
+    t.index ["discount_approved_by_id"], name: "index_pos_sales_on_discount_approved_by_id"
+    t.index ["number"], name: "index_pos_sales_on_number", unique: true
+    t.index ["status", "completed_at"], name: "index_pos_sales_on_status_and_completed_at"
+    t.index ["voided_by_id"], name: "index_pos_sales_on_voided_by_id"
+    t.check_constraint "currency::text = 'EGP'::text", name: "pos_sales_currency_valid"
+    t.check_constraint "status = ANY (ARRAY[0, 1, 2])", name: "pos_sales_status_valid"
+    t.check_constraint "subtotal_cents >= 0 AND automatic_discount_cents >= 0 AND manual_discount_cents >= 0 AND tax_cents >= 0 AND total_cents >= 0", name: "pos_sales_money_nonnegative"
+    t.check_constraint "total_cents = (subtotal_cents - automatic_discount_cents - manual_discount_cents + tax_cents)", name: "pos_sales_total_consistent"
   end
 
   create_table "prescriptions", force: :cascade do |t|
@@ -953,7 +1069,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_16_230000) do
     t.index ["user_id"], name: "index_report_export_events_on_user_id"
     t.check_constraint "format::text = 'csv'::text", name: "report_export_events_format_valid"
     t.check_constraint "range_end > range_start AND row_count >= 0", name: "report_export_events_range_rows_valid"
-    t.check_constraint "report_type::text = ANY (ARRAY['sales'::character varying, 'orders'::character varying, 'products'::character varying, 'inventory'::character varying, 'promotions'::character varying, 'customers'::character varying, 'prescriptions'::character varying, 'fulfilments'::character varying, 'purchasing'::character varying, 'batches'::character varying]::text[])", name: "report_export_events_type_valid"
+    t.check_constraint "report_type::text = ANY (ARRAY['sales'::character varying, 'orders'::character varying, 'products'::character varying, 'inventory'::character varying, 'promotions'::character varying, 'customers'::character varying, 'prescriptions'::character varying, 'fulfilments'::character varying, 'purchasing'::character varying, 'batches'::character varying, 'pos'::character varying]::text[])", name: "report_export_events_type_valid"
   end
 
   create_table "report_exports", force: :cascade do |t|
@@ -1124,6 +1240,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_16_230000) do
   add_foreign_key "cart_items", "products"
   add_foreign_key "carts", "coupons", column: "applied_coupon_id"
   add_foreign_key "carts", "users"
+  add_foreign_key "cashier_sessions", "users"
   add_foreign_key "coupons", "promotions"
   add_foreign_key "delivery_methods", "delivery_zones"
   add_foreign_key "delivery_slots", "delivery_zones"
@@ -1169,6 +1286,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_16_230000) do
   add_foreign_key "orders", "delivery_zones"
   add_foreign_key "orders", "users"
   add_foreign_key "orders", "users", column: "cancelled_by_id"
+  add_foreign_key "pos_payments", "pos_sales"
+  add_foreign_key "pos_sale_batch_allocations", "inventory_batches"
+  add_foreign_key "pos_sale_batch_allocations", "inventory_movements"
+  add_foreign_key "pos_sale_batch_allocations", "pos_sale_items"
+  add_foreign_key "pos_sale_items", "pos_sales"
+  add_foreign_key "pos_sale_items", "products"
+  add_foreign_key "pos_sale_items", "users", column: "prescription_approved_by_id"
+  add_foreign_key "pos_sales", "cashier_sessions"
+  add_foreign_key "pos_sales", "users", column: "cashier_id"
+  add_foreign_key "pos_sales", "users", column: "discount_approved_by_id"
+  add_foreign_key "pos_sales", "users", column: "voided_by_id"
   add_foreign_key "prescriptions", "orders", on_delete: :cascade
   add_foreign_key "prescriptions", "users"
   add_foreign_key "prescriptions", "users", column: "reviewed_by_id"

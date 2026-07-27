@@ -22,7 +22,8 @@ module DemoGuidance
           [ "افتح قائمة المراجعة", "اعرض الوصفات المنتظرة وحالات الفحص.", :pharmacist_queue, :view ],
           [ "افتح المثال قيد المراجعة", "يُحل الطلب DEMO-PRESCRIPTION-REVIEW دون تثبيت رقم قاعدة بيانات.", :prescription_under_review, :view ],
           [ "قارن القرارات السابقة", "شاهد أمثلة الاعتماد والرفض والرسائل الآمنة.", :prescription_examples, :view ],
-          [ "اربط الوصفة بالطلب", "لاحظ انتقال حالة الطلب وتحرير أو تمديد الحجز.", :prescription_orders, :view ]
+          [ "اربط الوصفة بالطلب", "لاحظ انتقال حالة الطلب وتحرير أو تمديد الحجز.", :prescription_orders, :view ],
+          [ "نقطة البيع", "شاهد جلسة مفتوحة واعتماد بند دوائي قبل البيع.", :pos_open_session, :explore ]
         ]
       },
       order_manager: {
@@ -33,7 +34,8 @@ module DemoGuidance
           [ "قيد التجهيز", "قارن DEMO-PREPARING بالحالة المؤكدة.", :operations_preparing, :view ],
           [ "جاهز للتوصيل", "شاهد DEMO-READY بعد استهلاك المخزون المحجوز.", :operations_ready, :view ],
           [ "خرج للتوصيل", "افتح مهمة DEMO-OUT-FOR-DELIVERY المسندة.", :operations_dispatched, :view ],
-          [ "إلغاء وتحرير الحجز", "راجع DEMO-CANCELLED كمثال تاريخي لا يحتاج تعديلًا.", :operations_cancelled, :view ]
+          [ "إلغاء وتحرير الحجز", "راجع DEMO-CANCELLED كمثال تاريخي لا يحتاج تعديلًا.", :operations_cancelled, :view ],
+          [ "إيصال نقطة بيع", "تتبع بيعًا نقديًا مكتملًا وتشغيلاته.", :pos_completed_sale, :view ]
         ]
       },
       inventory_manager: {
@@ -58,6 +60,7 @@ module DemoGuidance
           [ "العرض والكوبون النشطان", "افتح حملة demo:active-cart المرتبطة بكوبون DEMO10.", :admin_promotion, :view ],
           [ "مناطق التوصيل", "قارن الرسوم والحدود والمنطقة المتوقفة.", :admin_delivery, :view ],
           [ "التقارير", "اعرض آخر 30 يومًا لالتقاط الطلب التاريخي المكتمل.", :admin_reports, :view ],
+          [ "تقارير نقطة البيع", "راجع طرق الدفع والتسويات وتتبع التشغيلات.", :pos_reports, :view ],
           [ "اعتماد المشتريات", "شاهد DEMO-PO-SUBMITTED كأمر ينتظر اعتماد المدير.", :purchasing_submitted, :view ],
           [ "الأمن والتشغيل", "اختم بحالة 2FA والأحداث والتنبيهات التشغيلية.", :admin_security, :view ]
         ]

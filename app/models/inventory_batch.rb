@@ -8,6 +8,7 @@ class InventoryBatch < ApplicationRecord
   has_many :reservation_allocations, class_name: "InventoryReservationAllocation", dependent: :restrict_with_error
   has_many :events, class_name: "InventoryBatchEvent", dependent: :restrict_with_error
   has_many :inventory_reservations, through: :reservation_allocations
+  has_many :pos_sale_batch_allocations, dependent: :restrict_with_error
 
   normalizes :batch_number, :lot_number, with: ->(value) { value.to_s.strip.upcase.presence }
 

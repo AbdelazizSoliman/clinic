@@ -34,6 +34,22 @@ Rails.application.routes.draw do
   resources :report_exports, only: %i[index create] do
     member { get :download }
   end
+  namespace :pos do
+    root "dashboard#index"
+    resources :sessions, only: %i[index create show], param: :identifier do
+      member { patch :close }
+    end
+    resources :sales, only: %i[index new create show], param: :number do
+      member do
+        post :complete
+        patch :void
+      end
+      resources :items, only: %i[create update destroy]
+      post "items/:item_id/approve_prescription", to: "approvals#prescription", as: :approve_prescription
+      post "approve_discount", to: "approvals#discount", as: :approve_discount
+    end
+    resources :products, only: :index
+  end
   resource :account, only: %i[show edit update], controller: "account"
   namespace :account do
     resources :addresses, except: :show do
@@ -97,6 +113,8 @@ Rails.application.routes.draw do
       resources :fulfilments, only: :index
       resources :purchasing, only: :index
       resources :batches, only: :index
+      resources :pos, only: :index
+      get "pos", to: "pos#index", as: :pos_index
     end
     root "inventory#index"
     resources :products do

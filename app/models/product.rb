@@ -8,6 +8,7 @@ class Product < ApplicationRecord
   has_many :price_changes, class_name: "ProductPriceChange", dependent: :restrict_with_error
   has_many :inventory_movements, dependent: :restrict_with_error
   has_many :inventory_batches, dependent: :restrict_with_error
+  has_many :pos_sale_items, dependent: :restrict_with_error
 
   scope :active, -> { where(active: true) }
   scope :featured, -> { active.where(featured: true) }

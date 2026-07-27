@@ -79,5 +79,17 @@ module Reports
         end
       Result.new(headers: %w[التشغيلة اللوط المنتج المورد الإيصال الاستلام الصلاحية الحالة الأصلية الفعلية المحجوزة المتاحة تكلفة_الوحدة_قرش القيمة_قرش], rows:)
     end
+    def pos
+      rows = PosSale.completed.where(completed_at: @range.range)
+        .includes(:cashier, :cashier_session, :payments, items: :batch_allocations)
+        .order(:completed_at).limit(CsvExporter::MAX_ROWS + 1).map do |sale|
+          [ sale.number, sale.completed_at, sale.cashier.full_name, sale.cashier_session.identifier,
+            sale.subtotal_cents, sale.automatic_discount_cents, sale.manual_discount_cents,
+            sale.total_cents, sale.payments.map(&:payment_method).join("+"),
+            sale.items.sum(&:quantity), sale.items.sum { |item| item.batch_allocations.size },
+            sale.items.count(&:requires_prescription?) ]
+        end
+      Result.new(headers: %w[الإيصال التاريخ الكاشير الجلسة الخام_قرش الخصم_التلقائي_قرش الخصم_اليدوي_قرش الصافي_قرش طرق_الدفع الوحدات التشغيلات بنود_الروشتة], rows:)
+    end
   end
 end

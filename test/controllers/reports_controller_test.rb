@@ -57,4 +57,13 @@ class ReportsControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to admin_reports_root_path(preset: "current_month")
   end
+
+  test "authorized roles view and export POS reports" do
+    sign_in users(:inventory_manager)
+    get admin_reports_pos_path
+    assert_response :success
+    get admin_reports_pos_path(format: :csv, preset: "today")
+    assert_response :success
+    assert_equal "text/csv", response.media_type
+  end
 end

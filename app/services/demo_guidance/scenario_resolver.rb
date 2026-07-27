@@ -48,6 +48,13 @@ module DemoGuidance
     def operations_ready = allowed?(:can_operate_orders?) && staff_order("DEMO-READY", "ready_for_delivery")
     def operations_dispatched = allowed?(:can_manage_delivery?) && fulfilment("DEMO-OUT-FOR-DELIVERY", "dispatched")
     def operations_cancelled = allowed?(:can_operate_orders?) && staff_order("DEMO-CANCELLED", "cancelled")
+    def pos_open_session = allowed?(:can_operate_pos?) && @routes.pos_root_path
+    def pos_completed_sale
+      return unless allowed?(:can_operate_pos?)
+      sale = PosSale.find_by(number: "DEMO-POS-CASH")
+      sale ? @routes.pos_sale_path(sale) : @routes.pos_sales_path
+    end
+    def pos_reports = allowed?(:can_view_pos_reports?) && @routes.admin_reports_pos_path(preset: "last_30_days")
 
     def inventory_dashboard = allowed?(:can_manage_inventory?) && @routes.admin_root_path
     def inventory_low = allowed?(:can_manage_inventory?) && @routes.admin_low_stock_inventory_path

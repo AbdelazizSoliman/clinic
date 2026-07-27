@@ -1,5 +1,9 @@
 # Saydaliyati — Arabic RTL Pharmacy Commerce and Operations
 
+Phase 18 adds cashier sessions, scanner-ready Arabic RTL POS, transactional
+batch-FEFO sales, pharmacist approvals, controlled discounts, reconciliation,
+printable receipts and POS reports. See [docs/pos.md](docs/pos.md).
+
 Saydaliyati (صيدليتي) is a Ruby on Rails application that connects an Arabic
 right-to-left customer storefront with prescription review, stock reservation,
 order fulfilment, delivery operations, promotions, reporting, and pharmacy

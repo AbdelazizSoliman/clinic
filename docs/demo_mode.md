@@ -1,5 +1,10 @@
 # Demo mode foundation
 
+The deterministic data includes `DEMO-POS-OPEN`, balanced and variance closed
+sessions, cash/multi-item/prescription/discount sales and `DEMO-POS-VOID`.
+Stable completion keys make a second run reuse records without repeating stock
+consumption. Guided links are capability-gated.
+
 Phase 17 adds stable `DEMO-BATCH-EXPIRED`, `DEMO-BATCH-NEAR`, and
 `DEMO-BATCH-QUARANTINE` scenarios, receipt-created supplier batches, and
 batch-linked reservation consumption. Inventory-manager guidance links to the

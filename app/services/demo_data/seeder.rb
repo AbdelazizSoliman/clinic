@@ -78,8 +78,9 @@ module DemoData
       seed_ready_cart(accounts.fetch(:customer), products, coupons.fetch(:active))
       orders = seed_orders(accounts, addresses, products, zones, promotions, coupons)
       purchasing = seed_purchasing(accounts, products)
+      pos = seed_pos(accounts, products)
       setting.class.invalidate_cache
-      build_manifest(accounts, categories, brands, products, zones, orders, promotions, coupons, purchasing)
+      build_manifest(accounts, categories, brands, products, zones, orders, promotions, coupons, purchasing, pos)
     end
 
     def seed_accounts
@@ -419,13 +420,77 @@ module DemoData
       { suppliers:, orders: }
     end
 
-    def build_manifest(accounts, categories, brands, products, zones, orders, promotions, coupons, purchasing)
+    def seed_pos(accounts, products)
+      operator = accounts.fetch(:order_manager)
+      pharmacist = accounts.fetch(:pharmacist)
+      admin = accounts.fetch(:admin)
+
+      closed = CashierSession.find_by(identifier: "DEMO-POS-CLOSED") ||
+        Pos::OpenSession.new(actor: operator, opening_cash_cents: 20_000, identifier: "DEMO-POS-CLOSED").call.record
+      unless closed.closed?
+        create_demo_sale(closed, operator, "DEMO-POS-CASH", [ [ products.fetch("paracetamol-20"), 1 ] ],
+          key: "demo:pos:cash")
+        create_demo_sale(closed, operator, "DEMO-POS-MULTI", [
+          [ products.fetch("paracetamol-20"), 2 ], [ products.fetch("vitamin-c"), 1 ]
+        ], key: "demo:pos:multi")
+        rx_sale = create_demo_sale(closed, operator, "DEMO-POS-RX", [ [ products.fetch("rx-tablets-a"), 1 ] ],
+          key: "demo:pos:rx", before_complete: ->(sale) {
+            Pos::ApprovePrescription.new(item: sale.items.first, actor: pharmacist,
+              reason: "اعتماد صيدلي تجريبي داخل الصيدلية").call
+          })
+        raise Refused, "POS prescription demo failed" unless rx_sale.completed?
+        create_demo_sale(closed, operator, "DEMO-POS-DISCOUNT", [ [ products.fetch("daily-moisturizer"), 1 ] ],
+          key: "demo:pos:discount", before_complete: ->(sale) {
+            Pos::ApproveDiscount.new(sale:, actor: admin, amount_cents: 500,
+              reason: "خصم يدوي تجريبي موثق").call
+          })
+        expected = closed.expected_cash
+        result = Pos::CloseSession.new(session: closed, actor: operator, counted_cash_cents: expected,
+          notes: "تسوية تجريبية متوازنة").call
+        raise Refused, result.errors.join("، ") unless result.success?
+      end
+
+      variance = CashierSession.find_by(identifier: "DEMO-POS-VARIANCE") ||
+        Pos::OpenSession.new(actor: admin, opening_cash_cents: 10_000, identifier: "DEMO-POS-VARIANCE").call.record
+      if variance.open?
+        result = Pos::CloseSession.new(session: variance, actor: admin, counted_cash_cents: 10_100,
+          notes: "فرق تجريبي صغير موثق").call
+        raise Refused, result.errors.join("، ") unless result.success?
+      end
+
+      open_session = CashierSession.find_by(identifier: "DEMO-POS-OPEN") ||
+        Pos::OpenSession.new(actor: pharmacist, opening_cash_cents: 15_000, identifier: "DEMO-POS-OPEN").call.record
+      unless PosSale.exists?(number: "DEMO-POS-VOID")
+        draft = open_session.pos_sales.create!(cashier: pharmacist, number: "DEMO-POS-VOID")
+        Pos::Cart.new(sale: draft, actor: pharmacist).add(product: products.fetch("sterile-gauze"))
+        Pos::VoidSale.new(sale: draft, actor: pharmacist, reason: "تراجع عميل تجريبي").call
+      end
+      { sessions: [ closed, variance, open_session ], sales: PosSale.where("number LIKE 'DEMO-POS-%'") }
+    end
+
+    def create_demo_sale(session, cashier, number, lines, key:, before_complete: nil)
+      return PosSale.find_by!(number:) if PosSale.exists?(number:)
+      sale = session.pos_sales.create!(cashier:, number:)
+      lines.each do |product, quantity|
+        result = Pos::Cart.new(sale:, actor: cashier).add(product:, quantity:)
+        raise Refused, result.errors.join("، ") unless result.success?
+      end
+      before_complete&.call(sale)
+      result = Pos::Complete.new(sale:, actor: cashier, idempotency_key: key,
+        payments: [ { payment_method: "cash", amount_cents: sale.total_cents,
+          tendered_cents: sale.total_cents } ]).call
+      raise Refused, result.errors.join("، ") unless result.success?
+      result.record
+    end
+
+    def build_manifest(accounts, categories, brands, products, zones, orders, promotions, coupons, purchasing, pos)
       Manifest.new(accounts: accounts.size, categories: categories.size, brands: brands.size, products: products.size,
         inventory_movements: InventoryMovement.where("idempotency_key LIKE 'demo:%'").count,
         customers: accounts.values.count(&:customer?), prescriptions: orders.count { |order| order.prescription.present? },
         orders: orders.size, promotions: promotions.size, coupons: coupons.size, delivery_zones: zones.size,
         suppliers: purchasing[:suppliers].size, purchase_orders: purchasing[:orders].size,
-        purchase_receipts: PurchaseReceipt.where("idempotency_key LIKE 'demo:receipt:%'").count)
+        purchase_receipts: PurchaseReceipt.where("idempotency_key LIKE 'demo:receipt:%'").count,
+        cashier_sessions: pos[:sessions].size, pos_sales: pos[:sales].count)
     end
   end
 end

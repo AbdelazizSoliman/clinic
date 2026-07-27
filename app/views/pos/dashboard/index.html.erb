@@ -1,0 +1,10 @@
+<% content_for :title, "نقطة البيع" %>
+<div class="mx-auto max-w-7xl px-4 py-8">
+  <div class="flex flex-wrap items-center justify-between gap-4"><div><h1 class="text-3xl font-black">نقطة البيع</h1><p class="mt-1 text-slate-600">بيع فوري من التشغيلات وفق FEFO.</p></div><%= link_to "سجل المبيعات", pos_sales_path, class: "rounded-xl border px-4 py-2" %></div>
+  <% if @session %>
+    <section class="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-5"><strong>الجلسة المفتوحة:</strong> <span dir="ltr"><%= @session.identifier %></span> · بدأت <%= l(@session.opened_at, format: :short) %><div class="mt-4 flex gap-3"><%= link_to(@sale ? "متابعة البيع الحالي" : "بدء بيع جديد", @sale ? pos_sale_path(@sale) : new_pos_sale_path, class: "rounded-xl bg-emerald-700 px-5 py-3 font-bold text-white") %><%= link_to "التسوية والإغلاق", pos_session_path(@session), class: "rounded-xl bg-white px-5 py-3 font-bold" %></div></section>
+  <% else %>
+    <section class="mt-6 rounded-2xl bg-white p-6 shadow-sm"><h2 class="text-xl font-black">فتح جلسة صندوق</h2><%= form_with url: pos_sessions_path, class: "mt-4 flex flex-wrap items-end gap-3" do %><div><%= label_tag :opening_cash_cents, "رصيد البداية (قرش)", class: "block font-bold" %><%= number_field_tag :opening_cash_cents, 0, min: 0, required: true, class: "mt-1 rounded-xl border p-3", dir: "ltr" %></div><%= submit_tag "فتح الجلسة", class: "rounded-xl bg-pharmacy-700 px-6 py-3 font-bold text-white" %><% end %></section>
+  <% end %>
+  <section class="mt-8"><h2 class="text-xl font-black">أحدث المبيعات</h2><div class="mt-3 grid gap-3"><% @recent_sales.each do |sale| %><%= link_to pos_sale_path(sale), class: "flex justify-between rounded-xl bg-white p-4" do %><span dir="ltr"><%= sale.number %></span><strong><%= number_to_currency(sale.total_cents / 100.0, unit: "ج.م") %></strong><% end %><% end %></div></section>
+</div>

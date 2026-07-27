@@ -1,5 +1,10 @@
 # Architecture overview
 
+Phase 18 uses a dedicated `PosSale` aggregate. Online `Order` retains
+customer/delivery/fulfilment semantics; POS drafts stay stock-neutral and
+completed counter sales consume the shared batch aggregate transactionally.
+See [pos.md](pos.md).
+
 ## System context
 
 Saydaliyati serves five authenticated roles through one Arabic RTL web

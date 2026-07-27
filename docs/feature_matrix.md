@@ -1,5 +1,15 @@
 # Feature matrix
 
+| Phase 18 capability | Status |
+| --- | --- |
+| Cashier sessions and reconciliation | Complete |
+| Arabic RTL cart and barcode/SKU search | Complete |
+| Batch FEFO counter-sale completion | Complete |
+| Pharmacist approval and controlled discount | Complete |
+| Cash/external-terminal marker and printable receipt | Complete |
+| POS reports, CSV and deterministic demo | Complete |
+| Returns/refunds and prescription substitution | Deferred (Phases 22/19) |
+
 Status meanings:
 
 - **Implemented** — present in application code and covered by repository tests.

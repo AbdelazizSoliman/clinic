@@ -1,5 +1,10 @@
 # Batch inventory, expiry, and FEFO
 
+Phase 18 POS uses the same batch aggregate. Draft carts do not reserve;
+completion locks eligible batches in FEFO order, persists
+`PosSaleBatchAllocation`, appends `pos_sale` movements and synchronizes the
+product compatibility aggregate. See [pos.md](pos.md).
+
 Phase 17 makes `InventoryBatch` the pharmaceutical stock aggregate root.
 `Product#stock_quantity` remains a compatibility aggregate cache and must equal
 the sum of batch on-hand quantities.

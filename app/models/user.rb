@@ -17,6 +17,8 @@ class User < ApplicationRecord
   has_many :created_purchase_orders, class_name: "PurchaseOrder", foreign_key: :created_by_id, dependent: :restrict_with_error
   has_many :approved_purchase_orders, class_name: "PurchaseOrder", foreign_key: :approved_by_id, dependent: :restrict_with_error
   has_many :purchase_receipts, foreign_key: :received_by_id, dependent: :restrict_with_error
+  has_many :cashier_sessions, dependent: :restrict_with_error
+  has_many :pos_sales, foreign_key: :cashier_id, dependent: :restrict_with_error
 
   enum :role, { customer: 0, admin: 1, pharmacist: 2, order_manager: 3, inventory_manager: 4 }, default: :customer, validate: true
 
@@ -69,6 +71,10 @@ class User < ApplicationRecord
   def can_export_reports? = admin? || inventory_manager? || order_manager? || pharmacist?
   def can_manage_users? = admin?
   def can_manage_application_settings? = admin?
+  def can_operate_pos? = admin? || pharmacist? || order_manager?
+  def can_approve_pos_prescriptions? = pharmacist?
+  def can_approve_pos_discounts? = admin?
+  def can_view_pos_reports? = admin? || order_manager? || inventory_manager?
 
   def active_for_authentication?
     super && active?

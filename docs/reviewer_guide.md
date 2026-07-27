@@ -1,5 +1,11 @@
 # Technical reviewer guide
 
+For Phase 18, sign in as the order manager, pharmacist or admin and open
+`/pos`. Open a session, scan a demo barcode, complete a cash sale, inspect the
+receipt and close the session. Use the pharmacist for a prescription-required
+line and the admin for a manual discount. Reports are at `/admin/reports/pos`.
+See [pos.md](pos.md).
+
 This guide provides a high-signal technical path through the repository. Start
 with the [reviewer and presentation index](deliverables_index.md) if you need a
 different audience path; otherwise use the sequence below rather than reading

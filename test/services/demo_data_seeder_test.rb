@@ -47,6 +47,8 @@ class DemoDataSeederTest < ActiveSupport::TestCase
     assert_equal 3, @manifest.suppliers
     assert_equal 7, @manifest.purchase_orders
     assert_equal 3, @manifest.purchase_receipts
+    assert_equal 3, @manifest.cashier_sessions
+    assert_equal 5, @manifest.pos_sales
     assert_empty ActionMailer::Base.deliveries
 
     DemoData::Accounts::DEFINITIONS.each_value do |definition|
@@ -72,6 +74,11 @@ class DemoDataSeederTest < ActiveSupport::TestCase
     assert PurchaseOrder.find_by!(number: "DEMO-PO-RECEIVED").received?
     assert PurchaseOrder.find_by!(number: "DEMO-PO-CANCELLED").cancelled?
     assert_equal 4, PurchaseOrder.find_by!(number: "DEMO-PO-CANCELLED-PARTIAL").items.first.received_quantity
+    assert PosSale.find_by!(number: "DEMO-POS-CASH").completed?
+    assert PosSale.find_by!(number: "DEMO-POS-RX").items.first.prescription_approved?
+    assert PosSale.find_by!(number: "DEMO-POS-DISCOUNT").manual_discount_cents.positive?
+    assert PosSale.find_by!(number: "DEMO-POS-VOID").voided?
+    assert CashierSession.find_by!(identifier: "DEMO-POS-OPEN").open?
   end
 
   test "seeding twice reuses every stable demo record" do
@@ -129,7 +136,10 @@ class DemoDataSeederTest < ActiveSupport::TestCase
       reservations: InventoryReservation.joins(:order).where("orders.number LIKE 'DEMO-%'").count,
       suppliers: Supplier.where("code LIKE 'DEMO-SUP-%'").count,
       purchase_orders: PurchaseOrder.where("number LIKE 'DEMO-PO-%'").count,
-      purchase_receipts: PurchaseReceipt.where("idempotency_key LIKE 'demo:receipt:%'").count
+      purchase_receipts: PurchaseReceipt.where("idempotency_key LIKE 'demo:receipt:%'").count,
+      cashier_sessions: CashierSession.where("identifier LIKE 'DEMO-POS-%'").count,
+      pos_sales: PosSale.where("number LIKE 'DEMO-POS-%'").count,
+      pos_allocations: PosSaleBatchAllocation.joins(pos_sale_item: :pos_sale).where("pos_sales.number LIKE 'DEMO-POS-%'").count
     }
   end
 end
