@@ -95,6 +95,7 @@ Rails.application.routes.draw do
       resources :customers, only: :index
       resources :prescriptions, only: :index
       resources :fulfilments, only: :index
+      resources :purchasing, only: :index
     end
     root "inventory#index"
     resources :products do
@@ -121,6 +122,22 @@ Rails.application.routes.draw do
     end
     resources :inventory_adjustments, only: %i[index new create show]
     resources :price_changes, only: %i[index show]
+    resources :suppliers do
+      member do
+        patch :deactivate
+        patch :activate
+      end
+    end
+    resources :purchase_orders, param: :number do
+      member do
+        patch :submit
+        patch :approve
+        patch :cancel
+        patch :close
+      end
+      resources :items, controller: "purchase_order_items", only: %i[create update destroy]
+      resources :receipts, controller: "purchase_receipts", only: :create
+    end
     get "inventory", to: "inventory#index"
     get "inventory/low_stock", to: "inventory#low_stock", as: :low_stock_inventory
   end

@@ -18,7 +18,8 @@ a production database, bucket, credentials, or real patient/customer data.
 - Verify the synthetic prescription attachment is clean and accessible only to
   the authorized customer/pharmacist. Never upload a real prescription.
 - Open `/demo`, the prescription queue, stock dashboard, fulfilment queue, and
-  the last-30-days reports. Confirm their seeded examples are present.
+  the supplier/purchase-order lists and last-30-days reports. Confirm their
+  seeded examples are present.
 - Confirm payment, SMS, and courier integrations are absent, and that email is
   sandboxed. Confirm storage and scanner failures remain fail-closed.
 
@@ -32,7 +33,7 @@ a production database, bucket, credentials, or real patient/customer data.
 4. Inventory manager: physical/reserved/available stock, low/zero stock,
    movements, and inventory report.
 5. Administrator: users, settings, `demo:active-cart`/`DEMO10`, delivery zones,
-   reports, and security operations.
+   submitted purchase-order approval, reports, and security operations.
 
 Prefer viewing seeded historical records. Create a fresh customer order only
 when there is enough time and the operator intends to mutate the disposable

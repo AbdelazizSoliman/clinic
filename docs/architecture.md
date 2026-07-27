@@ -15,7 +15,7 @@ application:
 
 External boundaries are PostgreSQL, private object storage, SMTP, ClamAV (or a
 future scanner adapter), and an optional error-reporting adapter. No payment,
-SMS, courier, supplier, or clinical decision API is integrated.
+SMS, courier, supplier API, or clinical decision API is integrated.
 
 The maintainable system diagram is in
 [`diagrams/system_context.mmd`](diagrams/system_context.mmd).
@@ -114,6 +114,20 @@ changes reservation state without inventing stock. Expiry, extension, release,
 consumption, and return-to-stock are separate operations.
 
 See [`diagrams/order_inventory_flow.mmd`](diagrams/order_inventory_flow.mmd).
+
+### Suppliers and purchasing
+
+`Supplier`, `PurchaseOrder`, and `PurchaseOrderItem` model product-level
+purchasing. Inventory managers manage suppliers, prepare and submit orders, and
+receive; administrators additionally approve. Submitted commercial lines retain
+product name/SKU and EGP-cent cost snapshots.
+
+`PurchaseReceipt` and `PurchaseReceiptItem` preserve multiple partial deliveries.
+`Purchasing::Receive` locks the order, lines, and products, validates outstanding
+quantities, increases physical stock, and creates one idempotent
+`purchase_received` inventory movement per receipt line. Receipt records and
+timeline events are append-only. Receiving does not change selling prices,
+reservations, or allocate stock automatically. See [purchasing](purchasing.md).
 
 ### Fulfilment and delivery
 
@@ -239,7 +253,8 @@ or global database reset is introduced.
 
 - One globally scoped pharmacy; no multi-branch or multi-tenant boundary.
 - Cash on delivery is the only operational payment method.
-- No supplier, purchasing, batch/lot, expiry, FEFO, or POS module.
+- No batch/lot, expiry, FEFO, purchasing returns, supplier invoices/payments, or
+  POS module.
 - No per-item substitution workflow or drug-safety rules engine.
 - No SMS, courier, payment-gateway, or public API integration.
 - No permanent public demo is guaranteed.

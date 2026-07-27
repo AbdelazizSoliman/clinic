@@ -1,5 +1,5 @@
 class ReportExportEvent < ApplicationRecord
-  TYPES = %w[sales orders products inventory promotions customers prescriptions fulfilments].freeze
+  TYPES = %w[sales orders products inventory promotions customers prescriptions fulfilments purchasing].freeze
   belongs_to :user
   validates :report_type, inclusion: { in: TYPES }
   validates :format, inclusion: { in: %w[csv] }

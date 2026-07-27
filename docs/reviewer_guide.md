@@ -149,3 +149,19 @@ external work during seeding, and explicit refusal outside safe demo settings.
 
 The repository contains operational preparation, not evidence that a permanent
 public deployment or external scanner/SMTP/storage provider is currently active.
+
+## 11. Suppliers, purchasing, and receiving
+
+- [`docs/purchasing.md`](purchasing.md) defines roles, states, receiving
+  invariants, reporting, and the Phase 17 boundary.
+- [`app/services/purchasing/receive.rb`](../app/services/purchasing/receive.rb)
+  is the stock-changing transaction.
+- [`app/models/purchase_receipt.rb`](../app/models/purchase_receipt.rb) and
+  [`app/models/purchase_receipt_item.rb`](../app/models/purchase_receipt_item.rb)
+  preserve immutable partial-delivery events.
+- [`app/services/reports/purchasing_summary.rb`](../app/services/reports/purchasing_summary.rb)
+  reads purchasing activity and received cost history.
+
+Look for: admin-only approval, frozen submitted lines, deterministic locks,
+outstanding-quantity validation, receipt idempotency, one referenced inventory
+movement per received line, and no batch/expiry or selling-price side effect.

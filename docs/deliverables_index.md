@@ -26,7 +26,7 @@ items are not current capabilities.
 - [Feature matrix](feature_matrix.md) — canonical distinction between
   implemented, demo-ready, partial/external, and planned capabilities.
 - [Technical reviewer guide](reviewer_guide.md) — high-signal code and test path.
-- [Roadmap](../README.md#roadmap-phases-1627) — Phase 16–27 sequence; planned
+- [Roadmap](../README.md#roadmap-phases-1727) — Phase 17–27 sequence; planned
   modules only. The same statuses appear in the feature matrix.
 
 ## Demo and visual evidence
@@ -76,9 +76,10 @@ items are not current capabilities.
 
 ## Presentation boundary
 
-Do not market supplier/purchasing, lots/batches/expiry/FEFO, POS, per-item
-substitution, drug-safety rules, advanced search, returns, loyalty, branches,
-tenancy, APIs/integrations, or advanced analytics as implemented. Do not claim
+Supplier management and product-level purchasing/receiving are implemented in
+Phase 16. Do not market lots/batches/expiry/FEFO, supplier invoices/payments or
+purchase returns, POS, per-item substitution, drug-safety rules, advanced
+search, customer returns, loyalty, branches, tenancy, APIs/integrations, or
+advanced analytics as implemented. Do not claim
 online payment, real SMTP/scanner/storage providers, regulatory certification,
 production scale, a permanent demo, or real-client results.
-

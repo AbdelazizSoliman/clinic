@@ -7,8 +7,9 @@ administration.
 
 The repository is a software engineering portfolio project and supports
 temporary, on-request demonstrations. A permanently available public deployment
-is not guaranteed. The customer and pharmacy workflows are implemented through
-Phase 15; supplier, purchasing, and later advanced modules remain roadmap work.
+is not guaranteed. The customer, pharmacy, supplier, and purchasing workflows
+are implemented through Phase 16; batch/lot and later advanced modules remain
+roadmap work.
 
 Start with the [reviewer and presentation index](docs/deliverables_index.md) to
 choose a recruiter, engineering, client, demo, or interview review path.
@@ -27,7 +28,7 @@ choose a recruiter, engineering, client, demo, or interview review path.
 - [Docker](#docker)
 - [Tests and quality checks](#tests-and-quality-checks)
 - [Documentation](#documentation)
-- [Roadmap](#roadmap-phases-1627)
+- [Roadmap](#roadmap-phases-1727)
 
 ## Capabilities
 
@@ -56,6 +57,17 @@ choose a recruiter, engineering, client, demo, or interview review path.
   fulfilment records.
 - Product, category, brand, cart, and delivery promotions; coupons, limits,
   deterministic calculation, redemption, release, and audit history.
+
+### Suppliers and purchasing
+
+- Supplier management with stable codes, active/inactive history, contact and
+  commercial terms, search, and safe deletion restrictions.
+- Draft, submission, admin approval, partial/full receiving, cancellation, and
+  closure through explicit purchase-order transitions.
+- Immutable receipt events and purchase-cost snapshots; idempotent receiving
+  increases physical stock only through append-only inventory movements.
+- Outstanding, overdue, supplier, product, and latest-cost purchasing reports
+  with role-authorized CSV export.
 
 ### Administration and reporting
 
@@ -260,6 +272,7 @@ the test and audit jobs against PostgreSQL.
 
 - [Reviewer and presentation index](docs/deliverables_index.md)
 - [Architecture](docs/architecture.md)
+- [Suppliers and purchasing](docs/purchasing.md)
 - [Portfolio engineering case study](docs/portfolio_case_study.md)
 - [Feature matrix and roadmap](docs/feature_matrix.md)
 - [Technical reviewer guide](docs/reviewer_guide.md)
@@ -270,20 +283,19 @@ the test and audit jobs against PostgreSQL.
 - [Security operations](docs/security_operations.md)
 - [Environment variables](docs/environment_variables.md)
 
-## Roadmap: Phases 16–27
+## Roadmap: Phases 17–27
 
-1. Suppliers and Purchasing
-2. Batch, Lot, Expiry, and FEFO
-3. Pharmacy POS
-4. Per-Item Prescription Review and Substitution
-5. Drug Safety Rules Engine
-6. Advanced Arabic Search
-7. Returns and Reverse Logistics
-8. Loyalty and Wallet
-9. Multi-Branch Operations
-10. SaaS Multi-Tenancy
-11. APIs and Integrations
-12. Advanced Analytics
+1. Batch, Lot, Expiry, and FEFO
+2. Pharmacy POS
+3. Per-Item Prescription Review and Substitution
+4. Drug Safety Rules Engine
+5. Advanced Arabic Search
+6. Returns and Reverse Logistics
+7. Loyalty and Wallet
+8. Multi-Branch Operations
+9. SaaS Multi-Tenancy
+10. APIs and Integrations
+11. Advanced Analytics
 
 These are planned modules, not current capabilities.
 

@@ -216,10 +216,12 @@ Each accepted physical change records before, delta, and after values with a
 business reference. Update and delete are blocked, so investigation does not
 depend on mutable history.
 
-**Does inventory support batches, expiry, or FEFO?**
+**Does inventory support purchasing, batches, expiry, or FEFO?**
 
-No. Current stock is product-level. Lots, batches, expiry-aware allocation,
-FEFO, suppliers, and purchasing are explicit roadmap items.
+Supplier orders and partial/full receipts are implemented at product level and
+increase physical stock through append-only movements. Lots, batches,
+expiry-aware allocation, FEFO, supplier invoices/payments, and purchase returns
+are not implemented.
 
 ## Testing and quality
 
@@ -323,4 +325,3 @@ cleanup. Random seed records are not enough to explain a connected workflow.
 Real client results, medical decision support, compliance certification,
 production scale, permanent hosting, or support for roadmap modules and
 unconfigured external integrations.
-

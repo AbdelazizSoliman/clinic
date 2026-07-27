@@ -53,6 +53,13 @@ module DemoGuidance
     def inventory_low = allowed?(:can_manage_inventory?) && @routes.admin_low_stock_inventory_path
     def inventory_movements = allowed?(:can_manage_inventory?) && @routes.admin_inventory_adjustments_path
     def inventory_reports = allowed?(:can_view_inventory_reports?) && @routes.admin_reports_inventory_index_path(preset: "last_30_days")
+    def purchasing_reports = allowed?(:can_view_purchasing_reports?) && @routes.admin_reports_purchasing_index_path(preset: "last_30_days")
+    def purchasing_partial
+      purchasing_order("DEMO-PO-PARTIAL") if allowed?(:can_manage_purchasing?)
+    end
+    def purchasing_submitted
+      purchasing_order("DEMO-PO-SUBMITTED") if allowed?(:can_approve_purchasing?)
+    end
 
     def admin_users = allowed?(:can_manage_users?) && @routes.admin_users_path(q: "@example.test")
     def admin_settings = allowed?(:can_manage_application_settings?) && @routes.edit_admin_pharmacy_setting_path
@@ -84,6 +91,11 @@ module DemoGuidance
     def fulfilment(number, fallback_status)
       record = Fulfilment.joins(:order).find_by(orders: { number: })
       record ? @routes.staff_fulfilment_path(record) : @routes.staff_fulfilments_path(status: fallback_status)
+    end
+
+    def purchasing_order(number)
+      order = PurchaseOrder.find_by(number:)
+      order ? @routes.admin_purchase_order_path(order) : @routes.admin_purchase_orders_path
     end
   end
 end

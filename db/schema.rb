@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_16_210000) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_16_220000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -763,6 +763,112 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_16_210000) do
     t.check_constraint "total_usage_limit IS NULL OR total_usage_limit > 0", name: "promotions_total_limit_positive"
   end
 
+  create_table "purchase_order_events", force: :cascade do |t|
+    t.bigint "actor_id"
+    t.datetime "created_at", null: false
+    t.string "event_type", null: false
+    t.string "from_status"
+    t.jsonb "metadata", default: {}, null: false
+    t.bigint "purchase_order_id", null: false
+    t.string "to_status"
+    t.datetime "updated_at", null: false
+    t.index ["actor_id"], name: "index_purchase_order_events_on_actor_id"
+    t.index ["purchase_order_id", "created_at"], name: "idx_on_purchase_order_id_created_at_32548c016b"
+    t.index ["purchase_order_id"], name: "index_purchase_order_events_on_purchase_order_id"
+  end
+
+  create_table "purchase_order_items", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "discount_cents", default: 0, null: false
+    t.integer "line_total_cents", null: false
+    t.integer "lock_version", default: 0, null: false
+    t.text "notes"
+    t.integer "ordered_quantity", null: false
+    t.bigint "product_id", null: false
+    t.string "product_name_snapshot", null: false
+    t.bigint "purchase_order_id", null: false
+    t.integer "received_quantity", default: 0, null: false
+    t.string "sku_snapshot"
+    t.integer "tax_cents", default: 0, null: false
+    t.integer "unit_cost_cents", null: false
+    t.datetime "updated_at", null: false
+    t.index ["product_id"], name: "index_purchase_order_items_on_product_id"
+    t.index ["purchase_order_id", "product_id"], name: "index_purchase_order_items_unique_product", unique: true
+    t.index ["purchase_order_id"], name: "index_purchase_order_items_on_purchase_order_id"
+    t.check_constraint "ordered_quantity > 0", name: "purchase_order_items_ordered_positive"
+    t.check_constraint "received_quantity >= 0 AND received_quantity <= ordered_quantity", name: "purchase_order_items_received_valid"
+    t.check_constraint "unit_cost_cents >= 0 AND discount_cents >= 0 AND tax_cents >= 0 AND line_total_cents >= 0", name: "purchase_order_items_money_nonnegative"
+  end
+
+  create_table "purchase_orders", force: :cascade do |t|
+    t.datetime "approved_at"
+    t.bigint "approved_by_id"
+    t.text "cancellation_reason"
+    t.datetime "cancelled_at"
+    t.bigint "cancelled_by_id"
+    t.datetime "closed_at"
+    t.datetime "created_at", null: false
+    t.bigint "created_by_id", null: false
+    t.string "currency", default: "EGP", null: false
+    t.integer "discount_total_cents", default: 0, null: false
+    t.date "expected_at"
+    t.text "internal_notes"
+    t.integer "lock_version", default: 0, null: false
+    t.text "notes"
+    t.string "number", null: false
+    t.datetime "ordered_at"
+    t.datetime "received_at"
+    t.integer "status", default: 0, null: false
+    t.datetime "submitted_at"
+    t.integer "subtotal_cents", default: 0, null: false
+    t.bigint "supplier_id", null: false
+    t.integer "tax_total_cents", default: 0, null: false
+    t.integer "total_cents", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["approved_by_id"], name: "index_purchase_orders_on_approved_by_id"
+    t.index ["cancelled_by_id"], name: "index_purchase_orders_on_cancelled_by_id"
+    t.index ["created_by_id"], name: "index_purchase_orders_on_created_by_id"
+    t.index ["number"], name: "index_purchase_orders_on_number", unique: true
+    t.index ["status", "expected_at"], name: "index_purchase_orders_on_status_and_expected_at"
+    t.index ["supplier_id", "ordered_at"], name: "index_purchase_orders_on_supplier_id_and_ordered_at"
+    t.index ["supplier_id"], name: "index_purchase_orders_on_supplier_id"
+    t.check_constraint "currency::text = 'EGP'::text", name: "purchase_orders_currency_valid"
+    t.check_constraint "status >= 0 AND status <= 6", name: "purchase_orders_status_valid"
+    t.check_constraint "subtotal_cents >= 0 AND discount_total_cents >= 0 AND tax_total_cents >= 0 AND total_cents >= 0", name: "purchase_orders_money_nonnegative"
+  end
+
+  create_table "purchase_receipt_items", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "inventory_movement_id", null: false
+    t.bigint "purchase_order_item_id", null: false
+    t.bigint "purchase_receipt_id", null: false
+    t.integer "quantity", null: false
+    t.integer "unit_cost_cents", null: false
+    t.datetime "updated_at", null: false
+    t.index ["inventory_movement_id"], name: "index_purchase_receipt_items_unique_movement", unique: true
+    t.index ["purchase_order_item_id"], name: "index_purchase_receipt_items_on_purchase_order_item_id"
+    t.index ["purchase_receipt_id", "purchase_order_item_id"], name: "index_purchase_receipt_items_unique_line", unique: true
+    t.index ["purchase_receipt_id"], name: "index_purchase_receipt_items_on_purchase_receipt_id"
+    t.check_constraint "quantity > 0", name: "purchase_receipt_items_quantity_positive"
+    t.check_constraint "unit_cost_cents >= 0", name: "purchase_receipt_items_cost_nonnegative"
+  end
+
+  create_table "purchase_receipts", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "idempotency_key", null: false
+    t.text "notes"
+    t.bigint "purchase_order_id", null: false
+    t.datetime "received_at", null: false
+    t.bigint "received_by_id", null: false
+    t.string "reference", null: false
+    t.string "supplier_document_number"
+    t.datetime "updated_at", null: false
+    t.index ["idempotency_key"], name: "index_purchase_receipts_on_idempotency_key", unique: true
+    t.index ["purchase_order_id"], name: "index_purchase_receipts_on_purchase_order_id"
+    t.index ["received_by_id"], name: "index_purchase_receipts_on_received_by_id"
+    t.index ["reference"], name: "index_purchase_receipts_on_reference", unique: true
+  end
+
   create_table "report_export_events", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.jsonb "filters", default: {}, null: false
@@ -777,7 +883,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_16_210000) do
     t.index ["user_id"], name: "index_report_export_events_on_user_id"
     t.check_constraint "format::text = 'csv'::text", name: "report_export_events_format_valid"
     t.check_constraint "range_end > range_start AND row_count >= 0", name: "report_export_events_range_rows_valid"
-    t.check_constraint "report_type::text = ANY (ARRAY['sales'::character varying, 'orders'::character varying, 'products'::character varying, 'inventory'::character varying, 'promotions'::character varying, 'customers'::character varying, 'prescriptions'::character varying, 'fulfilments'::character varying]::text[])", name: "report_export_events_type_valid"
+    t.check_constraint "report_type::text = ANY (ARRAY['sales'::character varying, 'orders'::character varying, 'products'::character varying, 'inventory'::character varying, 'promotions'::character varying, 'customers'::character varying, 'prescriptions'::character varying, 'fulfilments'::character varying, 'purchasing'::character varying]::text[])", name: "report_export_events_type_valid"
   end
 
   create_table "report_exports", force: :cascade do |t|
@@ -823,6 +929,27 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_16_210000) do
     t.text "reason"
     t.index ["actor_id"], name: "index_settings_audit_events_on_actor_id"
     t.index ["created_at"], name: "index_settings_audit_events_on_created_at"
+  end
+
+  create_table "suppliers", force: :cascade do |t|
+    t.boolean "active", default: true, null: false
+    t.text "address"
+    t.string "code", null: false
+    t.string "contact_person"
+    t.datetime "created_at", null: false
+    t.string "email"
+    t.integer "lead_time_days"
+    t.string "legal_name"
+    t.integer "lock_version", default: 0, null: false
+    t.string "name", null: false
+    t.text "notes"
+    t.string "payment_terms"
+    t.string "phone"
+    t.string "tax_identifier"
+    t.datetime "updated_at", null: false
+    t.index "lower((code)::text)", name: "index_suppliers_on_lower_code", unique: true
+    t.index ["active"], name: "index_suppliers_on_active"
+    t.check_constraint "lead_time_days IS NULL OR lead_time_days >= 0", name: "suppliers_lead_time_nonnegative"
   end
 
   create_table "transactional_email_deliveries", force: :cascade do |t|
@@ -987,6 +1114,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_16_210000) do
   add_foreign_key "promotions", "delivery_zones"
   add_foreign_key "promotions", "users", column: "created_by_id"
   add_foreign_key "promotions", "users", column: "updated_by_id"
+  add_foreign_key "purchase_order_events", "purchase_orders"
+  add_foreign_key "purchase_order_events", "users", column: "actor_id"
+  add_foreign_key "purchase_order_items", "products"
+  add_foreign_key "purchase_order_items", "purchase_orders"
+  add_foreign_key "purchase_orders", "suppliers"
+  add_foreign_key "purchase_orders", "users", column: "approved_by_id"
+  add_foreign_key "purchase_orders", "users", column: "cancelled_by_id"
+  add_foreign_key "purchase_orders", "users", column: "created_by_id"
+  add_foreign_key "purchase_receipt_items", "inventory_movements"
+  add_foreign_key "purchase_receipt_items", "purchase_order_items"
+  add_foreign_key "purchase_receipt_items", "purchase_receipts"
+  add_foreign_key "purchase_receipts", "purchase_orders"
+  add_foreign_key "purchase_receipts", "users", column: "received_by_id"
   add_foreign_key "report_export_events", "users"
   add_foreign_key "report_exports", "users"
   add_foreign_key "security_events", "users"
