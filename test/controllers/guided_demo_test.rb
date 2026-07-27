@@ -61,6 +61,8 @@ class GuidedDemoTest < ActionDispatch::IntegrationTest
     get demo_path
     assert_select "article[data-demo-role='inventory_manager'][aria-current='step']", count: 1
     assert_select "a[href='#{admin_low_stock_inventory_path}']"
+    partial_purchase = PurchaseOrder.find_by!(number: "DEMO-PO-PARTIAL")
+    assert_select "a[href='#{admin_purchase_order_path(partial_purchase)}']"
     get admin_low_stock_inventory_path
     assert_response :success
 

@@ -31,7 +31,10 @@ Status meanings:
 | Storage | Local dev/test and private S3-compatible production boundary | Partial | All/operator | Configuration implemented; real bucket requires configuration |
 | Error reporting | Safe logging adapter and provider-neutral external boundary | Partial | Operator | `Errors::Reporter`; no commercial provider selected |
 | Demo | Explicit mode, deterministic data, protected identities, guided journeys | Demo-ready | All roles/operator | `DemoMode`, `DemoData`, `DemoGuidance`, demo docs/tests |
-| Suppliers and purchasing | Supplier records, purchase orders, receiving | Planned | — | Phase 16 |
+| Suppliers | Stable codes, active history, contact/terms, search and safe deletion | Demo-ready | Inventory manager, admin | `Supplier`, admin supplier workflow/tests |
+| Purchasing | Draft/submission/admin approval, immutable lines, partial receipts, cancellation/closure | Demo-ready | Inventory manager, admin | `Purchasing::*`, purchase and authorization tests |
+| Purchase inventory | Idempotent receipt movements, outstanding quantities and cost history | Demo-ready | Inventory manager, admin | `PurchaseReceipt*`, `purchase_received`, receiving tests |
+| Purchasing reports | Supplier totals, outstanding/overdue, top products, latest costs and CSV | Demo-ready | Inventory manager, admin | `Reports::PurchasingSummary`, report tests |
 | Lots, batches, expiry, FEFO | Lot-level stock and expiry-aware allocation | Planned | — | Phase 17 |
 | Pharmacy POS | Counter sales and shift/cash workflow | Planned | — | Phase 18 |
 | Per-item prescription review | Item decisions and substitution workflow | Planned | — | Phase 19 |

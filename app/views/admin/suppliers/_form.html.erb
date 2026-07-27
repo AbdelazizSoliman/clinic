@@ -1,0 +1,19 @@
+<%= form_with model: [:admin, supplier], class: "grid gap-5 rounded-2xl bg-white p-6" do |f| %>
+  <% if supplier.errors.any? %><div class="rounded-xl bg-rose-50 p-4"><strong>راجع البيانات:</strong><ul><% supplier.errors.full_messages.each do |message| %><li><%= message %></li><% end %></ul></div><% end %>
+  <%= f.hidden_field :lock_version %>
+  <div class="grid gap-4 sm:grid-cols-2">
+    <div><%= f.label :name, "اسم المورد" %><%= f.text_field :name, required: true, class: "mt-1 w-full rounded-xl border p-3" %></div>
+    <div><%= f.label :legal_name, "الاسم القانوني" %><%= f.text_field :legal_name, class: "mt-1 w-full rounded-xl border p-3" %></div>
+    <div><%= f.label :code, "الكود الثابت" %><%= f.text_field :code, required: true, dir: "ltr", class: "mt-1 w-full rounded-xl border p-3" %></div>
+    <div><%= f.label :tax_identifier, "الرقم الضريبي" %><%= f.text_field :tax_identifier, dir: "ltr", class: "mt-1 w-full rounded-xl border p-3" %></div>
+    <div><%= f.label :contact_person, "جهة الاتصال" %><%= f.text_field :contact_person, class: "mt-1 w-full rounded-xl border p-3" %></div>
+    <div><%= f.label :phone, "الهاتف" %><%= f.telephone_field :phone, dir: "ltr", class: "mt-1 w-full rounded-xl border p-3" %></div>
+    <div><%= f.label :email, "البريد" %><%= f.email_field :email, dir: "ltr", class: "mt-1 w-full rounded-xl border p-3" %></div>
+    <div><%= f.label :lead_time_days, "مدة التوريد بالأيام" %><%= f.number_field :lead_time_days, min: 0, class: "mt-1 w-full rounded-xl border p-3" %></div>
+    <div class="sm:col-span-2"><%= f.label :payment_terms, "شروط الدفع" %><%= f.text_field :payment_terms, class: "mt-1 w-full rounded-xl border p-3" %></div>
+  </div>
+  <div><%= f.label :address, "العنوان" %><%= f.text_area :address, rows: 3, class: "mt-1 w-full rounded-xl border p-3" %></div>
+  <div><%= f.label :notes, "ملاحظات" %><%= f.text_area :notes, rows: 3, class: "mt-1 w-full rounded-xl border p-3" %></div>
+  <%= f.label :active do %><%= f.check_box :active %> مورد نشط للطلبات الجديدة<% end %>
+  <%= f.submit "حفظ المورد", class: "rounded-xl bg-pharmacy-700 px-5 py-3 font-bold text-white" %>
+<% end %>

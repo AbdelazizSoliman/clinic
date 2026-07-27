@@ -56,10 +56,11 @@ class Product < ApplicationRecord
   def published? = active? && published_at.present? && discontinued_at.nil?
 
   def deletable?
-    order_items.none? && inventory_reservations.none? && cart_items.none?
+    order_items.none? && inventory_reservations.none? && cart_items.none? && purchase_order_items.none?
   end
 
   has_many :cart_items, dependent: :restrict_with_error
+  has_many :purchase_order_items, dependent: :restrict_with_error
 
   private
 

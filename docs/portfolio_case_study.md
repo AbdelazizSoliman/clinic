@@ -205,8 +205,9 @@ claimed.
   operator-managed.
 - Data is scoped to one global pharmacy, not branches or tenants.
 - Cash on delivery is the only operational payment method.
-- Supplier purchasing, lots/batches, expiry/FEFO, POS, returns, loyalty,
-  substitution, and drug-safety rules are not implemented.
+- Supplier purchasing and partial receiving are implemented at product level.
+  Lots/batches, expiry/FEFO, POS, purchasing returns/invoices/payments, customer
+  returns, loyalty, substitution, and drug-safety rules are not implemented.
 - There is no SMS, courier, payment-gateway, or public API integration.
 - Linux browser installation was unavailable in the Phase 15E environment.
   Real-browser journeys and captures were instead run against local Rails using
@@ -220,18 +221,17 @@ claimed.
 The roadmap deliberately grows operational depth after the current commerce
 foundation:
 
-1. Suppliers and purchasing.
-2. Batch/lot, expiry, and FEFO inventory.
-3. Pharmacy POS.
-4. Per-item prescription review and substitution.
-5. Drug safety rules.
-6. Advanced Arabic search.
-7. Returns and reverse logistics.
-8. Loyalty and wallet.
-9. Multi-branch operations.
-10. SaaS multi-tenancy.
-11. APIs and integrations.
-12. Advanced analytics.
+1. Batch/lot, expiry, and FEFO inventory.
+2. Pharmacy POS.
+3. Per-item prescription review and substitution.
+4. Drug safety rules.
+5. Advanced Arabic search.
+6. Returns and reverse logistics.
+7. Loyalty and wallet.
+8. Multi-branch operations.
+9. SaaS multi-tenancy.
+10. APIs and integrations.
+11. Advanced analytics.
 
 See the [feature matrix](feature_matrix.md) for the implemented/planned boundary
 and [architecture](architecture.md) for current technical details.

@@ -44,6 +44,9 @@ class DemoDataSeederTest < ActiveSupport::TestCase
     assert_equal 28, @manifest.products
     assert_equal 10, @manifest.orders
     assert_equal 4, @manifest.prescriptions
+    assert_equal 3, @manifest.suppliers
+    assert_equal 7, @manifest.purchase_orders
+    assert_equal 3, @manifest.purchase_receipts
     assert_empty ActionMailer::Base.deliveries
 
     DemoData::Accounts::DEFINITIONS.each_value do |definition|
@@ -62,6 +65,13 @@ class DemoDataSeederTest < ActiveSupport::TestCase
     assert Coupon.exists?(normalized_code: "DEMO10", active: true)
     assert Promotion.exists?(internal_name: "demo:expired", active: false)
     assert_equal 4, DeliveryZone.where("code LIKE 'demo-%'").count
+    assert PurchaseOrder.find_by!(number: "DEMO-PO-DRAFT").draft?
+    assert PurchaseOrder.find_by!(number: "DEMO-PO-SUBMITTED").submitted?
+    assert PurchaseOrder.find_by!(number: "DEMO-PO-APPROVED-OVERDUE").approved?
+    assert PurchaseOrder.find_by!(number: "DEMO-PO-PARTIAL").partially_received?
+    assert PurchaseOrder.find_by!(number: "DEMO-PO-RECEIVED").received?
+    assert PurchaseOrder.find_by!(number: "DEMO-PO-CANCELLED").cancelled?
+    assert_equal 4, PurchaseOrder.find_by!(number: "DEMO-PO-CANCELLED-PARTIAL").items.first.received_quantity
   end
 
   test "seeding twice reuses every stable demo record" do
@@ -115,7 +125,10 @@ class DemoDataSeederTest < ActiveSupport::TestCase
       coupons: Coupon.where(normalized_code: %w[DEMO10 VITA25 OLD15 SOONFREE]).count,
       prescriptions: Prescription.joins(:order).where("orders.number LIKE 'DEMO-%'").count,
       orders: Order.where("number LIKE 'DEMO-%'").count,
-      reservations: InventoryReservation.joins(:order).where("orders.number LIKE 'DEMO-%'").count
+      reservations: InventoryReservation.joins(:order).where("orders.number LIKE 'DEMO-%'").count,
+      suppliers: Supplier.where("code LIKE 'DEMO-SUP-%'").count,
+      purchase_orders: PurchaseOrder.where("number LIKE 'DEMO-PO-%'").count,
+      purchase_receipts: PurchaseReceipt.where("idempotency_key LIKE 'demo:receipt:%'").count
     }
   end
 end

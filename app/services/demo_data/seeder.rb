@@ -76,8 +76,9 @@ module DemoData
       promotions, coupons = seed_promotions(accounts.fetch(:admin), categories, products, zones)
       seed_ready_cart(accounts.fetch(:customer), products, coupons.fetch(:active))
       orders = seed_orders(accounts, addresses, products, zones, promotions, coupons)
+      purchasing = seed_purchasing(accounts, products)
       setting.class.invalidate_cache
-      build_manifest(accounts, categories, brands, products, zones, orders, promotions, coupons)
+      build_manifest(accounts, categories, brands, products, zones, orders, promotions, coupons, purchasing)
     end
 
     def seed_accounts
@@ -329,11 +330,68 @@ module DemoData
         discount_cents: discount, status: :redeemed, redeemed_at: submitted_at)
     end
 
-    def build_manifest(accounts, categories, brands, products, zones, orders, promotions, coupons)
+    def seed_purchasing(accounts, products)
+      suppliers = {
+        medical: [ "DEMO-SUP-MED", "المتحدة للتوريدات الدوائية", true, 4 ],
+        wellness: [ "DEMO-SUP-WELL", "النيل لمنتجات العناية", true, 7 ],
+        inactive: [ "DEMO-SUP-OLD", "مورد تاريخي متوقف", false, 10 ]
+      }.to_h do |key, (code, name, active, lead)|
+        supplier = Supplier.find_or_initialize_by(code:)
+        supplier.update!(name:, legal_name: "#{name} — بيانات خيالية", contact_person: "مسؤول عرض #{key}",
+          phone: "010000001#{lead.to_s.rjust(2, '0')}", email: "#{key}@supplier.example.test", payment_terms: "30 يومًا",
+          lead_time_days: lead, active:, notes: "مورد خيالي لبيانات العرض")
+        [ key, supplier ]
+      end
+
+      definitions = [
+        [ "DEMO-PO-DRAFT", :medical, "draft", "paracetamol-20", 20, 2_900, 8 ],
+        [ "DEMO-PO-SUBMITTED", :wellness, "submitted", "daily-moisturizer", 12, 13_000, 6 ],
+        [ "DEMO-PO-APPROVED-OVERDUE", :medical, "approved", "cold-tablets", 30, 4_200, -3 ],
+        [ "DEMO-PO-PARTIAL", :medical, "partially_received", "vitamin-c", 18, 11_500, 2 ],
+        [ "DEMO-PO-RECEIVED", :wellness, "received", "gentle-cleanser", 10, 15_000, -6 ],
+        [ "DEMO-PO-CANCELLED", :inactive, "cancelled", "sterile-gauze", 25, 3_100, 5 ],
+        [ "DEMO-PO-CANCELLED-PARTIAL", :medical, "cancelled_partial", "vitamin-c", 8, 12_200, 1 ]
+      ]
+      orders = definitions.map do |number, supplier_key, target, product_key, quantity, cost, expected_offset|
+        existing = PurchaseOrder.find_by(number:)
+        next existing if existing
+
+        supplier = suppliers.fetch(supplier_key)
+        supplier.update!(active: true) if supplier_key == :inactive
+        order = Purchasing::CreateOrder.new(actor: accounts.fetch(:inventory_manager), supplier:,
+          attributes: { expected_at: Date.current + expected_offset.days, notes: "أمر شراء خيالي للعرض" }).call.purchase_order
+        order.update!(number:)
+        item = Purchasing::AddItem.new(purchase_order: order, actor: accounts.fetch(:inventory_manager),
+          product: products.fetch(product_key), ordered_quantity: quantity, unit_cost_cents: cost).call.item
+        unless target == "draft"
+          Purchasing::Submit.new(purchase_order: order, actor: accounts.fetch(:inventory_manager)).call
+          unless target == "submitted"
+            Purchasing::Approve.new(purchase_order: order.reload, actor: accounts.fetch(:admin)).call
+            if %w[partially_received received cancelled_partial].include?(target)
+              received = target == "received" ? quantity : [ quantity / 2, 1 ].max
+              Purchasing::Receive.new(purchase_order: order.reload, actor: accounts.fetch(:inventory_manager),
+                quantities: { item.id => received }, idempotency_key: "demo:receipt:#{number}",
+                supplier_document_number: "DOC-#{number}", received_at: @reference_time - 1.day).call
+            end
+            if target == "cancelled" || target == "cancelled_partial"
+              Purchasing::Cancel.new(purchase_order: order.reload, actor: accounts.fetch(:inventory_manager),
+                reason: "إلغاء تجريبي موثق").call
+            end
+          end
+        end
+        supplier.update!(active: false) if supplier_key == :inactive
+        order.reload
+      end
+      { suppliers:, orders: }
+    end
+
+    def build_manifest(accounts, categories, brands, products, zones, orders, promotions, coupons, purchasing)
       Manifest.new(accounts: accounts.size, categories: categories.size, brands: brands.size, products: products.size,
         inventory_movements: InventoryMovement.where("idempotency_key LIKE 'demo:%'").count,
         customers: accounts.values.count(&:customer?), prescriptions: orders.count { |order| order.prescription.present? },
-        orders: orders.size, promotions: promotions.size, coupons: coupons.size, delivery_zones: zones.size)
+        orders: orders.size, promotions: promotions.size, coupons: coupons.size, delivery_zones: zones.size,
+        suppliers: purchasing[:suppliers].size, purchase_orders: purchasing[:orders].size,
+        purchase_receipts: PurchaseReceipt.where("idempotency_key LIKE 'demo:receipt:%'").count)
     end
   end
 end

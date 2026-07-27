@@ -57,7 +57,11 @@ never reuse it for a real account.
 The dataset includes healthy, low, zero, reserved, released, and consumed stock;
 active/expired/future promotions; varied delivery zones; cart-ready, prescription,
 confirmed, preparing, ready, dispatched, delivered, rejected, and cancelled
-orders; and dates distributed across recent weeks for reports.
+orders; active/inactive fictional suppliers; draft, submitted, approved,
+partially received, fully received, and cancelled purchase orders; varied
+expected dates and purchase costs; and dates distributed across recent weeks for
+reports. Purchasing receipts increase product-level stock only—no batch or
+expiry data is seeded.
 
 The bundled PDF is synthetic and contains no medical information. The seed task
 temporarily uses Active Job's test adapter so prescription scan and mail jobs are

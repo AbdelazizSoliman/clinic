@@ -14,6 +14,9 @@ class User < ApplicationRecord
   has_many :user_audit_events, dependent: :restrict_with_error
   has_many :report_exports, dependent: :restrict_with_error
   has_many :transactional_email_deliveries, dependent: :restrict_with_error
+  has_many :created_purchase_orders, class_name: "PurchaseOrder", foreign_key: :created_by_id, dependent: :restrict_with_error
+  has_many :approved_purchase_orders, class_name: "PurchaseOrder", foreign_key: :approved_by_id, dependent: :restrict_with_error
+  has_many :purchase_receipts, foreign_key: :received_by_id, dependent: :restrict_with_error
 
   enum :role, { customer: 0, admin: 1, pharmacist: 2, order_manager: 3, inventory_manager: 4 }, default: :customer, validate: true
 
@@ -54,6 +57,10 @@ class User < ApplicationRecord
   alias_method :can_assign_delivery?, :can_manage_delivery?
   def can_manage_catalog? = inventory_manager? || admin?
   alias_method :can_manage_inventory?, :can_manage_catalog?
+  def can_manage_purchasing? = inventory_manager? || admin?
+  alias_method :can_receive_purchasing?, :can_manage_purchasing?
+  def can_approve_purchasing? = admin?
+  alias_method :can_view_purchasing_reports?, :can_manage_purchasing?
   def can_manage_promotions? = admin?
   def can_view_business_reports? = admin? || order_manager?
   def can_view_inventory_reports? = admin? || inventory_manager?

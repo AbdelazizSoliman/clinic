@@ -19,7 +19,7 @@ or repository documentation.
 - Do not open server configuration, environment variables, storage URLs,
   developer tools, Rails consoles, logs, or recovery-code screens.
 - Call the implemented payment method “cash on delivery.” Do not suggest that a
-  gateway, SMS, courier, ERP, WhatsApp, branches, suppliers, or safety engine is
+  gateway, SMS, courier, ERP, WhatsApp, branches, or safety engine is
   already connected.
 - If an expected seeded link is missing, do not improvise by changing data.
   move to the relevant screenshot and explain that the operator will inspect
@@ -224,8 +224,8 @@ movement history.
 **Explain:** physical/reserved/available calculation; product/reservation locks;
 movement before/delta/after invariant; release versus return-to-stock.
 
-**Avoid:** showing cost data unless relevant and authorized; do not claim lot,
-expiry, FEFO, purchasing, or supplier support.
+**Avoid:** showing cost data outside the authorized purchasing view; do not
+claim lot, expiry, FEFO, supplier invoicing/payment, or purchasing returns.
 
 ### 15:00–17:30 — Admin, promotions, and reports
 

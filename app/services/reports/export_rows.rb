@@ -56,5 +56,18 @@ module Reports
       end
       Result.new(headers: %w[الطلب الحالة المنطقة المسؤول الإسناد الانطلاق التسليم], rows:)
     end
+    def purchasing
+      rows = PurchaseReceiptItem.joins(:purchase_receipt, purchase_order_item: { purchase_order: :supplier })
+        .where(purchase_receipts: { received_at: @range.range })
+        .includes(purchase_receipt: { purchase_order: :supplier }, purchase_order_item: :product)
+        .order("purchase_receipts.received_at").limit(CsvExporter::MAX_ROWS + 1).map do |item|
+          receipt = item.purchase_receipt
+          order = receipt.purchase_order
+          [ receipt.received_at, order.number, receipt.reference, order.supplier.code, order.supplier.name,
+            item.purchase_order_item.product_name_snapshot, item.quantity, item.unit_cost_cents,
+            item.quantity * item.unit_cost_cents, order.currency ]
+        end
+      Result.new(headers: %w[التاريخ أمر_الشراء الإيصال كود_المورد المورد المنتج الكمية تكلفة_الوحدة_قرش الإجمالي_قرش العملة], rows:)
+    end
   end
 end

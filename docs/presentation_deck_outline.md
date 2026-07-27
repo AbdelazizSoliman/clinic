@@ -99,8 +99,9 @@ the limitations slide. Do not turn roadmap items into product screenshots.
 
 - Current: one pharmacy, cash on delivery, no permanent public deployment.
 - External services require operator configuration and verification.
-- Roadmap sequence: suppliers/purchasing; lots/expiry/FEFO; POS; per-item review;
-  safety rules; search; returns; loyalty; branches; tenancy; APIs; analytics.
+- Roadmap sequence after product-level purchasing: lots/expiry/FEFO; POS;
+  per-item review; safety rules; search; returns; loyalty; branches; tenancy;
+  APIs; analytics.
 - Say “planned,” never “supported,” for every roadmap item.
 
 ## 14. Lessons learned and discussion
@@ -111,4 +112,3 @@ the limitations slide. Do not turn roadmap items into product screenshots.
 - Deterministic demo data is an engineering feature, not just presentation work.
 - Close with an invitation to inspect one code path or run a focused private
   demo rather than repeating the full feature list.
-

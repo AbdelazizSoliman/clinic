@@ -34,7 +34,7 @@ module Admin
       redirect_to admin_products_path, notice: "تم إيقاف المنتج"
     end
     def destroy
-      return redirect_to(admin_product_path(@product), alert: "لا يمكن حذف منتج مرتبط بسلة أو طلب أو حجز") unless @product.deletable?
+      return redirect_to(admin_product_path(@product), alert: "لا يمكن حذف منتج مرتبط بسلة أو طلب أو حجز أو شراء") unless @product.deletable?
       @product.destroy!
       redirect_to admin_products_path, notice: "تم حذف المنتج"
     end
