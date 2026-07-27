@@ -5,8 +5,8 @@ module Admin
       products = Product.includes(:inventory_reservations).to_a
       @out_of_stock = products.count(&:out_of_stock?)
       @low_stock = products.count(&:low_stock?)
-      @physical_units = products.sum(&:stock_quantity)
-      @reserved_units = InventoryReservation.active.sum(:quantity)
+      @physical_units = InventoryBatch.sum(:on_hand_quantity)
+      @reserved_units = InventoryBatch.sum(:reserved_quantity)
       @available_units = products.sum(&:available_to_sell_quantity)
       @recent_movements = InventoryMovement.includes(:product, :actor).order(created_at: :desc).limit(10)
       @recent_price_changes = ProductPriceChange.includes(:product, :changed_by).order(effective_at: :desc).limit(10)

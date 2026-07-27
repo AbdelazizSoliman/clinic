@@ -148,8 +148,13 @@ module Orders
           discount_cents: line.discount_cents, quantity: line.quantity,
           line_total_cents: line.line_total_cents, requires_prescription: product.requires_prescription?
         )
-        order.inventory_reservations.create!(order_item: item, product:, quantity: line.quantity, status: :active,
+        reservation = order.inventory_reservations.create!(order_item: item, product:, quantity: line.quantity, status: :active,
           expires_at: Inventory::ReservationExpiryPolicy.expires_at_for(order))
+        allocation = Inventory::AllocateFefo.new(reservation:).call
+        unless allocation.success?
+          order.errors.add(:base, allocation.errors.join("، "))
+          raise ActiveRecord::RecordInvalid, order
+        end
       end
     end
 

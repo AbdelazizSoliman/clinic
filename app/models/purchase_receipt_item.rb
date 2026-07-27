@@ -1,12 +1,13 @@
 class PurchaseReceiptItem < ApplicationRecord
   belongs_to :purchase_receipt
   belongs_to :purchase_order_item
-  belongs_to :inventory_movement
+  belongs_to :inventory_movement, optional: true
+  has_many :inventory_batches, dependent: :restrict_with_error
 
   validates :quantity, numericality: { only_integer: true, greater_than: 0 }
   validates :unit_cost_cents, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
   validates :purchase_order_item_id, uniqueness: { scope: :purchase_receipt_id }
-  validates :inventory_movement_id, uniqueness: true
+  validates :inventory_movement_id, uniqueness: true, allow_nil: true
   validate :line_belongs_to_receipt_order
   validate :movement_matches_receipt_and_product
   before_update { throw :abort }

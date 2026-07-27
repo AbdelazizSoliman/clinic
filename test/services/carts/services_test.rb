@@ -3,7 +3,8 @@ require "test_helper"
 class Carts::ServicesTest < ActiveSupport::TestCase
   test "set item quantity enforces stock and maximum" do
     product = products(:skin_product)
-    product.update!(stock_quantity: 4)
+    product.inventory_batches.first.update!(on_hand_quantity: 4)
+    Inventory::BatchAggregate.sync_product!(product)
     result = Carts::SetItemQuantity.new(cart: carts(:guest_cart), product:, quantity: 99).call
     assert result.success?
     assert_equal 4, result.item.quantity

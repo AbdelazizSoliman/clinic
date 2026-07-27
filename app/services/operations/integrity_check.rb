@@ -19,7 +19,11 @@ module Operations
         [ :orders_with_invalid_totals, :critical, Order.where("total_cents <> subtotal_cents - discount_cents + delivery_fee_cents - delivery_discount_cents") ],
         [ :terminal_orders_with_active_reservations, :high, InventoryReservation.active.joins(:order).where(orders: { status: terminal }) ],
         [ :delivered_orders_with_unconsumed_reservations, :high, InventoryReservation.where.not(status: InventoryReservation.statuses[:consumed]).joins(:order).where(orders: { status: Order.statuses[:delivered] }) ],
-        [ :consumed_reservations_without_movements, :high, InventoryReservation.consumed.where.not(id: InventoryMovement.reservation_consumed.where(reference_type: "InventoryReservation").select(:reference_id)) ],
+        [ :consumed_reservations_without_movements, :high, InventoryReservation.consumed.where.not(id:
+          InventoryReservationAllocation.where(id: InventoryMovement.reservation_consumed
+            .where(reference_type: "InventoryReservationAllocation").select(:reference_id))
+            .select(:inventory_reservation_id)) ],
+        [ :product_batch_stock_mismatch, :critical, Product.where("stock_quantity <> (SELECT COALESCE(SUM(on_hand_quantity), 0) FROM inventory_batches WHERE inventory_batches.product_id = products.id)") ],
         [ :prescriptions_not_clean, :critical, Prescription.where.not(scan_status: Prescription.scan_statuses[:clean]) ],
         [ :product_images_without_blobs, :medium, ProductImage.left_joins(file_attachment: :blob).where(active_storage_blobs: { id: nil }) ],
         [ :completed_exports_without_files, :medium, ReportExport.completed.left_joins(file_attachment: :blob).where(active_storage_blobs: { id: nil }) ],

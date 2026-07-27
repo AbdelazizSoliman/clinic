@@ -69,5 +69,15 @@ module Reports
         end
       Result.new(headers: %w[التاريخ أمر_الشراء الإيصال كود_المورد المورد المنتج الكمية تكلفة_الوحدة_قرش الإجمالي_قرش العملة], rows:)
     end
+    def batches
+      rows = InventoryBatch.includes(:product, :supplier, :purchase_receipt).order(:expiry_date, :id)
+        .limit(CsvExporter::MAX_ROWS + 1).map do |batch|
+          [ batch.batch_number, batch.lot_number, batch.product.name, batch.supplier&.code,
+            batch.purchase_receipt&.reference, batch.received_at, batch.expiry_date, batch.lifecycle_status,
+            batch.original_quantity, batch.on_hand_quantity, batch.reserved_quantity, batch.available_quantity,
+            batch.unit_cost_cents, batch.on_hand_quantity * batch.unit_cost_cents.to_i ]
+        end
+      Result.new(headers: %w[التشغيلة اللوط المنتج المورد الإيصال الاستلام الصلاحية الحالة الأصلية الفعلية المحجوزة المتاحة تكلفة_الوحدة_قرش القيمة_قرش], rows:)
+    end
   end
 end

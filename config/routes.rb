@@ -96,6 +96,7 @@ Rails.application.routes.draw do
       resources :prescriptions, only: :index
       resources :fulfilments, only: :index
       resources :purchasing, only: :index
+      resources :batches, only: :index
     end
     root "inventory#index"
     resources :products do
@@ -121,6 +122,13 @@ Rails.application.routes.draw do
       member { patch :deactivate }
     end
     resources :inventory_adjustments, only: %i[index new create show]
+    resources :inventory_batches, only: %i[index show] do
+      member do
+        post :adjust
+        patch :quarantine
+        patch :release_quarantine
+      end
+    end
     resources :price_changes, only: %i[index show]
     resources :suppliers do
       member do

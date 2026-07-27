@@ -52,6 +52,7 @@ module DemoGuidance
     def inventory_dashboard = allowed?(:can_manage_inventory?) && @routes.admin_root_path
     def inventory_low = allowed?(:can_manage_inventory?) && @routes.admin_low_stock_inventory_path
     def inventory_movements = allowed?(:can_manage_inventory?) && @routes.admin_inventory_adjustments_path
+    def batch_inventory = allowed?(:can_manage_inventory?) && @routes.admin_inventory_batches_path
     def inventory_reports = allowed?(:can_view_inventory_reports?) && @routes.admin_reports_inventory_index_path(preset: "last_30_days")
     def purchasing_reports = allowed?(:can_view_purchasing_reports?) && @routes.admin_reports_purchasing_index_path(preset: "last_30_days")
     def purchasing_partial

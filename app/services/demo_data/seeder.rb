@@ -71,6 +71,7 @@ module DemoData
       categories = seed_categories
       brands = seed_brands
       products = seed_products(categories, brands, accounts.fetch(:inventory_manager))
+      seed_batch_scenarios(products, accounts.fetch(:inventory_manager))
       zones = seed_delivery_zones
       addresses = seed_addresses(accounts, zones)
       promotions, coupons = seed_promotions(accounts.fetch(:admin), categories, products, zones)
@@ -119,7 +120,7 @@ module DemoData
           default_locale: "ar", time_zone: "Africa/Cairo", order_number_prefix: "DEMO", prescription_review_enabled: true,
           guest_cart_enabled: true, customer_registration_enabled: true, default_low_stock_threshold: 5,
           default_maximum_order_quantity: 10, default_reservation_minutes: 30,
-          pending_prescription_reservation_hours: 24, maintenance_mode: false,
+          pending_prescription_reservation_hours: 24, near_expiry_threshold_days: 90, maintenance_mode: false,
           sender_email: "demo@example.test", sender_name: "صيدلية الروضة التجريبية")
       end
     end
@@ -155,11 +156,42 @@ module DemoData
         product.stock_quantity = stock if new_product
         product.save!
         if new_product && stock.positive?
-          product.inventory_movements.create!(actor: inventory_actor, movement_type: :opening_balance,
+          batch = product.inventory_batches.create!(batch_number: "DEMO-BATCH-#{format('%03d', index + 1)}",
+            lot_number: "DEMO-LOT-#{format('%03d', index + 1)}", expiry_date: Date.current + (18 + index).months,
+            received_at: @reference_time - 60.days, original_quantity: stock, on_hand_quantity: stock,
+            reserved_quantity: 0, unit_cost_cents: (product.cost_price * 100).round,
+            notes: "تشغيلة افتتاحية خيالية لبيانات العرض")
+          product.inventory_movements.create!(actor: inventory_actor, inventory_batch: batch, movement_type: :opening_balance,
             quantity_delta: stock, quantity_before: 0, quantity_after: stock, reason: "رصيد افتتاحي لبيانات العرض",
+            batch_quantity_before: 0, batch_quantity_after: stock,
             idempotency_key: "demo:opening:#{slug}", created_at: @reference_time - 60.days)
         end
         [ suffix, product ]
+      end
+    end
+
+    def seed_batch_scenarios(products, actor)
+      scenarios = [
+        [ "DEMO-BATCH-EXPIRED", "allergy-tablets", 2, Date.yesterday, true ],
+        [ "DEMO-BATCH-NEAR", "vitamin-d", 2, Date.current + 20.days, false ],
+        [ "DEMO-BATCH-QUARANTINE", "hair-serum", 3, Date.current + 1.year, false ]
+      ]
+      scenarios.each do |number, product_key, quantity, expiry, quarantined|
+        next if InventoryBatch.exists?(batch_number: number)
+        product = products.fetch(product_key)
+        before = product.stock_quantity
+        batch = product.inventory_batches.create!(batch_number: number, lot_number: number.sub("BATCH", "LOT"),
+          expiry_date: expiry, received_at: @reference_time - 90.days, original_quantity: quantity,
+          on_hand_quantity: quantity, reserved_quantity: 0, unit_cost_cents: (product.cost_price * 100).round,
+          quarantined_at: quarantined ? @reference_time - 30.days : nil, quarantined_by: quarantined ? actor : nil,
+          quarantine_reason: quarantined ? "عزل جودة خيالي للعرض" : nil, notes: "سيناريو صلاحية خيالي")
+        Inventory::BatchAggregate.sync_product!(product)
+        product.inventory_movements.create!(actor:, inventory_batch: batch, movement_type: :opening_balance,
+          quantity_delta: quantity, quantity_before: before, quantity_after: product.stock_quantity,
+          batch_quantity_before: 0, batch_quantity_after: quantity, reason: "سيناريو تشغيلة خيالي",
+          idempotency_key: "demo:batch:#{number}")
+        batch.events.create!(actor:, event_type: quarantined ? "quarantined" : "created",
+          reason: quarantined ? "عزل جودة خيالي للعرض" : "إنشاء سيناريو عرض")
       end
     end
 
@@ -286,6 +318,8 @@ module DemoData
           line_total_cents: subtotal - discount, requires_prescription: product.requires_prescription?)
         reservation = order.inventory_reservations.create!(order_item: item, product:, quantity:, status: :active,
           expires_at: %w[confirmed preparing].include?(status) ? nil : submitted_at + 24.hours)
+        allocation = Inventory::AllocateFefo.new(reservation:).call
+        raise Refused, allocation.errors.join("، ") unless allocation.success?
         if %w[ready_for_delivery out_for_delivery delivered].include?(status)
           raise Refused, "Insufficient demo stock for #{product.slug}" unless Inventory::ConsumeReservations.new(order).call
         elsif %w[cancelled rejected].include?(status)

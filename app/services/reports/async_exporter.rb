@@ -25,6 +25,7 @@ module Reports
       case type
       when "inventory" then user.can_view_inventory_reports?
       when "purchasing" then user.can_view_purchasing_reports?
+      when "batches" then user.can_view_inventory_reports?
       when "prescriptions" then user.can_view_prescription_reports?
       when "fulfilments", "sales", "orders" then user.can_view_business_reports?
       when "customers", "promotions" then user.admin?

@@ -35,6 +35,7 @@ Status meanings:
 | Purchasing | Draft/submission/admin approval, immutable lines, partial receipts, cancellation/closure | Demo-ready | Inventory manager, admin | `Purchasing::*`, purchase and authorization tests |
 | Purchase inventory | Idempotent receipt movements, outstanding quantities and cost history | Demo-ready | Inventory manager, admin | `PurchaseReceipt*`, `purchase_received`, receiving tests |
 | Purchasing reports | Supplier totals, outstanding/overdue, top products, latest costs and CSV | Demo-ready | Inventory manager, admin | `Reports::PurchasingSummary`, report tests |
+| Batch inventory and FEFO | Receipt batches, expiry/quarantine, multi-batch reservations, traced consumption, valuation and CSV | Demo-ready | Inventory manager, admin | `InventoryBatch`, `Inventory::AllocateFefo`, batch tests |
 | Lots, batches, expiry, FEFO | Lot-level stock and expiry-aware allocation | Planned | — | Phase 17 |
 | Pharmacy POS | Counter sales and shift/cash workflow | Planned | — | Phase 18 |
 | Per-item prescription review | Item decisions and substitution workflow | Planned | — | Phase 19 |
