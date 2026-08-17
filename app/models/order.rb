@@ -38,7 +38,9 @@ class Order < ApplicationRecord
   private
 
   def total_matches_components
-    return if total_cents == subtotal_cents - discount_cents + delivery_fee_cents - delivery_discount_cents
+    expected = subtotal_cents - discount_cents + delivery_fee_cents - delivery_discount_cents +
+      prescription_adjustment_cents
+    return if total_cents == expected
 
     errors.add(:total_cents, "لا يطابق مكونات الإجمالي")
   end

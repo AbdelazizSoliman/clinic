@@ -52,9 +52,15 @@ promotions are recalculated server-side. Coupons remain online-checkout
 features. A manual fixed discount requires an admin, reason, actor and timestamp
 and cannot make a sale negative.
 
-Each prescription-required line needs its own pharmacist approval before
-completion. The approval records actor, timestamp and a concise reason. It
-cannot be reused by another line. Receipts show only that approval occurred.
+Each prescription-required line needs its own pharmacist clinical decision
+before completion — approve the original product, substitute a therapeutic
+alternative, or reject the line. See [prescription_review.md](prescription_review.md)
+for the full per-item review architecture shared with online orders. The
+decision records actor, timestamp and a concise reason, and cannot be reused
+by another line. `Pos::Complete` prices, allocates FEFO batches from, and
+consumes stock for whichever product was actually dispensed, never the
+original product on a substituted line. Receipts show only that a decision
+occurred, never a clinical reason.
 
 Supported payments are cash and a manual external-card-terminal marker. The app
 stores no card number, CVV or verification claim. Applied amounts must equal the
@@ -98,7 +104,6 @@ Stable row locking serializes two cashiers competing for final units. The second
 completion recalculates availability and fails without partial effects. Session
 close also serializes with completion.
 
-Phase 19 owns prescription substitution. Phase 22 owns returns, refunds and
-completed-sale reversal. Real gateways, stored cards, offline mode, printer and
-drawer hardware, loyalty, customer credit, multi-branch scope and ERP
-integration remain out of scope.
+Phase 22 owns returns, refunds and completed-sale reversal. Real gateways,
+stored cards, offline mode, printer and drawer hardware, loyalty, customer
+credit, multi-branch scope and ERP integration remain out of scope.

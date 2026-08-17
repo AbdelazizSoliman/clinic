@@ -54,6 +54,7 @@ class User < ApplicationRecord
   end
   def staff? = pharmacist? || order_manager? || admin?
   def can_review_prescriptions? = pharmacist? || admin?
+  def can_make_prescription_decisions? = pharmacist?
   def can_operate_orders? = order_manager? || admin?
   def can_manage_delivery? = order_manager? || admin?
   alias_method :can_assign_delivery?, :can_manage_delivery?

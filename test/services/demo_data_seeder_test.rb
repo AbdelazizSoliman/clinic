@@ -42,14 +42,15 @@ class DemoDataSeederTest < ActiveSupport::TestCase
 
     assert_equal 7, @manifest.accounts
     assert_equal 28, @manifest.products
-    assert_equal 10, @manifest.orders
-    assert_equal 4, @manifest.prescriptions
+    assert_equal 12, @manifest.orders
+    assert_equal 6, @manifest.prescriptions
     assert_equal 3, @manifest.suppliers
     assert_equal 7, @manifest.purchase_orders
     assert_equal 3, @manifest.purchase_receipts
     assert_equal 3, @manifest.cashier_sessions
-    assert_equal 5, @manifest.pos_sales
+    assert_equal 6, @manifest.pos_sales
     assert_empty ActionMailer::Base.deliveries
+    assert_equal 0, TransactionalEmailDelivery.count
 
     DemoData::Accounts::DEFINITIONS.each_value do |definition|
       user = User.find_by!(email: definition[:email])
@@ -61,7 +62,28 @@ class DemoDataSeederTest < ActiveSupport::TestCase
     assert Product.find_by!(slug: "demo-saline-spray").low_stock?
     assert Product.find_by!(slug: "demo-allergy-tablets").out_of_stock?
     assert Product.find_by!(slug: "demo-rx-tablets-a").requires_prescription?
-    assert_equal %w[approved rejected submitted under_review], Prescription.where(order: Order.where("number LIKE 'DEMO-%'")).distinct.order(:status).pluck(:status).sort
+    assert_equal %w[approved partially_approved rejected submitted under_review], Prescription.where(order: Order.where("number LIKE 'DEMO-%'")).distinct.order(:status).pluck(:status).sort
+
+    substituted_order = Order.find_by!(number: "DEMO-PRESCRIPTION-SUBSTITUTED")
+    substituted_review = PrescriptionReview.find_by!(reviewable: substituted_order.prescription)
+    substituted_item = substituted_review.items.sole
+    assert substituted_item.substituted?
+    assert_not_equal substituted_item.original_product_id, substituted_item.dispensed_product_id
+    assert substituted_item.therapeutic_substitution.present?
+    assert substituted_order.inventory_reservations.active.exists?(product_id: substituted_item.dispensed_product_id)
+
+    mixed_order = Order.find_by!(number: "DEMO-PRESCRIPTION-MIXED")
+    mixed_review = PrescriptionReview.find_by!(reviewable: mixed_order.prescription)
+    assert_equal 2, mixed_review.items.count
+    assert mixed_review.items.approved.exists?
+    assert mixed_review.items.rejected.exists?
+    assert mixed_order.submitted?
+    assert mixed_order.items.where(requires_prescription: false).exists?
+
+    substituted_sale = PosSale.find_by!(number: "DEMO-POS-RX-SUBSTITUTED")
+    substituted_sale_review_item = PrescriptionReview.find_by!(reviewable: substituted_sale).items.sole
+    assert substituted_sale_review_item.substituted?
+    assert substituted_sale.items.first.prescription_approved?
     demo_orders = Order.where("number LIKE 'DEMO-%'")
     assert %w[cancelled confirmed delivered out_for_delivery pending_prescription preparing ready_for_delivery rejected submitted].all? { |status| demo_orders.exists?(status:) }
     assert Coupon.exists?(normalized_code: "DEMO10", active: true)

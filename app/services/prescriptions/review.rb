@@ -13,6 +13,7 @@ module Prescriptions
       return failure("قرار الروشتة غير صحيح") unless %w[under_review approved partially_approved rejected].include?(@decision)
       return failure("سبب الرفض مطلوب") if @decision == "rejected" && @customer_message.blank?
       return failure("رسالة المتابعة مطلوبة") if @decision == "partially_approved" && @customer_message.blank?
+      return line_level_final_decision if %w[approved rejected].include?(@decision)
 
       Prescription.transaction do
         @prescription.lock!
@@ -39,6 +40,23 @@ module Prescriptions
     end
 
     private
+
+    def line_level_final_decision
+      return failure("القرار السريري متاح للصيدلي فقط") unless @actor&.can_make_prescription_decisions?
+      @prescription.lock!
+      raise ActiveRecord::StaleObjectError.new(@prescription, "review") if @lock_version && @prescription.lock_version != @lock_version.to_i
+      review = Prescriptions::EnsureReview.call(@prescription)
+      review.items.order(:id).each do |item|
+        next if item.terminal?
+        result = Prescriptions::DecideLine.new(item:, actor: @actor, decision: @decision,
+          reason: @customer_message.presence || "اعتماد البند وفق الروشتة",
+          notes: @internal_notes).call
+        return failure(result.errors.join("، ")) unless result.success?
+      end
+      Result.new(success?: true, prescription: @prescription.reload, errors: [])
+    rescue ActiveRecord::StaleObjectError
+      failure("تم تحديث الروشتة بواسطة مستخدم آخر؛ أعد تحميل الصفحة")
+    end
 
     def apply_order_decision(from)
       case @decision

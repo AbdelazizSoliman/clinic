@@ -1,1 +1,48 @@
-<% content_for :title, "مراجعة #{@prescription.order.number}" %><div class="mx-auto max-w-6xl px-4 py-10"><%= link_to "← قائمة الروشتات", staff_prescriptions_path, class: "font-bold text-pharmacy-700" %><h1 class="mt-5 text-3xl font-black">مراجعة روشتة الطلب <%= @prescription.order.number %></h1><div class="mt-6 grid gap-6 lg:grid-cols-2"><section class="rounded-2xl bg-white p-5"><h2 class="text-xl font-black">الملفات المرفوعة</h2><div class="mt-4 grid gap-3"><% @prescription.images.each do |image| %><%= link_to image.filename.to_s, staff_prescription_file_path(@prescription, image.id), target: "_blank", rel: "noopener", class: "rounded-xl border p-4 font-bold" %><% end %></div><h2 class="mt-6 font-black">المنتجات المعنية</h2><ul class="mt-2"><% @prescription.order.items.select(&:requires_prescription?).each do |item| %><li><%= item.product_name %> × <%= item.quantity %></li><% end %></ul></section><section class="rounded-2xl bg-white p-5"><h2 class="text-xl font-black">قرار المراجعة</h2><p class="mt-2">الحالة: <%= t("staff.prescription_statuses.#{@prescription.status}") %></p><% if @prescription.submitted? || @prescription.under_review? %><%= form_with url: review_staff_prescription_path(@prescription), method: :patch, class: "mt-5 grid gap-4" do |form| %><%= hidden_field_tag :lock_version, @prescription.lock_version %><%= label_tag :customer_message, "رسالة للعميل" %><%= text_area_tag :customer_message, nil, rows: 3, class: "rounded-xl border p-3" %><%= label_tag :internal_notes, "ملاحظات داخلية" %><%= text_area_tag :internal_notes, nil, rows: 3, class: "rounded-xl border p-3" %><div class="grid gap-2 sm:grid-cols-2"><% [["under_review", "بدء المراجعة"], ["approved", "اعتماد"], ["partially_approved", "اعتماد جزئي"], ["rejected", "رفض"]].each do |value, label| %><button name="decision" value="<%= value %>" class="rounded-xl border px-4 py-3 font-bold"><%= label %></button><% end %></div><% end %><% else %><div class="mt-5 rounded-xl bg-slate-100 p-4">تم اتخاذ قرار نهائي ولا يمكن تغييره دون مسار إعادة فتح مستقبلي.</div><% end %></section></div></div>
+<% content_for :title, "مراجعة #{@prescription.order.number}" %>
+<div class="mx-auto max-w-7xl px-4 py-10">
+  <%= link_to "← قائمة الروشتات", staff_prescriptions_path, class: "font-bold text-pharmacy-700" %>
+  <header class="mt-5 rounded-3xl bg-white p-6 shadow-sm">
+    <div class="flex flex-wrap justify-between gap-3">
+      <div><h1 class="text-3xl font-black">مراجعة بنود الطلب <%= @prescription.order.number %></h1><p class="mt-2 text-slate-600">كل بند مقيد له قرار مستقل وسجل غير قابل للمحو.</p></div>
+      <span class="rounded-full bg-pharmacy-100 px-4 py-2 font-black"><%= @review.status %></span>
+    </div>
+  </header>
+
+  <div class="mt-6 grid gap-6 lg:grid-cols-[0.8fr_1.5fr]">
+    <section class="rounded-2xl bg-white p-5">
+      <h2 class="text-xl font-black">الملفات المرفوعة</h2>
+      <div class="mt-4 grid gap-3"><% @prescription.images.each do |image| %><%= link_to image.filename.to_s, staff_prescription_file_path(@prescription, image.id), target: "_blank", rel: "noopener", class: "rounded-xl border p-4 font-bold" %><% end %></div>
+      <p class="mt-5 rounded-xl bg-amber-50 p-4 text-sm">لا تسجل معلومات طبية غير لازمة. Phase 20 سيضيف قواعد السلامة والتداخلات.</p>
+    </section>
+
+    <section class="space-y-5">
+      <% @review_items.each do |item| %>
+        <article class="rounded-2xl bg-white p-5 shadow-sm">
+          <div class="flex flex-wrap justify-between gap-3">
+            <div><h2 class="text-xl font-black"><%= item.original_product.name %> × <%= item.quantity %></h2><p class="text-sm text-slate-500">المنتج الموصوف محفوظ دائمًا · <%= number_to_currency(item.prescribed_unit_price_cents / 100.0, unit: "ج.م") %></p></div>
+            <span class="rounded-full bg-slate-100 px-3 py-2 font-bold"><%= item.status %></span>
+          </div>
+          <% if item.dispensable? %>
+            <div class="mt-4 rounded-xl bg-emerald-50 p-4"><strong>المنتج المصروف:</strong> <%= item.dispensed_product.name %> · <%= number_to_currency(item.dispensed_unit_price_cents / 100.0, unit: "ج.م") %><% if item.substituted? %><span class="mr-2 rounded bg-emerald-700 px-2 py-1 text-xs text-white">بديل علاجي</span><% end %></div>
+          <% elsif item.rejected? %><div class="mt-4 rounded-xl bg-rose-50 p-4 text-rose-900">مرفوض: <%= item.reason %></div><% end %>
+
+          <% unless item.terminal? %>
+            <% if item.pending? %><%= button_to "بدء مراجعة البند", start_staff_prescription_review_item_path(@prescription, item), method: :patch, params: { lock_version: item.lock_version }, class: "mt-4 rounded-xl border px-4 py-2 font-bold" %><% end %>
+            <% if current_user.can_make_prescription_decisions? %>
+              <%= form_with url: decide_staff_prescription_review_item_path(@prescription, item), method: :patch, class: "mt-4 grid gap-3 rounded-xl border p-4" do %>
+                <%= hidden_field_tag :lock_version, item.lock_version %>
+                <div><%= label_tag :reason, "سبب القرار *" %><%= text_field_tag :reason, nil, required: true, class: "mt-1 w-full rounded-xl border p-3" %></div>
+                <div><%= label_tag :notes, "ملاحظات صيدلي مختصرة" %><%= text_area_tag :notes, nil, rows: 2, class: "mt-1 w-full rounded-xl border p-3" %></div>
+                <div><%= label_tag :physician_instruction_reference, "مرجع تعليمات الطبيب — اختياري" %><%= text_field_tag :physician_instruction_reference, nil, class: "mt-1 w-full rounded-xl border p-3" %></div>
+                <div><%= label_tag :substitute_product_id, "البديل العلاجي عند الاستبدال" %><%= select_tag :substitute_product_id, options_from_collection_for_select(@substitution_candidates.where.not(id: item.original_product_id), :id, :name), include_blank: "اختر بديلًا", class: "mt-1 w-full rounded-xl border p-3" %></div>
+                <div class="grid gap-2 sm:grid-cols-3"><button name="decision" value="approved" class="rounded-xl bg-emerald-700 px-4 py-3 font-bold text-white">اعتماد الأصلي</button><button name="decision" value="substituted" class="rounded-xl bg-blue-700 px-4 py-3 font-bold text-white">اعتماد البديل</button><button name="decision" value="rejected" class="rounded-xl bg-rose-700 px-4 py-3 font-bold text-white">رفض البند</button></div>
+              <% end %>
+            <% end %>
+          <% end %>
+
+          <details class="mt-4"><summary class="cursor-pointer font-bold">الخط الزمني للقرار</summary><ol class="mt-2 space-y-2"><% item.decisions.order(:created_at).each do |decision| %><li class="border-r-2 pr-3 text-sm"><%= decision.from_status %> ← <%= decision.to_status %> · <%= decision.actor.full_name %> · <%= l(decision.created_at, format: :short) %></li><% end %></ol></details>
+        </article>
+      <% end %>
+    </section>
+  </div>
+</div>

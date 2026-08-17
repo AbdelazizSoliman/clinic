@@ -8,7 +8,19 @@
 | Pharmacist approval and controlled discount | Complete |
 | Cash/external-terminal marker and printable receipt | Complete |
 | POS reports, CSV and deterministic demo | Complete |
-| Returns/refunds and prescription substitution | Deferred (Phases 22/19) |
+| Per-item review and therapeutic substitution | Complete (Phase 19) |
+| Returns/refunds | Deferred (Phase 22) |
+
+| Phase 19 capability | Status |
+| --- | --- |
+| Per-line pending/under_review/approved/substituted/rejected lifecycle | Complete |
+| Pharmacist-only clinical decisions with optimistic locking | Complete |
+| Therapeutic substitution with FEFO reallocation | Complete |
+| Mixed online-order settlement (ordinary + approved + rejected) | Complete |
+| POS line-level review, substitution and idempotent completion | Complete |
+| Clinical traceability and immutable decision history | Complete |
+| Per-item reports (status, substitution frequency, pharmacist workload) and CSV | Complete |
+| Deterministic demo scenarios (new/review/approved/rejected/substituted/mixed/POS) | Complete |
 
 Status meanings:
 
@@ -23,7 +35,7 @@ Status meanings:
 | Storefront | Arabic RTL catalog, search/filter, product detail, availability | Demo-ready | Customer | `ProductsController`, `ProductsQuery`, storefront tests |
 | Customer account | Registration, login, addresses, wishlist, notifications, owned orders | Implemented | Customer | Devise/controllers, ownership request tests |
 | Cart and checkout | Guest/account cart, merge, coupon, zone/method/slot, COD checkout | Demo-ready | Customer | `Carts::*`, `Orders::CreateFromCart`, checkout tests |
-| Prescriptions | Required-product upload, states, follow-up, pharmacist review | Demo-ready | Customer, pharmacist | `Prescription`, `Prescriptions::Review`, staff tests |
+| Prescriptions | Required-product upload, states, follow-up, per-item pharmacist review and substitution | Demo-ready | Customer, pharmacist | `Prescription`, `PrescriptionReview`, `Prescriptions::DecideLine`, staff tests |
 | Upload security | Allowlists, bounded signature validation, private authorized access | Implemented | Customer, pharmacist | `AttachmentValidator`, `FileSignature`, security tests |
 | Malware scanning | Fail-closed states and ClamAV adapter boundary | Partial | Pharmacist, admin | `Uploads::Scanner`; real service must be configured |
 | Orders | Immutable snapshots, events, authorized transitions and cancellation | Demo-ready | Customer, order manager | `Order`, `Orders::*`, order/staff tests |
@@ -47,8 +59,8 @@ Status meanings:
 | Purchasing reports | Supplier totals, outstanding/overdue, top products, latest costs and CSV | Demo-ready | Inventory manager, admin | `Reports::PurchasingSummary`, report tests |
 | Batch inventory and FEFO | Receipt batches, expiry/quarantine, multi-batch reservations, traced consumption, valuation and CSV | Demo-ready | Inventory manager, admin | `InventoryBatch`, `Inventory::AllocateFefo`, batch tests |
 | Lots, batches, expiry, FEFO | Lot-level stock and expiry-aware allocation | Planned | — | Phase 17 |
-| Pharmacy POS | Counter sales and shift/cash workflow | Planned | — | Phase 18 |
-| Per-item prescription review | Item decisions and substitution workflow | Planned | — | Phase 19 |
+| Pharmacy POS | Counter sales and shift/cash workflow | Demo-ready | Pharmacist, order manager, admin | Phase 18 |
+| Per-item prescription review | Item decisions and therapeutic substitution workflow | Demo-ready | Pharmacist | `PrescriptionReview`, `Prescriptions::DecideLine`, Phase 19 |
 | Drug safety rules | Interaction/allergy/rule engine | Planned | — | Phase 20 |
 | Advanced Arabic search | Normalization, typo tolerance, richer ranking | Planned | — | Phase 21 |
 | Returns | Returns, refunds, reverse inventory/logistics | Planned | — | Phase 22 |

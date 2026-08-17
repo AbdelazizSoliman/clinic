@@ -1,5 +1,10 @@
 # Saydaliyati — Arabic RTL Pharmacy Commerce and Operations
 
+Phase 19 upgrades prescription handling to an independent pharmacist decision
+per commercial line — approve, substitute a therapeutic alternative, or
+reject — online and in POS, with FEFO reallocation and an immutable clinical
+history. See [docs/prescription_review.md](docs/prescription_review.md).
+
 Phase 18 adds cashier sessions, scanner-ready Arabic RTL POS, transactional
 batch-FEFO sales, pharmacist approvals, controlled discounts, reconciliation,
 printable receipts and POS reports. See [docs/pos.md](docs/pos.md).
@@ -277,6 +282,8 @@ the test and audit jobs against PostgreSQL.
 - [Reviewer and presentation index](docs/deliverables_index.md)
 - [Architecture](docs/architecture.md)
 - [Suppliers and purchasing](docs/purchasing.md)
+- [Pharmacy POS](docs/pos.md)
+- [Per-item prescription review and substitution](docs/prescription_review.md)
 - [Portfolio engineering case study](docs/portfolio_case_study.md)
 - [Feature matrix and roadmap](docs/feature_matrix.md)
 - [Technical reviewer guide](docs/reviewer_guide.md)

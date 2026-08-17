@@ -9,6 +9,10 @@ class Product < ApplicationRecord
   has_many :inventory_movements, dependent: :restrict_with_error
   has_many :inventory_batches, dependent: :restrict_with_error
   has_many :pos_sale_items, dependent: :restrict_with_error
+  has_many :prescription_review_items_as_original, class_name: "PrescriptionReviewItem",
+    foreign_key: :original_product_id, dependent: :restrict_with_error
+  has_many :prescription_review_items_as_dispensed, class_name: "PrescriptionReviewItem",
+    foreign_key: :dispensed_product_id, dependent: :restrict_with_error
 
   scope :active, -> { where(active: true) }
   scope :featured, -> { active.where(featured: true) }

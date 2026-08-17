@@ -83,6 +83,12 @@ Rails.application.routes.draw do
     end
     resources :prescriptions, only: %i[index show] do
       member { patch :review }
+      resources :review_items, only: [], controller: "prescription_review_items" do
+        member do
+          patch :start
+          patch :decide
+        end
+      end
       get "files/:attachment_id", to: "prescription_files#show", as: :file
     end
   end

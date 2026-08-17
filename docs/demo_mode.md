@@ -74,9 +74,18 @@ expected dates and purchase costs; and dates distributed across recent weeks for
 reports. Purchasing receipts increase product-level stock only—no batch or
 expiry data is seeded.
 
+Per-item prescription review (Phase 19) scenarios run through the real
+pharmacist decision services, not direct attribute writes: `DEMO-PRESCRIPTION-NEW`
+(pending), `DEMO-PRESCRIPTION-REVIEW` (under review), `DEMO-PRESCRIPTION-APPROVED`,
+`DEMO-PRESCRIPTION-REJECTED`, `DEMO-PRESCRIPTION-SUBSTITUTED`, a mixed
+ordinary+approved+rejected order (`DEMO-PRESCRIPTION-MIXED`), and a substituted
+POS sale (`DEMO-POS-RX-SUBSTITUTED`).
+
 The bundled PDF is synthetic and contains no medical information. The seed task
 temporarily uses Active Job's test adapter so prescription scan and mail jobs are
-not executed. In production mode the task also refuses to run without
+not executed, and suppresses transactional-email enqueueing so exercising the
+real prescription-decision pipeline never queues customer notifications. In
+production mode the task also refuses to run without
 `DEMO_STORAGE_ISOLATED=true`; this is operator confirmation that Active Storage
 points to a private demo-only bucket. It never sends invitations.
 

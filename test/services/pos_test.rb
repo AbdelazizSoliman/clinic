@@ -90,6 +90,44 @@ class PosTest < ActiveSupport::TestCase
     assert_not complete(other, key: "rx-other").success?
   end
 
+  test "pharmacist can substitute a POS prescription line and FEFO consumes the dispensed product" do
+    @product.update!(requires_prescription: true)
+    substitute = products(:skin_product)
+    substitute.update!(requires_prescription: true)
+    sale = create_sale
+    Pos::Cart.new(sale:, actor: @cashier).add(product: @product)
+    item = sale.items.first
+
+    review = Prescriptions::EnsureReview.call(sale)
+    review_item = review.items.find_by!(reviewable_item: item)
+    assert_not @cashier.can_make_prescription_decisions?
+
+    denied = Prescriptions::DecideLine.new(item: review_item, actor: @cashier, decision: "substituted",
+      reason: "محاولة كاشير", substitute_product: substitute).call
+    assert_not denied.success?
+
+    result = Prescriptions::DecideLine.new(item: review_item, actor: @pharmacist, decision: "substituted",
+      reason: "بديل علاجي متاح فورًا", substitute_product: substitute).call
+    assert result.success?, result.errors.join(", ")
+    assert sale.reload.total_cents.positive?
+    assert item.reload.prescription_approved?
+
+    completion = complete(sale, key: "pos-substituted")
+    assert completion.success?, completion.errors.join(", ")
+    sale.reload
+    assert sale.completed?
+    allocation = item.reload.batch_allocations.first
+    assert_equal substitute, allocation.inventory_batch.product
+    assert_equal @product, item.product
+    assert_equal substitute, review_item.reload.dispensed_product
+    assert_equal @product, review_item.original_product
+
+    counts = [ PosSale.count, PosPayment.count, InventoryMovement.count ]
+    retry_result = complete(sale, key: "pos-substituted")
+    assert retry_result.success?
+    assert_equal counts, [ PosSale.count, PosPayment.count, InventoryMovement.count ]
+  end
+
   test "manual discount requires admin approval reason and cannot make total negative" do
     sale = create_sale
     Pos::Cart.new(sale:, actor: @cashier).add(product: @product)

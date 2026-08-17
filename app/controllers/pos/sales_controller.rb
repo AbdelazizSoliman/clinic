@@ -26,6 +26,8 @@ module Pos
 
     def show
       @products = Product.active.includes(:inventory_batches).order(:name).limit(20)
+      @substitution_candidates = Product.active.where(requires_prescription: true)
+        .joins(:inventory_batches).merge(InventoryBatch.allocatable).distinct.order(:name)
       @idempotency_key = @sale.completion_idempotency_key || SecureRandom.uuid
     end
 

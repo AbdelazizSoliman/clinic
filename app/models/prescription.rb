@@ -8,6 +8,7 @@ class Prescription < ApplicationRecord
   belongs_to :order
   belongs_to :reviewed_by, class_name: "User", optional: true
   has_many_attached :images
+  has_one :prescription_review, as: :reviewable, dependent: :restrict_with_error
 
   enum :status, { submitted: 0, under_review: 1, approved: 2, partially_approved: 3, rejected: 4 }, default: :submitted, validate: true
   enum :scan_status, { pending: 0, clean: 1, infected: 2, failed: 3 }, prefix: :scan, validate: true
