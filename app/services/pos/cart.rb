@@ -26,6 +26,7 @@ module Pos
           discount_cents: 0, line_total_cents: cents * requested,
           requires_prescription: product.requires_prescription?)
         item.save!
+        sync_review_item(item)
         Recalculate.call(@sale)
       end
       success(@sale)
@@ -35,10 +36,15 @@ module Pos
 
     def update(item:, quantity:)
       return failure(@sale, "غير مصرح") unless authorized? && item.pos_sale_id == @sale.id && @sale.draft?
+      return failure(@sale, "لا يمكن تعديل بند بعد القرار السريري") if item.prescription_review_item&.terminal?
       quantity = quantity.to_i
       return remove(item:) unless quantity.positive?
       return failure(@sale, "الكمية المتاحة غير كافية") if quantity > item.product.available_to_sell_quantity
-      PosSale.transaction { item.update!(quantity:); Recalculate.call(@sale) }
+      PosSale.transaction do
+        item.update!(quantity:)
+        sync_review_item(item)
+        Recalculate.call(@sale)
+      end
       success(@sale)
     rescue ActiveRecord::RecordInvalid => error
       failure(@sale, error.record.errors.full_messages)
@@ -46,11 +52,19 @@ module Pos
 
     def remove(item:)
       return failure(@sale, "غير مصرح") unless authorized? && item.pos_sale_id == @sale.id && @sale.draft?
+      return failure(@sale, "لا يمكن حذف بند بعد القرار السريري") if item.prescription_review_item&.terminal?
       PosSale.transaction { item.destroy!; Recalculate.call(@sale) }
       success(@sale)
     end
 
     private
+
+    def sync_review_item(item)
+      return unless item.requires_prescription?
+      review = Prescriptions::EnsureReview.call(@sale)
+      review_item = review.items.find_by!(reviewable_item: item)
+      review_item.update!(quantity: item.quantity) unless review_item.quantity == item.quantity
+    end
 
     def authorized? = @actor&.can_operate_pos? && (@sale.cashier_id == @actor.id || @actor.admin?)
   end

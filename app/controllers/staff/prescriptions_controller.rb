@@ -14,7 +14,13 @@ module Staff
       @pagy, @prescriptions = pagy(scope, limit: 20)
     end
 
-    def show; end
+    def show
+      @review = Prescriptions::EnsureReview.call(@prescription)
+      @review_items = @review.items.includes(:original_product, :dispensed_product, :reviewed_by,
+        :therapeutic_substitution, :decisions).order(:id)
+      @substitution_candidates = Product.active.where(requires_prescription: true)
+        .joins(:inventory_batches).merge(InventoryBatch.allocatable).distinct.order(:name)
+    end
 
     def review
       result = Prescriptions::Review.new(prescription: @prescription, actor: current_user, decision: params[:decision], customer_message: params[:customer_message], internal_notes: params[:internal_notes], lock_version: params[:lock_version]).call

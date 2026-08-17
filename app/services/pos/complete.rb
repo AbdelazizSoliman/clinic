@@ -25,8 +25,9 @@ module Pos
           raise ActiveRecord::Rollback
         end
         Recalculate.call(@sale)
-        items = @sale.items.includes(:product).order(:product_id).to_a
-        products = Product.where(id: items.map(&:product_id)).order(:id).lock.index_by(&:id)
+        items = @sale.items.includes(:product, prescription_review_item: :dispensed_product).order(:product_id).to_a
+        product_ids = items.filter_map { |item| effective_product(item)&.id }
+        products = Product.where(id: product_ids).order(:id).lock.index_by(&:id)
         errors.concat(validate_items(items, products))
         payment_attributes = normalize_payments(@sale.total_cents, errors)
         raise ActiveRecord::Rollback if errors.any?
@@ -59,11 +60,13 @@ module Pos
     def validate_items(items, products)
       return [ "سلة نقطة البيع فارغة" ] if items.empty?
       items.filter_map do |item|
-        product = products[item.product_id]
+        review_item = item.prescription_review_item
+        next if review_item&.rejected?
+        product = effective_product(item)
         if !product&.active?
           "#{item.product_name} غير نشط"
-        elsif item.requires_prescription? && !item.prescription_approved?
-          "#{item.product_name} يحتاج اعتماد صيدلي"
+        elsif item.requires_prescription? && !review_item&.dispensable?
+          "#{item.product_name} يحتاج قرارًا سريريًا نهائيًا"
         elsif item.quantity > product.available_to_sell_quantity
           "الكمية المتاحة من #{item.product_name} غير كافية"
         end
@@ -98,12 +101,14 @@ module Pos
 
     def consume_batches!(items, products, errors)
       items.each do |item|
+        next if item.prescription_review_item&.rejected?
         remaining = item.quantity
-        batches = InventoryBatch.where(product_id: item.product_id).allocatable.fefo.lock.to_a
+        product = effective_product(item)
+        batches = InventoryBatch.where(product_id: product.id).allocatable.fefo.lock.to_a
         batches.each do |batch|
           quantity = [ remaining, batch.available_quantity ].min
           next unless quantity.positive?
-          product = products.fetch(item.product_id)
+          product = products.fetch(product.id)
           product_before = product.stock_quantity
           batch_before = batch.on_hand_quantity
           batch.update!(on_hand_quantity: batch_before - quantity)
@@ -122,6 +127,11 @@ module Pos
         errors << "الكمية المتاحة من #{item.product_name} غير كافية" if remaining.positive?
         break if errors.any?
       end
+    end
+
+    def effective_product(item)
+      review_item = item.prescription_review_item
+      review_item&.dispensable? ? review_item.effective_product : item.product
     end
   end
 end

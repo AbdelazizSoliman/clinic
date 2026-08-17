@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_27_200000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_17_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -294,7 +294,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_27_200000) do
     t.index ["actor_id"], name: "index_inventory_batch_events_on_actor_id"
     t.index ["inventory_batch_id", "created_at"], name: "idx_on_inventory_batch_id_created_at_27dad0d21b"
     t.index ["inventory_batch_id"], name: "index_inventory_batch_events_on_inventory_batch_id"
-    t.check_constraint "event_type::text = ANY (ARRAY['created'::character varying::text, 'quarantined'::character varying::text, 'quarantine_released'::character varying::text, 'adjusted'::character varying::text])", name: "inventory_batch_events_type_valid"
+    t.check_constraint "event_type::text = ANY (ARRAY['created'::character varying, 'quarantined'::character varying, 'quarantine_released'::character varying, 'adjusted'::character varying]::text[])", name: "inventory_batch_events_type_valid"
   end
 
   create_table "inventory_batches", force: :cascade do |t|
@@ -387,7 +387,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_27_200000) do
     t.integer "status", default: 0, null: false
     t.datetime "updated_at", null: false
     t.index ["order_id"], name: "index_inventory_reservations_on_order_id"
-    t.index ["order_item_id"], name: "index_inventory_reservations_on_order_item_id", unique: true
+    t.index ["order_item_id", "status"], name: "index_inventory_reservations_unique_line_status", unique: true
     t.index ["product_id", "status"], name: "index_inventory_reservations_on_product_id_and_status"
     t.index ["product_id"], name: "index_inventory_reservations_on_product_id"
     t.index ["status", "product_id"], name: "index_inventory_reservations_reporting_status_product"
@@ -464,7 +464,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_27_200000) do
     t.index ["event_type"], name: "index_order_events_on_event_type"
     t.index ["order_id", "created_at"], name: "index_order_events_on_order_id_and_created_at"
     t.index ["order_id"], name: "index_order_events_on_order_id"
-    t.check_constraint "event_type::text = ANY (ARRAY['order_submitted'::character varying::text, 'prescription_review_started'::character varying::text, 'prescription_approved'::character varying::text, 'prescription_partially_approved'::character varying::text, 'prescription_rejected'::character varying::text, 'order_confirmed'::character varying::text, 'preparation_started'::character varying::text, 'order_ready'::character varying::text, 'out_for_delivery'::character varying::text, 'delivered'::character varying::text, 'cancelled'::character varying::text, 'rejected'::character varying::text, 'reservations_released'::character varying::text, 'reservations_consumed'::character varying::text, 'follow_up_opened'::character varying::text, 'customer_responded'::character varying::text, 'follow_up_resolved'::character varying::text, 'customer_cancelled'::character varying::text, 'staff_cancelled'::character varying::text, 'system_cancelled'::character varying::text, 'reservations_extended'::character varying::text, 'reservations_expired'::character varying::text, 'notification_sent'::character varying::text, 'fulfilment_assigned'::character varying::text, 'delivery_scheduled'::character varying::text, 'fulfilment_picking'::character varying::text, 'fulfilment_packed'::character varying::text, 'delivery_dispatched'::character varying::text, 'delivery_completed'::character varying::text])", name: "order_events_type_valid"
+    t.check_constraint "event_type::text = ANY (ARRAY['order_submitted'::character varying, 'prescription_review_started'::character varying, 'prescription_approved'::character varying, 'prescription_partially_approved'::character varying, 'prescription_rejected'::character varying, 'order_confirmed'::character varying, 'preparation_started'::character varying, 'order_ready'::character varying, 'out_for_delivery'::character varying, 'delivered'::character varying, 'cancelled'::character varying, 'rejected'::character varying, 'reservations_released'::character varying, 'reservations_consumed'::character varying, 'follow_up_opened'::character varying, 'customer_responded'::character varying, 'follow_up_resolved'::character varying, 'customer_cancelled'::character varying, 'staff_cancelled'::character varying, 'system_cancelled'::character varying, 'reservations_extended'::character varying, 'reservations_expired'::character varying, 'notification_sent'::character varying, 'fulfilment_assigned'::character varying, 'delivery_scheduled'::character varying, 'fulfilment_picking'::character varying, 'fulfilment_packed'::character varying, 'delivery_dispatched'::character varying, 'delivery_completed'::character varying, 'prescription_line_review_completed'::character varying]::text[])", name: "order_events_type_valid"
   end
 
   create_table "order_follow_up_messages", force: :cascade do |t|
@@ -577,6 +577,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_27_200000) do
     t.string "number", null: false
     t.integer "payment_method", null: false
     t.integer "payment_status", default: 0, null: false
+    t.bigint "prescription_adjustment_cents", default: 0, null: false
     t.boolean "prescription_required", default: false, null: false
     t.string "pricing_calculation_version", default: "v1", null: false
     t.integer "product_discount_cents", default: 0, null: false
@@ -730,6 +731,69 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_27_200000) do
     t.check_constraint "status = ANY (ARRAY[0, 1, 2])", name: "pos_sales_status_valid"
     t.check_constraint "subtotal_cents >= 0 AND automatic_discount_cents >= 0 AND manual_discount_cents >= 0 AND tax_cents >= 0 AND total_cents >= 0", name: "pos_sales_money_nonnegative"
     t.check_constraint "total_cents = (subtotal_cents - automatic_discount_cents - manual_discount_cents + tax_cents)", name: "pos_sales_total_consistent"
+  end
+
+  create_table "prescription_decisions", force: :cascade do |t|
+    t.bigint "actor_id", null: false
+    t.datetime "created_at", null: false
+    t.string "from_status", null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.text "notes"
+    t.bigint "prescription_review_item_id", null: false
+    t.text "reason"
+    t.string "to_status", null: false
+    t.index ["actor_id"], name: "index_prescription_decisions_on_actor_id"
+    t.index ["prescription_review_item_id", "created_at"], name: "index_prescription_decisions_timeline"
+    t.index ["prescription_review_item_id"], name: "index_prescription_decisions_on_prescription_review_item_id"
+    t.check_constraint "(from_status::text = ANY (ARRAY['pending'::character varying, 'under_review'::character varying, 'approved'::character varying, 'substituted'::character varying, 'rejected'::character varying]::text[])) AND (to_status::text = ANY (ARRAY['pending'::character varying, 'under_review'::character varying, 'approved'::character varying, 'substituted'::character varying, 'rejected'::character varying]::text[]))", name: "prescription_decisions_statuses_valid"
+  end
+
+  create_table "prescription_review_items", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "dispensed_product_id"
+    t.bigint "dispensed_unit_price_cents"
+    t.integer "lock_version", default: 0, null: false
+    t.bigint "original_product_id", null: false
+    t.text "pharmacist_notes"
+    t.string "physician_instruction_reference"
+    t.bigint "prescribed_unit_price_cents", null: false
+    t.bigint "prescription_review_id", null: false
+    t.integer "quantity", null: false
+    t.text "reason"
+    t.bigint "reviewable_item_id", null: false
+    t.string "reviewable_item_type", null: false
+    t.datetime "reviewed_at"
+    t.bigint "reviewed_by_id"
+    t.integer "status", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["dispensed_product_id"], name: "index_prescription_review_items_on_dispensed_product_id"
+    t.index ["original_product_id"], name: "index_prescription_review_items_on_original_product_id"
+    t.index ["prescription_review_id", "reviewable_item_type", "reviewable_item_id"], name: "index_prescription_review_items_unique_source", unique: true
+    t.index ["prescription_review_id"], name: "index_prescription_review_items_on_prescription_review_id"
+    t.index ["reviewable_item_type", "reviewable_item_id"], name: "index_prescription_review_items_on_reviewable_item"
+    t.index ["reviewed_by_id"], name: "index_prescription_review_items_on_reviewed_by_id"
+    t.index ["status", "reviewed_at"], name: "index_prescription_review_items_on_status_and_reviewed_at"
+    t.check_constraint "(status = ANY (ARRAY[0, 1])) AND reviewed_by_id IS NULL AND reviewed_at IS NULL AND dispensed_product_id IS NULL OR status = 2 AND reviewed_by_id IS NOT NULL AND reviewed_at IS NOT NULL AND dispensed_product_id = original_product_id OR status = 3 AND reviewed_by_id IS NOT NULL AND reviewed_at IS NOT NULL AND dispensed_product_id IS NOT NULL AND dispensed_product_id <> original_product_id OR status = 4 AND reviewed_by_id IS NOT NULL AND reviewed_at IS NOT NULL AND dispensed_product_id IS NULL", name: "prescription_review_items_decision_consistent"
+    t.check_constraint "prescribed_unit_price_cents >= 0 AND (dispensed_unit_price_cents IS NULL OR dispensed_unit_price_cents >= 0)", name: "prescription_review_items_money_nonnegative"
+    t.check_constraint "quantity > 0", name: "prescription_review_items_quantity_positive"
+    t.check_constraint "status = ANY (ARRAY[0, 1, 2, 3, 4])", name: "prescription_review_items_status_valid"
+  end
+
+  create_table "prescription_reviews", force: :cascade do |t|
+    t.datetime "completed_at"
+    t.datetime "created_at", null: false
+    t.integer "lock_version", default: 0, null: false
+    t.bigint "reviewable_id", null: false
+    t.string "reviewable_type", null: false
+    t.datetime "started_at"
+    t.bigint "started_by_id"
+    t.integer "status", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["reviewable_type", "reviewable_id"], name: "index_prescription_reviews_on_reviewable"
+    t.index ["reviewable_type", "reviewable_id"], name: "index_prescription_reviews_unique_reviewable", unique: true
+    t.index ["started_by_id"], name: "index_prescription_reviews_on_started_by_id"
+    t.index ["status", "created_at"], name: "index_prescription_reviews_on_status_and_created_at"
+    t.check_constraint "status = ANY (ARRAY[0, 1, 2])", name: "prescription_reviews_status_valid"
   end
 
   create_table "prescriptions", force: :cascade do |t|
@@ -906,7 +970,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_27_200000) do
     t.index ["status", "redeemed_at"], name: "index_redemptions_reporting_status_time"
     t.index ["user_id"], name: "index_promotion_redemptions_on_user_id"
     t.check_constraint "discount_cents >= 0", name: "promotion_redemptions_discount_nonnegative"
-    t.check_constraint "status::text = ANY (ARRAY['redeemed'::character varying::text, 'released'::character varying::text])", name: "promotion_redemptions_status_valid"
+    t.check_constraint "status::text = ANY (ARRAY['redeemed'::character varying, 'released'::character varying]::text[])", name: "promotion_redemptions_status_valid"
   end
 
   create_table "promotions", force: :cascade do |t|
@@ -941,11 +1005,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_27_200000) do
     t.index ["created_by_id"], name: "index_promotions_on_created_by_id"
     t.index ["delivery_zone_id"], name: "index_promotions_on_delivery_zone_id"
     t.index ["updated_by_id"], name: "index_promotions_on_updated_by_id"
-    t.check_constraint "discount_type::text = ANY (ARRAY['percentage'::character varying::text, 'fixed_amount'::character varying::text, 'fixed_price'::character varying::text, 'free_delivery'::character varying::text])", name: "promotions_discount_type_valid"
+    t.check_constraint "discount_type::text = ANY (ARRAY['percentage'::character varying, 'fixed_amount'::character varying, 'fixed_price'::character varying, 'free_delivery'::character varying]::text[])", name: "promotions_discount_type_valid"
     t.check_constraint "discount_value >= 0 AND minimum_subtotal_cents >= 0 AND priority >= 0", name: "promotions_values_nonnegative"
     t.check_constraint "ends_at > starts_at", name: "promotions_time_range_valid"
     t.check_constraint "per_customer_usage_limit IS NULL OR per_customer_usage_limit > 0", name: "promotions_customer_limit_positive"
-    t.check_constraint "promotion_type::text = ANY (ARRAY['product'::character varying::text, 'category'::character varying::text, 'brand'::character varying::text, 'cart'::character varying::text, 'delivery'::character varying::text])", name: "promotions_type_valid"
+    t.check_constraint "promotion_type::text = ANY (ARRAY['product'::character varying, 'category'::character varying, 'brand'::character varying, 'cart'::character varying, 'delivery'::character varying]::text[])", name: "promotions_type_valid"
     t.check_constraint "total_usage_limit IS NULL OR total_usage_limit > 0", name: "promotions_total_limit_positive"
   end
 
@@ -1138,6 +1202,24 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_27_200000) do
     t.check_constraint "lead_time_days IS NULL OR lead_time_days >= 0", name: "suppliers_lead_time_nonnegative"
   end
 
+  create_table "therapeutic_substitutions", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "original_product_id", null: false
+    t.bigint "pharmacist_id", null: false
+    t.string "physician_instruction_reference"
+    t.bigint "prescription_review_item_id", null: false
+    t.text "reason", null: false
+    t.bigint "substitute_product_id", null: false
+    t.datetime "substituted_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["original_product_id"], name: "index_therapeutic_substitutions_on_original_product_id"
+    t.index ["pharmacist_id"], name: "index_therapeutic_substitutions_on_pharmacist_id"
+    t.index ["prescription_review_item_id"], name: "index_therapeutic_substitutions_on_prescription_review_item_id"
+    t.index ["prescription_review_item_id"], name: "index_therapeutic_substitutions_unique_item", unique: true
+    t.index ["substitute_product_id"], name: "index_therapeutic_substitutions_on_substitute_product_id"
+    t.check_constraint "original_product_id <> substitute_product_id", name: "therapeutic_substitutions_products_differ"
+  end
+
   create_table "transactional_email_deliveries", force: :cascade do |t|
     t.string "action", null: false
     t.integer "attempts_count", default: 0, null: false
@@ -1170,7 +1252,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_27_200000) do
     t.index ["actor_id"], name: "index_user_audit_events_on_actor_id"
     t.index ["user_id", "created_at"], name: "index_user_audit_events_on_user_id_and_created_at"
     t.index ["user_id"], name: "index_user_audit_events_on_user_id"
-    t.check_constraint "action::text = ANY (ARRAY['invited'::character varying::text, 'invitation_resent'::character varying::text, 'invitation_revoked'::character varying::text, 'invitation_accepted'::character varying::text, 'activated'::character varying::text, 'deactivated'::character varying::text, 'role_changed'::character varying::text, 'profile_updated_by_admin'::character varying::text, 'account_unlocked'::character varying::text, 'password_reset_requested_by_admin'::character varying::text, 'bootstrap_admin'::character varying::text])", name: "user_audit_events_action_valid"
+    t.check_constraint "action::text = ANY (ARRAY['invited'::character varying, 'invitation_resent'::character varying, 'invitation_revoked'::character varying, 'invitation_accepted'::character varying, 'activated'::character varying, 'deactivated'::character varying, 'role_changed'::character varying, 'profile_updated_by_admin'::character varying, 'account_unlocked'::character varying, 'password_reset_requested_by_admin'::character varying, 'bootstrap_admin'::character varying]::text[])", name: "user_audit_events_action_valid"
   end
 
   create_table "user_invitations", force: :cascade do |t|
@@ -1297,6 +1379,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_27_200000) do
   add_foreign_key "pos_sales", "users", column: "cashier_id"
   add_foreign_key "pos_sales", "users", column: "discount_approved_by_id"
   add_foreign_key "pos_sales", "users", column: "voided_by_id"
+  add_foreign_key "prescription_decisions", "prescription_review_items"
+  add_foreign_key "prescription_decisions", "users", column: "actor_id"
+  add_foreign_key "prescription_review_items", "prescription_reviews"
+  add_foreign_key "prescription_review_items", "products", column: "dispensed_product_id"
+  add_foreign_key "prescription_review_items", "products", column: "original_product_id"
+  add_foreign_key "prescription_review_items", "users", column: "reviewed_by_id"
+  add_foreign_key "prescription_reviews", "users", column: "started_by_id"
   add_foreign_key "prescriptions", "orders", on_delete: :cascade
   add_foreign_key "prescriptions", "users"
   add_foreign_key "prescriptions", "users", column: "reviewed_by_id"
@@ -1340,6 +1429,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_27_200000) do
   add_foreign_key "security_events", "users"
   add_foreign_key "security_events", "users", column: "actor_id"
   add_foreign_key "settings_audit_events", "users", column: "actor_id"
+  add_foreign_key "therapeutic_substitutions", "prescription_review_items"
+  add_foreign_key "therapeutic_substitutions", "products", column: "original_product_id"
+  add_foreign_key "therapeutic_substitutions", "products", column: "substitute_product_id"
+  add_foreign_key "therapeutic_substitutions", "users", column: "pharmacist_id"
   add_foreign_key "transactional_email_deliveries", "notifications"
   add_foreign_key "transactional_email_deliveries", "users"
   add_foreign_key "user_audit_events", "users"

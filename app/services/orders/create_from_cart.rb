@@ -148,12 +148,14 @@ module Orders
           discount_cents: line.discount_cents, quantity: line.quantity,
           line_total_cents: line.line_total_cents, requires_prescription: product.requires_prescription?
         )
-        reservation = order.inventory_reservations.create!(order_item: item, product:, quantity: line.quantity, status: :active,
-          expires_at: Inventory::ReservationExpiryPolicy.expires_at_for(order))
-        allocation = Inventory::AllocateFefo.new(reservation:).call
-        unless allocation.success?
-          order.errors.add(:base, allocation.errors.join("، "))
-          raise ActiveRecord::RecordInvalid, order
+        unless product.requires_prescription?
+          reservation = order.inventory_reservations.create!(order_item: item, product:, quantity: line.quantity, status: :active,
+            expires_at: Inventory::ReservationExpiryPolicy.expires_at_for(order))
+          allocation = Inventory::AllocateFefo.new(reservation:).call
+          unless allocation.success?
+            order.errors.add(:base, allocation.errors.join("، "))
+            raise ActiveRecord::RecordInvalid, order
+          end
         end
       end
     end
@@ -197,6 +199,7 @@ module Orders
       prescription = order.build_prescription(user: @user, status: :submitted, submitted_at: Time.current, customer_notes: @prescription_notes.to_s.squish.presence)
       prescription.images.attach(@prescription_files)
       prescription.save!
+      Prescriptions::EnsureReview.call(prescription)
     end
 
     def success(order)

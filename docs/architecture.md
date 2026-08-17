@@ -85,10 +85,18 @@ supplemented by bounded magic-byte inspection.
 
 Creation enqueues `ScanPrescriptionJob`. The `Uploads::Scanner` boundary can
 use ClamAV; pending, failed, and infected states remain unavailable for normal
-staff review. `Prescriptions::Review` checks pharmacist/admin authorization,
-scan state, row version, and allowed transitions. Final decisions update the
-order/reservation workflow and notify the customer after the transactional
-change.
+staff review.
+
+Since Phase 19, the clinical decision itself is per commercial line, not per
+prescription. `Prescriptions::EnsureReview` creates one `PrescriptionReviewItem`
+per prescription-required order/POS line; `Prescriptions::StartLineReview` and
+`Prescriptions::DecideLine` (pharmacist-only, optimistic-locked) move a line
+through `pending → under_review → approved|substituted|rejected`, with an
+append-only `PrescriptionDecision` timeline and an append-only
+`TherapeuticSubstitution` record when a therapeutic alternative is dispensed.
+`Prescriptions::FinalizeReview` recomputes the coarse `Prescription`/`Order`
+status once every line has a terminal decision and notifies the customer.
+Details: [`docs/prescription_review.md`](prescription_review.md).
 
 ### Orders
 
@@ -195,11 +203,19 @@ request time, avoiding hard-coded primary keys and unauthorized direct links.
 ### Prescription-required order
 
 1. Checkout validates one to five bounded supported files before creating an
-   order in `pending_prescription` with reservations.
+   order in `pending_prescription`. Ordinary lines get an immediate
+   reservation; prescription-required lines do not — they are reserved only
+   once a pharmacist decides them.
 2. Creation enqueues malware scanning; staff access is denied until clean.
-3. A pharmacist reviews the clean prescription using allowed state transitions.
-4. Approval permits the order workflow to continue. Rejection records a safe
-   reason, rejects the order, and releases reservations/redemptions.
+3. A pharmacist decides each prescription-required line independently:
+   approve the original product, substitute a therapeutic alternative, or
+   reject the line.
+4. Once every line has a terminal decision, `Prescriptions::FinalizeReview`
+   settles the order: `rejected` if nothing is dispensable, otherwise
+   `submitted` (with reservations extended for dispensed lines and a
+   `prescription_adjustment_cents` total adjustment for any substitution price
+   difference). A mixed order (ordinary + approved + rejected lines) settles
+   consistently without discarding the rejected line's history.
 
 ### Reservation consumption
 

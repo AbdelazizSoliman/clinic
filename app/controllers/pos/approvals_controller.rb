@@ -4,8 +4,14 @@ module Pos
 
     def prescription
       item = @sale.items.find(params[:item_id])
-      result = ApprovePrescription.new(item:, actor: current_user, reason: params[:reason]).call
-      redirect_to pos_sale_path(@sale), result.success? ? { notice: "تم اعتماد بند الروشتة" } : { alert: result.errors.join("، ") }
+      review_item = Prescriptions::EnsureReview.call(@sale).items.find_by!(reviewable_item: item)
+      substitute = Product.find_by(id: params[:substitute_product_id]) if params[:decision] == "substituted"
+      result = Prescriptions::DecideLine.new(item: review_item, actor: current_user,
+        decision: params[:decision].presence || "approved", reason: params[:reason],
+        notes: params[:notes], substitute_product: substitute,
+        physician_instruction_reference: params[:physician_instruction_reference],
+        lock_version: params[:lock_version]).call
+      redirect_to pos_sale_path(@sale), result.success? ? { notice: "تم حفظ القرار السريري" } : { alert: result.errors.join("، ") }
     end
 
     def discount

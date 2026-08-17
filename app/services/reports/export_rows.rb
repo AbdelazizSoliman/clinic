@@ -44,10 +44,17 @@ module Reports
       Result.new(headers: %w[المحافظة المدينة عدد_العناوين], rows:)
     end
     def prescriptions
-      rows = Prescription.where(submitted_at: @range.range).order(:submitted_at).limit(CsvExporter::MAX_ROWS + 1).map do |prescription|
-        [ prescription.order.number, prescription.submitted_at, prescription.status, prescription.reviewed_at ]
+      scope = Prescription.where(submitted_at: @range.range)
+      items = PrescriptionReviewItem.joins(:prescription_review)
+        .where(prescription_review: { reviewable_type: "Prescription", reviewable_id: scope.select(:id) })
+        .includes(:original_product, :dispensed_product, :reviewed_by, prescription_review: { reviewable: :order })
+        .order(:id).limit(CsvExporter::MAX_ROWS + 1)
+      rows = items.map do |item|
+        order = item.prescription_review.reviewable.order
+        [ order.number, item.status, item.original_product.name, item.dispensed_product&.name,
+          item.reviewed_by&.full_name, item.reviewed_at, item.reason, batch_numbers(item) ]
       end
-      Result.new(headers: %w[الطلب تاريخ_الإرسال الحالة تاريخ_المراجعة], rows:)
+      Result.new(headers: %w[الطلب حالة_البند المنتج_الموصوف المنتج_المصروف الصيدلي تاريخ_القرار السبب التشغيلات], rows:)
     end
     def fulfilments
       rows = Fulfilment.joins(:order).where(created_at: @range.range).includes(:delivery_zone, :assigned_to, :order).limit(CsvExporter::MAX_ROWS + 1).map do |fulfilment|
@@ -90,6 +97,10 @@ module Reports
             sale.items.count(&:requires_prescription?) ]
         end
       Result.new(headers: %w[الإيصال التاريخ الكاشير الجلسة الخام_قرش الخصم_التلقائي_قرش الخصم_اليدوي_قرش الصافي_قرش طرق_الدفع الوحدات التشغيلات بنود_الروشتة], rows:)
+    end
+    def batch_numbers(item)
+      return nil unless item.reviewable_item.is_a?(OrderItem)
+      item.reviewable_item.inventory_reservation&.inventory_batches&.pluck(:batch_number)&.join("+")
     end
   end
 end

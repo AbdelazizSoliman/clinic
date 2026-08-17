@@ -48,9 +48,11 @@ module DemoData
       @reference_time = Time.zone.now.beginning_of_day
       previous_adapter = ActiveJob::Base.queue_adapter
       ActiveJob::Base.queue_adapter = :test
+      Thread.current[:suppress_transactional_email] = true
       seed_all
     ensure
       ActiveJob::Base.queue_adapter = previous_adapter if previous_adapter
+      Thread.current[:suppress_transactional_email] = nil
     end
 
     private
@@ -270,27 +272,31 @@ module DemoData
 
     def seed_orders(accounts, addresses, products, zones, promotions, coupons)
       scenarios = [
-        [ "DEMO-PRESCRIPTION-NEW", :prescription_customer, "pending_prescription", "rx-tablets-a", 0, :submitted ],
-        [ "DEMO-PRESCRIPTION-REVIEW", :prescription_customer, "pending_prescription", "rx-capsules-b", 1, :under_review ],
-        [ "DEMO-PRESCRIPTION-APPROVED", :customer, "submitted", "rx-suspension-c", 4, :approved ],
-        [ "DEMO-PRESCRIPTION-REJECTED", :cancelled_customer, "rejected", "rx-tablets-a", 8, :rejected ],
-        [ "DEMO-CONFIRMED", :customer, "confirmed", "gentle-cleanser", 2, nil ],
-        [ "DEMO-PREPARING", :customer, "preparing", "baby-wipes", 3, nil ],
-        [ "DEMO-READY", :customer, "ready_for_delivery", "vitamin-c", 6, nil ],
-        [ "DEMO-OUT-FOR-DELIVERY", :customer, "out_for_delivery", "first-aid-kit", 10, nil ],
-        [ "DEMO-DELIVERED-OLD", :customer, "delivered", "daily-moisturizer", 25, nil ],
-        [ "DEMO-CANCELLED", :cancelled_customer, "cancelled", "digital-thermometer", 12, nil ]
+        [ "DEMO-PRESCRIPTION-NEW", :prescription_customer, "pending_prescription", "rx-tablets-a", 0, :submitted, nil ],
+        [ "DEMO-PRESCRIPTION-REVIEW", :prescription_customer, "pending_prescription", "rx-capsules-b", 1, :under_review, nil ],
+        [ "DEMO-PRESCRIPTION-APPROVED", :customer, "pending_prescription", "rx-suspension-c", 4, :approved, nil ],
+        [ "DEMO-PRESCRIPTION-REJECTED", :cancelled_customer, "pending_prescription", "rx-tablets-a", 8, :rejected, nil ],
+        [ "DEMO-PRESCRIPTION-SUBSTITUTED", :prescription_customer, "pending_prescription", "rx-tablets-a", 6, :substituted, "rx-capsules-b" ],
+        [ "DEMO-CONFIRMED", :customer, "confirmed", "gentle-cleanser", 2, nil, nil ],
+        [ "DEMO-PREPARING", :customer, "preparing", "baby-wipes", 3, nil, nil ],
+        [ "DEMO-READY", :customer, "ready_for_delivery", "vitamin-c", 6, nil, nil ],
+        [ "DEMO-OUT-FOR-DELIVERY", :customer, "out_for_delivery", "first-aid-kit", 10, nil, nil ],
+        [ "DEMO-DELIVERED-OLD", :customer, "delivered", "daily-moisturizer", 25, nil, nil ],
+        [ "DEMO-CANCELLED", :cancelled_customer, "cancelled", "digital-thermometer", 12, nil, nil ]
       ]
-      scenarios.map do |number, account_key, status, product_key, days_ago, prescription_status|
+      orders = scenarios.map do |number, account_key, status, product_key, days_ago, prescription_status, substitute_key|
         ensure_order(number:, user: accounts.fetch(account_key), address: addresses.fetch(account_key), status:,
           product: products.fetch(product_key), zone: account_key == :cancelled_customer ? zones.fetch("demo-nile") : zones.fetch("demo-roda"),
           days_ago:, prescription_status:, pharmacist: accounts.fetch(:pharmacist), order_manager: accounts.fetch(:order_manager),
           promotion: number == "DEMO-DELIVERED-OLD" ? promotions.fetch(:active) : nil,
-          coupon: number == "DEMO-DELIVERED-OLD" ? coupons.fetch(:active) : nil)
+          coupon: number == "DEMO-DELIVERED-OLD" ? coupons.fetch(:active) : nil,
+          substitute_product: substitute_key ? products.fetch(substitute_key) : nil)
       end
+      orders << ensure_mixed_prescription_order(accounts, addresses, products, zones)
+      orders
     end
 
-    def ensure_order(number:, user:, address:, status:, product:, zone:, days_ago:, prescription_status:, pharmacist:, order_manager:, promotion:, coupon:)
+    def ensure_order(number:, user:, address:, status:, product:, zone:, days_ago:, prescription_status:, pharmacist:, order_manager:, promotion:, coupon:, substitute_product: nil)
       return Order.find_by!(number:) if Order.exists?(number:)
 
       submitted_at = @reference_time - days_ago.days + 10.hours
@@ -317,13 +323,15 @@ module DemoData
           unit_price_cents: subtotal - discount, original_unit_price_cents: subtotal,
           final_unit_price_cents: subtotal - discount, discount_cents: discount,
           line_total_cents: subtotal - discount, requires_prescription: product.requires_prescription?)
-        reservation = order.inventory_reservations.create!(order_item: item, product:, quantity:, status: :active,
-          expires_at: %w[confirmed preparing].include?(status) ? nil : submitted_at + 24.hours)
-        allocation = Inventory::AllocateFefo.new(reservation:).call
-        raise Refused, allocation.errors.join("، ") unless allocation.success?
+        unless product.requires_prescription?
+          reservation = order.inventory_reservations.create!(order_item: item, product:, quantity:, status: :active,
+            expires_at: %w[confirmed preparing].include?(status) ? nil : submitted_at + 24.hours)
+          allocation = Inventory::AllocateFefo.new(reservation:).call
+          raise Refused, allocation.errors.join("، ") unless allocation.success?
+        end
         if %w[ready_for_delivery out_for_delivery delivered].include?(status)
           raise Refused, "Insufficient demo stock for #{product.slug}" unless Inventory::ConsumeReservations.new(order).call
-        elsif %w[cancelled rejected].include?(status)
+        elsif status == "cancelled"
           Inventory::ReleaseReservations.new(order).call
         end
         order.create_order_address!(address.attributes.symbolize_keys.slice(:label, :recipient_name, :mobile_number,
@@ -335,26 +343,100 @@ module DemoData
           dispatched_at: fulfilment_status.in?(%i[dispatched delivered]) ? submitted_at + 4.hours : nil,
           delivered_at: fulfilment_status == :delivered ? submitted_at + 6.hours : nil)
         order.events.create!(event_type: "order_submitted", to_status: status, customer_visible: true, created_at: submitted_at)
-        create_prescription(order, user, prescription_status, pharmacist, submitted_at) if prescription_status
+        create_prescription(order, user, prescription_status, pharmacist, submitted_at, substitute_product:) if prescription_status
         create_promotion_snapshot(order, user, promotion, coupon, discount, submitted_at) if promotion
-        reservation
         order
       end
     end
 
-    def create_prescription(order, user, status, pharmacist, submitted_at)
+    def create_prescription(order, user, status, pharmacist, submitted_at, substitute_product: nil)
       prescription = order.build_prescription(user:, status: :submitted, submitted_at:, customer_notes: "ملاحظة خيالية لبيانات العرض")
       prescription.images.attach(io: File.open(Rails.root.join("db/demo_assets/prescription.pdf")), filename: "demo-prescription.pdf", content_type: "application/pdf")
       prescription.save!
-      attributes = { scan_status: :clean, scanned_at: submitted_at + 5.minutes, status: }
-      if %i[approved rejected].include?(status)
-        attributes.merge!(reviewed_by: pharmacist, reviewed_at: submitted_at + 1.hour,
-          customer_message: status == :approved ? "تمت مراجعة الملف التجريبي" : "الملف التجريبي غير مكتمل",
-          rejection_reason: status == :rejected ? "الملف التجريبي غير مكتمل" : nil)
-      elsif status == :under_review
-        attributes[:internal_notes] = "مراجعة تجريبية جارية"
+      prescription.update!(scan_status: :clean, scanned_at: submitted_at + 5.minutes)
+      return prescription if status == :submitted
+
+      review = Prescriptions::EnsureReview.call(prescription)
+      item = review.items.first
+      case status
+      when :under_review
+        result = Prescriptions::StartLineReview.new(item:, actor: pharmacist).call
+        raise Refused, result.errors.join("، ") unless result.success?
+      when :approved
+        decide_review_item!(item, pharmacist, "approved", "تمت مراجعة الملف التجريبي واعتماد الصنف الموصوف")
+      when :rejected
+        decide_review_item!(item, pharmacist, "rejected", "الملف التجريبي غير مكتمل")
+      when :substituted
+        decide_review_item!(item, pharmacist, "substituted", "بديل علاجي مطابق ضمن بيانات العرض", substitute_product:)
       end
-      prescription.update!(attributes)
+      prescription
+    end
+
+    def decide_review_item!(item, actor, decision, reason, substitute_product: nil)
+      result = Prescriptions::DecideLine.new(item:, actor:, decision:, reason:, substitute_product:).call
+      raise Refused, result.errors.join("، ") unless result.success?
+      result
+    end
+
+    def ensure_mixed_prescription_order(accounts, addresses, products, zones)
+      number = "DEMO-PRESCRIPTION-MIXED"
+      return Order.find_by!(number:) if Order.exists?(number:)
+
+      user = accounts.fetch(:prescription_customer)
+      address = addresses.fetch(:prescription_customer)
+      zone = zones.fetch("demo-roda")
+      pharmacist = accounts.fetch(:pharmacist)
+      submitted_at = @reference_time - 3.days + 10.hours
+      lines = [
+        [ products.fetch("paracetamol-20"), 1 ],
+        [ products.fetch("rx-capsules-b"), 1 ],
+        [ products.fetch("rx-suspension-c"), 1 ]
+      ]
+      Cart.transaction do
+        cart = user.carts.create!(status: :completed, currency: "EGP", checkout_submission_token: "demo:cart:#{number}")
+        subtotal = lines.sum { |product, quantity| (product.price * 100).round * quantity }
+        fee = zone.delivery_fee_cents
+        order = user.orders.create!(cart:, number:, status: "pending_prescription", payment_method: :cash_on_delivery,
+          payment_status: :unpaid, delivery_method: :standard, currency: "EGP",
+          subtotal_cents: subtotal, discount_cents: 0, cart_discount_cents: 0, product_discount_cents: 0,
+          delivery_discount_cents: 0, delivery_fee_cents: fee, total_cents: subtotal + fee,
+          customer_email: user.email, customer_mobile_number: user.mobile_number,
+          customer_first_name: user.first_name, customer_last_name: user.last_name, submitted_at:,
+          prescription_required: true, delivery_zone: zone, delivery_zone_code: zone.code,
+          delivery_zone_name: zone.name, delivery_method_name: "توصيل عادي",
+          delivery_estimated_min_minutes: zone.estimated_min_minutes, delivery_estimated_max_minutes: zone.estimated_max_minutes,
+          pricing_calculation_version: Promotions::Calculator::VERSION)
+        lines.each do |product, quantity|
+          cents = (product.price * 100).round
+          item = order.items.create!(product:, product_name: product.name, product_slug: product.slug,
+            brand_name: product.brand.name, category_name: product.category.name, quantity:,
+            unit_price_cents: cents, original_unit_price_cents: cents, final_unit_price_cents: cents,
+            discount_cents: 0, line_total_cents: cents * quantity, requires_prescription: product.requires_prescription?)
+          next if product.requires_prescription?
+          reservation = order.inventory_reservations.create!(order_item: item, product:, quantity:, status: :active,
+            expires_at: submitted_at + 24.hours)
+          allocation = Inventory::AllocateFefo.new(reservation:).call
+          raise Refused, allocation.errors.join("، ") unless allocation.success?
+        end
+        order.create_order_address!(address.attributes.symbolize_keys.slice(:label, :recipient_name, :mobile_number,
+          :governorate, :city, :district, :street, :building_number, :floor, :apartment, :landmark, :postal_code,
+          :delivery_notes, :latitude, :longitude))
+        order.create_fulfilment!(delivery_zone: zone, status: :unassigned)
+        order.events.create!(event_type: "order_submitted", to_status: "pending_prescription", customer_visible: true, created_at: submitted_at)
+
+        prescription = order.build_prescription(user:, status: :submitted, submitted_at:,
+          customer_notes: "ملاحظة خيالية لطلب مختلط للعرض")
+        prescription.images.attach(io: File.open(Rails.root.join("db/demo_assets/prescription.pdf")), filename: "demo-prescription.pdf", content_type: "application/pdf")
+        prescription.save!
+        prescription.update!(scan_status: :clean, scanned_at: submitted_at + 5.minutes)
+
+        review = Prescriptions::EnsureReview.call(prescription)
+        approve_item = review.items.find_by!(original_product: products.fetch("rx-capsules-b"))
+        reject_item = review.items.find_by!(original_product: products.fetch("rx-suspension-c"))
+        decide_review_item!(approve_item, pharmacist, "approved", "بند معتمد ضمن طلب مختلط للعرض")
+        decide_review_item!(reject_item, pharmacist, "rejected", "بند مرفوض ضمن طلب مختلط للعرض")
+        order.reload
+      end
     end
 
     def create_promotion_snapshot(order, user, promotion, coupon, discount, submitted_at)
@@ -439,6 +521,15 @@ module DemoData
               reason: "اعتماد صيدلي تجريبي داخل الصيدلية").call
           })
         raise Refused, "POS prescription demo failed" unless rx_sale.completed?
+        substituted_sale = create_demo_sale(closed, operator, "DEMO-POS-RX-SUBSTITUTED",
+          [ [ products.fetch("rx-suspension-c"), 1 ] ], key: "demo:pos:rx-substituted", before_complete: ->(sale) {
+            review = Prescriptions::EnsureReview.call(sale)
+            item = review.items.find_by!(reviewable_item: sale.items.first)
+            result = Prescriptions::DecideLine.new(item:, actor: pharmacist, decision: "substituted",
+              reason: "بديل علاجي تجريبي داخل الصيدلية", substitute_product: products.fetch("rx-tablets-a")).call
+            raise Refused, result.errors.join("، ") unless result.success?
+          })
+        raise Refused, "POS substitution demo failed" unless substituted_sale.completed?
         create_demo_sale(closed, operator, "DEMO-POS-DISCOUNT", [ [ products.fetch("daily-moisturizer"), 1 ] ],
           key: "demo:pos:discount", before_complete: ->(sale) {
             Pos::ApproveDiscount.new(sale:, actor: admin, amount_cents: 500,
@@ -476,6 +567,7 @@ module DemoData
         raise Refused, result.errors.join("، ") unless result.success?
       end
       before_complete&.call(sale)
+      sale.reload
       result = Pos::Complete.new(sale:, actor: cashier, idempotency_key: key,
         payments: [ { payment_method: "cash", amount_cents: sale.total_cents,
           tendered_cents: sale.total_cents } ]).call

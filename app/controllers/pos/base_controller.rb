@@ -12,7 +12,8 @@ module Pos
 
     def find_sale
       scope = current_user.admin? ? PosSale.all : current_user.pos_sales
-      @sale = scope.includes(items: [ :product, :prescription_approved_by, batch_allocations: :inventory_batch ],
+      @sale = scope.includes(items: [ :product, { prescription_review_item: [ :dispensed_product, :reviewed_by ] },
+        { batch_allocations: :inventory_batch } ],
         payments: [], cashier_session: :user).find_by!(number: params[:sale_number] || params[:number])
     end
   end

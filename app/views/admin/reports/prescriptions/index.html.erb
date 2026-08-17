@@ -1,1 +1,16 @@
-<div class="mx-auto max-w-7xl px-4 py-10"><div class="flex justify-between"><div><h1 class="text-3xl font-black">مؤشرات مراجعة الروشتات</h1><p class="mt-2 text-sm text-slate-600">بيانات سير العمل فقط؛ لا ملفات ولا ملاحظات طبية في الصفحة أو التصدير.</p></div><%= render "admin/reports/export" %></div><%= render "admin/reports/filters" %><div class="mt-7 grid gap-4 sm:grid-cols-3"><% @report.status_counts.each do |status, count| %><div class="rounded-2xl bg-white p-5"><span><%= status %></span><strong class="block text-2xl"><%= count %></strong></div><% end %><div class="rounded-2xl bg-white p-5">نسبة الاعتماد<strong class="block text-2xl"><%= @report.approval_rate ? "#{@report.approval_rate}%" : "غير متاح" %></strong></div><div class="rounded-2xl bg-white p-5">متوسط المراجعة<strong class="block text-xl"><%= @report.average_review_seconds ? distance_of_time_in_words(@report.average_review_seconds) : "غير متاح" %></strong><small><%= @report.review_sample_count %> عينة</small></div></div></div>
+<div class="mx-auto max-w-7xl px-4 py-10"><div class="flex justify-between"><div><h1 class="text-3xl font-black">مؤشرات مراجعة الروشتات</h1><p class="mt-2 text-sm text-slate-600">بيانات سير العمل فقط؛ لا ملفات ولا ملاحظات طبية في الصفحة أو التصدير.</p></div><%= render "admin/reports/export" %></div><%= render "admin/reports/filters" %><div class="mt-7 grid gap-4 sm:grid-cols-3"><% @report.status_counts.each do |status, count| %><div class="rounded-2xl bg-white p-5"><span><%= status %></span><strong class="block text-2xl"><%= count %></strong></div><% end %><div class="rounded-2xl bg-white p-5">نسبة الاعتماد<strong class="block text-2xl"><%= @report.approval_rate ? "#{@report.approval_rate}%" : "غير متاح" %></strong></div><div class="rounded-2xl bg-white p-5">متوسط المراجعة<strong class="block text-xl"><%= @report.average_review_seconds ? distance_of_time_in_words(@report.average_review_seconds) : "غير متاح" %></strong><small><%= @report.review_sample_count %> عينة</small></div></div>
+
+<h2 class="mt-8 text-xl font-black">بنود المراجعة السريرية لكل صنف</h2>
+<div class="mt-4 grid gap-4 sm:grid-cols-3">
+  <% @report.item_status_counts.each do |status, count| %><div class="rounded-2xl bg-white p-5"><span><%= status %></span><strong class="block text-2xl"><%= count %></strong></div><% end %>
+  <div class="rounded-2xl bg-white p-5">بدائل علاجية<strong class="block text-2xl"><%= @report.substitution_count %></strong></div>
+</div>
+
+<h2 class="mt-8 text-xl font-black">أعباء العمل حسب الصيدلي</h2>
+<div class="mt-4 overflow-x-auto rounded-2xl bg-white">
+  <table class="w-full min-w-[400px] text-right"><thead><tr><th class="p-4">الصيدلي</th><th>عدد القرارات</th></tr></thead>
+    <tbody><% @report.pharmacist_workload.sort_by { |_, count| -count }.each do |name, count| %><tr class="border-t"><td class="p-4"><%= name %></td><td><%= count %></td></tr><% end %></tbody>
+  </table>
+  <% if @report.pharmacist_workload.empty? %><p class="p-5 text-center text-slate-500">لا توجد قرارات سريرية بعد.</p><% end %>
+</div>
+</div>

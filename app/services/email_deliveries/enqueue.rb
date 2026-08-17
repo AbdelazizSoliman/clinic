@@ -1,6 +1,8 @@
 module EmailDeliveries
   class Enqueue
     def self.call(user:, mailer:, action:, deduplication_key:, notification: nil)
+      return nil if Thread.current[:suppress_transactional_email]
+
       delivery = TransactionalEmailDelivery.find_or_create_by!(deduplication_key:) do |record|
         record.assign_attributes(user:, notification:, mailer:, action:, status: :queued, queued_at: Time.current)
       end

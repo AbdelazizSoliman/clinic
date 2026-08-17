@@ -59,8 +59,18 @@ keys, update/delete prevention, and transactional locking.
 
 ## 4. Prescription workflow and file boundary
 
+- [`docs/prescription_review.md`](prescription_review.md) documents the
+  per-item review architecture end to end.
+- [`app/services/prescriptions/decide_line.rb`](../app/services/prescriptions/decide_line.rb),
+  [`start_line_review.rb`](../app/services/prescriptions/start_line_review.rb), and
+  [`ensure_review.rb`](../app/services/prescriptions/ensure_review.rb) own the
+  per-line pharmacist decision, its inventory/FEFO consequences, and
+  therapeutic substitution.
+- [`app/services/prescriptions/finalize_review.rb`](../app/services/prescriptions/finalize_review.rb)
+  settles the order/prescription once every line has a terminal decision.
 - [`app/services/prescriptions/review.rb`](../app/services/prescriptions/review.rb)
-  owns pharmacist decisions and their order/reservation consequences.
+  is the earlier whole-prescription entry point, now a compatibility surface
+  that delegates terminal decisions to the per-line pipeline.
 - [`app/services/prescriptions/attachment_validator.rb`](../app/services/prescriptions/attachment_validator.rb)
   validates proposed uploads before checkout.
 - [`app/services/uploads/file_signature.rb`](../app/services/uploads/file_signature.rb)
