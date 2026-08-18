@@ -79,6 +79,18 @@ module DemoGuidance
       promotion ? @routes.admin_promotion_path(promotion) : @routes.admin_promotions_path
     end
 
+    def safety_interaction = safety_prescription("DEMO-SAFETY-INTERACTION")
+    def safety_substitution = safety_prescription("DEMO-SAFETY-SUBSTITUTION")
+    def safety_allergy = safety_prescription("DEMO-SAFETY-ALLERGY")
+    def safety_rules = allowed?(:can_manage_safety_rules?) && @routes.admin_drug_safety_rules_path
+    def safety_reports = allowed?(:can_view_safety_reports?) && @routes.admin_reports_drug_safety_index_path(preset: "last_30_days")
+
+    def safety_prescription(number)
+      return unless allowed?(:can_review_prescriptions?)
+      prescription = prescription_for(number)
+      prescription ? @routes.staff_prescription_path(prescription) : @routes.staff_prescriptions_path(q: number)
+    end
+
     def admin_delivery = allowed?(:can_manage_delivery?) && @routes.staff_delivery_zones_path
     def admin_reports = allowed?(:can_view_business_reports?) && @routes.admin_reports_root_path(preset: "last_30_days")
     def admin_security = @user&.admin? && @routes.admin_security_path

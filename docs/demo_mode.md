@@ -81,6 +81,19 @@ pharmacist decision services, not direct attribute writes: `DEMO-PRESCRIPTION-NE
 ordinary+approved+rejected order (`DEMO-PRESCRIPTION-MIXED`), and a substituted
 POS sale (`DEMO-POS-RX-SUBSTITUTED`).
 
+Drug safety scenarios (Phase 20) also run through the real evaluation,
+acknowledgement and decision services. Four fictional active ingredients
+(`DEMO-ALFA`, `DEMO-BETA`, `DEMO-GAMMA`, `DEMO-DELTA`) and four fictional rules
+drive `DEMO-SAFETY-INTERACTION` (critical blocking interaction, documented
+pharmacist override, then approval), `DEMO-SAFETY-DUPLICATE` (acknowledged
+duplicate-ingredient warning), `DEMO-SAFETY-ALLERGY` (open allergy conflict
+against a pharmacist-recorded allergen), `DEMO-SAFETY-AGE` (open age caution from
+a recorded date of birth) and `DEMO-SAFETY-SUBSTITUTION` (override, then a
+substitution that retires the interaction finding and creates a different one).
+The demo customer clinical profiles hold fictional dates of birth and one
+fictional allergy; the rules are demonstration configuration and carry no real
+clinical meaning or guidance. Re-seeding creates no duplicate findings.
+
 The bundled PDF is synthetic and contains no medical information. The seed task
 temporarily uses Active Job's test adapter so prescription scan and mail jobs are
 not executed, and suppresses transactional-email enqueueing so exercising the

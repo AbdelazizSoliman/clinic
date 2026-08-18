@@ -104,6 +104,17 @@ Stable row locking serializes two cashiers competing for final units. The second
 completion recalculates availability and fails without partial effects. Session
 close also serializes with completion.
 
+Since Phase 20, prescription-required POS lines are also evaluated by the drug
+safety rules engine. Adding, changing or removing a line re-runs the evaluation;
+findings render on the sale page with the same severity, acknowledgement and
+override controls as the online review. Cashiers and order managers running the
+till can read findings but cannot clear them — resolution is pharmacist-only.
+`Pos::Complete` refuses while an unresolved blocking finding exists, before any
+batch consumption or payment, and completion stays idempotent. Walk-in sales have
+no linked patient, so only interaction and duplicate-therapy rules can match
+there. Ordinary OTC sales are entirely unaffected. See
+[`docs/drug_safety_rules.md`](drug_safety_rules.md).
+
 Phase 22 owns returns, refunds and completed-sale reversal. Real gateways,
 stored cards, offline mode, printer and drawer hardware, loyalty, customer
 credit, multi-branch scope and ERP integration remain out of scope.

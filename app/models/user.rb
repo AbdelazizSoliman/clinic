@@ -19,6 +19,7 @@ class User < ApplicationRecord
   has_many :purchase_receipts, foreign_key: :received_by_id, dependent: :restrict_with_error
   has_many :cashier_sessions, dependent: :restrict_with_error
   has_many :pos_sales, foreign_key: :cashier_id, dependent: :restrict_with_error
+  has_one :patient_clinical_profile, dependent: :destroy
 
   enum :role, { customer: 0, admin: 1, pharmacist: 2, order_manager: 3, inventory_manager: 4 }, default: :customer, validate: true
 
@@ -55,6 +56,11 @@ class User < ApplicationRecord
   def staff? = pharmacist? || order_manager? || admin?
   def can_review_prescriptions? = pharmacist? || admin?
   def can_make_prescription_decisions? = pharmacist?
+  def can_resolve_safety_findings? = pharmacist?
+  def can_view_safety_findings? = pharmacist? || admin?
+  def can_manage_clinical_profiles? = pharmacist?
+  def can_manage_safety_rules? = admin?
+  def can_view_safety_reports? = admin? || pharmacist?
   def can_operate_orders? = order_manager? || admin?
   def can_manage_delivery? = order_manager? || admin?
   alias_method :can_assign_delivery?, :can_manage_delivery?

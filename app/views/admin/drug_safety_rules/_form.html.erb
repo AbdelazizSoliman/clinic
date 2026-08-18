@@ -1,0 +1,36 @@
+<%= form_with model: [ :admin, rule ], class: "grid gap-4 rounded-2xl bg-white p-6" do |form| %>
+  <% if rule.errors.any? %><div class="rounded-xl bg-rose-50 p-4 text-rose-900"><ul><% rule.errors.full_messages.each do |message| %><li><%= message %></li><% end %></ul></div><% end %>
+  <div class="grid gap-4 sm:grid-cols-2">
+    <div><%= form.label :code, "الرمز الثابت" %><%= form.text_field :code, required: true, dir: "ltr", class: "mt-1 w-full rounded-xl border p-3" %></div>
+    <div><%= form.label :version, "رقم الإصدار" %><%= form.number_field :version, min: 1, required: true, class: "mt-1 w-full rounded-xl border p-3" %></div>
+    <div><%= form.label :name, "الاسم الداخلي" %><%= form.text_field :name, required: true, class: "mt-1 w-full rounded-xl border p-3" %></div>
+    <div><%= form.label :arabic_label, "العنوان الظاهر للصيدلي" %><%= form.text_field :arabic_label, required: true, class: "mt-1 w-full rounded-xl border p-3" %></div>
+    <div><%= form.label :rule_type, "نوع القاعدة" %><%= form.select :rule_type, DrugSafetyRule.rule_types.keys.map { |key| [ DrugSafety::RULE_TYPE_LABELS[key], key ] }, {}, class: "mt-1 w-full rounded-xl border p-3" %><p class="mt-1 text-xs text-slate-600">الأنواع الكلوية والكبدية وحدود الجرعة غير مدعومة للتقييم ولا يمكن تفعيلها.</p></div>
+    <div><%= form.label :severity, "الخطورة" %><%= form.select :severity, DrugSafetyRule.severities.keys.map { |key| [ DrugSafety::SEVERITY_LABELS[key], key ] }, {}, class: "mt-1 w-full rounded-xl border p-3" %></div>
+  </div>
+  <label class="flex items-center gap-2 font-bold"><%= form.check_box :blocking %> يوقف الصرف حتى إقرار الصيدلي (متاح للخطورة «مهم» أو «حرج»)</label>
+  <div><%= form.label :description, "الشرح الظاهر مع التنبيه" %><%= form.text_area :description, rows: 3, required: true, class: "mt-1 w-full rounded-xl border p-3" %></div>
+  <div><%= form.label :evidence_note, "مصدر الإعداد الداخلي" %><%= form.text_area :evidence_note, rows: 2, class: "mt-1 w-full rounded-xl border p-3" %></div>
+  <div><%= form.label :internal_notes, "ملاحظات داخلية" %><%= form.text_area :internal_notes, rows: 2, class: "mt-1 w-full rounded-xl border p-3" %></div>
+  <div class="grid gap-4 sm:grid-cols-2">
+    <div><%= form.label :effective_from, "بداية السريان — اختياري" %><%= form.datetime_field :effective_from, class: "mt-1 w-full rounded-xl border p-3" %></div>
+    <div><%= form.label :effective_to, "نهاية السريان — اختياري" %><%= form.datetime_field :effective_to, class: "mt-1 w-full rounded-xl border p-3" %></div>
+  </div>
+
+  <fieldset class="rounded-xl border p-4">
+    <legend class="px-2 font-black">شروط المطابقة</legend>
+    <p class="text-sm text-slate-600">التداخل الدوائي: مادة أساسية + مادة ثانوية. القيد العمري وتنبيهات الحمل والرضاعة ومانع الاستعمال: مادة أساسية + حد عمري أو حالة مسجلة. الازدواج العلاجي والحساسية لا يحتاجان شروط مواد.</p>
+    <%= form.fields_for :conditions do |condition| %>
+      <div class="mt-3 grid gap-2 rounded-lg border p-3 sm:grid-cols-5">
+        <div><%= condition.label :role, "الدور", class: "text-sm" %><%= condition.select :role, DrugSafetyRuleCondition.roles.keys.map { |key| [ key == "primary" ? "أساسي" : "ثانوي", key ] }, {}, class: "mt-1 w-full rounded-lg border p-2" %></div>
+        <div><%= condition.label :condition_type, "نوع الشرط", class: "text-sm" %><%= condition.select :condition_type, [["—", ""]] + DrugSafetyRuleCondition.condition_types.keys.map { |key| [ { "active_ingredient" => "مادة فعالة", "patient_state" => "حالة مسجلة", "minimum_age_years" => "حد أدنى للعمر", "maximum_age_years" => "حد أقصى للعمر" }[key], key ] }, {}, class: "mt-1 w-full rounded-lg border p-2" %></div>
+        <div><%= condition.label :active_ingredient_id, "المادة الفعالة", class: "text-sm" %><%= condition.collection_select :active_ingredient_id, ActiveIngredient.active.order(:name), :id, :name, { include_blank: "—" }, class: "mt-1 w-full rounded-lg border p-2" %></div>
+        <div><%= condition.label :state_key, "الحالة المسجلة", class: "text-sm" %><%= condition.select :state_key, [["—", ""]] + DrugSafety::STATE_KEYS.map { |key| [ key == "pregnant" ? "حمل" : "رضاعة", key ] }, {}, class: "mt-1 w-full rounded-lg border p-2" %></div>
+        <div><%= condition.label :numeric_value, "العمر بالسنوات", class: "text-sm" %><%= condition.number_field :numeric_value, min: 0, max: 130, class: "mt-1 w-full rounded-lg border p-2" %></div>
+        <% if condition.object.persisted? %><label class="flex items-center gap-2 text-sm sm:col-span-5"><%= condition.check_box :_destroy %> حذف هذا الشرط</label><% end %>
+      </div>
+    <% end %>
+  </fieldset>
+
+  <%= form.submit "حفظ المسودة", class: "rounded-xl bg-pharmacy-700 px-5 py-3 font-black text-white" %>
+<% end %>

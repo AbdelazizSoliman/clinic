@@ -10,9 +10,22 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_17_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_18_090000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "active_ingredients", force: :cascade do |t|
+    t.boolean "active", default: true, null: false
+    t.string "code", null: false
+    t.datetime "created_at", null: false
+    t.string "name", null: false
+    t.string "normalized_name", null: false
+    t.text "notes"
+    t.datetime "updated_at", null: false
+    t.index ["active"], name: "index_active_ingredients_on_active"
+    t.index ["code"], name: "index_active_ingredients_on_code", unique: true
+    t.index ["normalized_name"], name: "index_active_ingredients_on_normalized_name", unique: true
+  end
 
   create_table "active_storage_attachments", force: :cascade do |t|
     t.bigint "blob_id", null: false
@@ -256,6 +269,123 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_17_120000) do
     t.check_constraint "\"position\" >= 0", name: "delivery_zones_position_nonnegative"
     t.check_constraint "delivery_fee_cents >= 0 AND (free_delivery_threshold_cents IS NULL OR free_delivery_threshold_cents >= 0) AND (minimum_order_cents IS NULL OR minimum_order_cents >= 0)", name: "delivery_zones_money_nonnegative"
     t.check_constraint "estimated_min_minutes > 0 AND estimated_max_minutes >= estimated_min_minutes", name: "delivery_zones_estimate_valid"
+  end
+
+  create_table "drug_safety_acknowledgements", force: :cascade do |t|
+    t.integer "action", null: false
+    t.datetime "created_at", null: false
+    t.bigint "drug_safety_finding_id", null: false
+    t.bigint "pharmacist_id", null: false
+    t.text "reason"
+    t.index ["drug_safety_finding_id", "created_at"], name: "index_drug_safety_acknowledgements_timeline"
+    t.index ["drug_safety_finding_id"], name: "index_drug_safety_acknowledgements_on_finding"
+    t.index ["pharmacist_id"], name: "index_drug_safety_acknowledgements_on_pharmacist"
+    t.check_constraint "action = 0 OR reason IS NOT NULL", name: "drug_safety_acknowledgements_override_reason"
+    t.check_constraint "action = ANY (ARRAY[0, 1])", name: "drug_safety_acknowledgements_action_valid"
+  end
+
+  create_table "drug_safety_evaluations", force: :cascade do |t|
+    t.bigint "actor_id"
+    t.integer "blocking_count", default: 0, null: false
+    t.string "context_digest", null: false
+    t.datetime "created_at", null: false
+    t.datetime "evaluated_at", null: false
+    t.integer "findings_count", default: 0, null: false
+    t.bigint "prescription_review_id", null: false
+    t.string "ruleset_digest", null: false
+    t.integer "sequence", null: false
+    t.datetime "superseded_at"
+    t.integer "trigger", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["actor_id"], name: "index_drug_safety_evaluations_on_actor_id"
+    t.index ["prescription_review_id", "sequence"], name: "index_drug_safety_evaluations_unique_sequence", unique: true
+    t.index ["prescription_review_id", "superseded_at"], name: "index_drug_safety_evaluations_current"
+    t.index ["prescription_review_id"], name: "index_drug_safety_evaluations_on_review"
+    t.check_constraint "findings_count >= 0 AND blocking_count >= 0 AND blocking_count <= findings_count", name: "drug_safety_evaluations_counts_valid"
+    t.check_constraint "sequence > 0", name: "drug_safety_evaluations_sequence_positive"
+    t.check_constraint "trigger >= 0 AND trigger <= 7", name: "drug_safety_evaluations_trigger_valid"
+  end
+
+  create_table "drug_safety_findings", force: :cascade do |t|
+    t.boolean "blocking", default: false, null: false
+    t.bigint "carried_from_id"
+    t.datetime "created_at", null: false
+    t.string "dedupe_key", null: false
+    t.bigint "drug_safety_evaluation_id", null: false
+    t.bigint "drug_safety_rule_id", null: false
+    t.text "explanation", null: false
+    t.integer "lock_version", default: 0, null: false
+    t.jsonb "matched_facts", default: {}, null: false
+    t.bigint "prescription_review_item_id", null: false
+    t.bigint "related_review_item_id"
+    t.datetime "resolved_at"
+    t.bigint "resolved_by_id"
+    t.jsonb "rule_snapshot", default: {}, null: false
+    t.integer "severity", null: false
+    t.integer "status", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["carried_from_id"], name: "index_drug_safety_findings_on_carried_from"
+    t.index ["drug_safety_evaluation_id", "dedupe_key"], name: "index_drug_safety_findings_unique_key", unique: true
+    t.index ["drug_safety_evaluation_id"], name: "index_drug_safety_findings_on_evaluation"
+    t.index ["drug_safety_rule_id"], name: "index_drug_safety_findings_on_rule"
+    t.index ["prescription_review_item_id"], name: "index_drug_safety_findings_on_review_item"
+    t.index ["related_review_item_id"], name: "index_drug_safety_findings_on_related_item"
+    t.index ["resolved_by_id"], name: "index_drug_safety_findings_on_resolved_by_id"
+    t.index ["severity", "created_at"], name: "index_drug_safety_findings_on_severity_and_created_at"
+    t.index ["status", "blocking"], name: "index_drug_safety_findings_on_status_and_blocking"
+    t.check_constraint "NOT blocking OR severity >= 2", name: "drug_safety_findings_blocking_requires_severity"
+    t.check_constraint "severity = ANY (ARRAY[0, 1, 2, 3])", name: "drug_safety_findings_severity_valid"
+    t.check_constraint "status = 0 AND resolved_at IS NULL AND resolved_by_id IS NULL OR (status = ANY (ARRAY[1, 2])) AND resolved_at IS NOT NULL AND resolved_by_id IS NOT NULL OR status = 3 AND resolved_at IS NOT NULL AND resolved_by_id IS NULL", name: "drug_safety_findings_resolution_consistent"
+    t.check_constraint "status = ANY (ARRAY[0, 1, 2, 3])", name: "drug_safety_findings_status_valid"
+  end
+
+  create_table "drug_safety_rule_conditions", force: :cascade do |t|
+    t.bigint "active_ingredient_id"
+    t.integer "condition_type", null: false
+    t.datetime "created_at", null: false
+    t.bigint "drug_safety_rule_id", null: false
+    t.integer "numeric_value"
+    t.integer "role", default: 0, null: false
+    t.string "state_key"
+    t.datetime "updated_at", null: false
+    t.index ["active_ingredient_id"], name: "index_rule_conditions_on_ingredient"
+    t.index ["drug_safety_rule_id", "role", "condition_type"], name: "index_rule_conditions_unique_slot", unique: true
+    t.index ["drug_safety_rule_id"], name: "index_rule_conditions_on_rule"
+    t.check_constraint "condition_type = 0 AND active_ingredient_id IS NOT NULL AND state_key IS NULL AND numeric_value IS NULL OR condition_type = 1 AND state_key IS NOT NULL AND active_ingredient_id IS NULL AND numeric_value IS NULL OR (condition_type = ANY (ARRAY[2, 3])) AND numeric_value IS NOT NULL AND numeric_value >= 0 AND active_ingredient_id IS NULL AND state_key IS NULL", name: "drug_safety_rule_conditions_payload_valid"
+    t.check_constraint "condition_type = ANY (ARRAY[0, 1, 2, 3])", name: "drug_safety_rule_conditions_type_valid"
+    t.check_constraint "role = ANY (ARRAY[0, 1])", name: "drug_safety_rule_conditions_role_valid"
+  end
+
+  create_table "drug_safety_rules", force: :cascade do |t|
+    t.datetime "activated_at"
+    t.boolean "active", default: false, null: false
+    t.string "arabic_label", null: false
+    t.boolean "blocking", default: false, null: false
+    t.string "code", null: false
+    t.datetime "created_at", null: false
+    t.bigint "created_by_id", null: false
+    t.text "description", null: false
+    t.datetime "effective_from"
+    t.datetime "effective_to"
+    t.text "evidence_note"
+    t.text "internal_notes"
+    t.integer "lock_version", default: 0, null: false
+    t.string "name", null: false
+    t.datetime "retired_at"
+    t.integer "rule_type", null: false
+    t.integer "severity", null: false
+    t.datetime "updated_at", null: false
+    t.integer "version", default: 1, null: false
+    t.index ["active", "rule_type"], name: "index_drug_safety_rules_on_active_and_type"
+    t.index ["code", "version"], name: "index_drug_safety_rules_unique_version", unique: true
+    t.index ["code"], name: "index_drug_safety_rules_single_active_version", unique: true, where: "active"
+    t.index ["created_by_id"], name: "index_drug_safety_rules_on_created_by_id"
+    t.check_constraint "NOT active OR rule_type <= 6", name: "drug_safety_rules_active_type_supported"
+    t.check_constraint "NOT blocking OR severity >= 2", name: "drug_safety_rules_blocking_requires_severity"
+    t.check_constraint "effective_to IS NULL OR effective_from IS NULL OR effective_to > effective_from", name: "drug_safety_rules_effective_window_valid"
+    t.check_constraint "rule_type >= 0 AND rule_type <= 9", name: "drug_safety_rules_type_valid"
+    t.check_constraint "severity = ANY (ARRAY[0, 1, 2, 3])", name: "drug_safety_rules_severity_valid"
+    t.check_constraint "version > 0", name: "drug_safety_rules_version_positive"
   end
 
   create_table "fulfilments", force: :cascade do |t|
@@ -605,6 +735,41 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_17_120000) do
     t.check_constraint "subtotal_cents >= 0 AND discount_cents >= 0 AND delivery_fee_cents >= 0 AND total_cents >= 0", name: "orders_money_nonnegative"
   end
 
+  create_table "patient_allergies", force: :cascade do |t|
+    t.boolean "active", default: true, null: false
+    t.bigint "active_ingredient_id", null: false
+    t.datetime "created_at", null: false
+    t.text "notes"
+    t.bigint "patient_clinical_profile_id", null: false
+    t.datetime "recorded_at", null: false
+    t.bigint "recorded_by_id", null: false
+    t.integer "severity", default: 2, null: false
+    t.datetime "updated_at", null: false
+    t.index ["active_ingredient_id"], name: "index_patient_allergies_on_active_ingredient_id"
+    t.index ["patient_clinical_profile_id", "active_ingredient_id"], name: "index_patient_allergies_unique_ingredient", unique: true
+    t.index ["patient_clinical_profile_id"], name: "index_patient_allergies_on_profile"
+    t.index ["recorded_by_id"], name: "index_patient_allergies_on_recorded_by_id"
+    t.check_constraint "severity = ANY (ARRAY[0, 1, 2, 3])", name: "patient_allergies_severity_valid"
+  end
+
+  create_table "patient_clinical_profiles", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.date "date_of_birth"
+    t.integer "lactation_status", default: 0, null: false
+    t.integer "lock_version", default: 0, null: false
+    t.text "notes"
+    t.integer "pregnancy_status", default: 0, null: false
+    t.datetime "recorded_at", null: false
+    t.bigint "recorded_by_id", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["recorded_by_id"], name: "index_patient_clinical_profiles_on_recorded_by_id"
+    t.index ["user_id"], name: "index_patient_clinical_profiles_on_user_id", unique: true
+    t.check_constraint "date_of_birth IS NULL OR date_of_birth > '1900-01-01'::date", name: "patient_clinical_profiles_dob_plausible"
+    t.check_constraint "lactation_status = ANY (ARRAY[0, 1, 2])", name: "patient_clinical_profiles_lactation_valid"
+    t.check_constraint "pregnancy_status = ANY (ARRAY[0, 1, 2])", name: "patient_clinical_profiles_pregnancy_valid"
+  end
+
   create_table "pharmacy_settings", force: :cascade do |t|
     t.text "address_summary"
     t.datetime "created_at", null: false
@@ -819,6 +984,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_17_120000) do
     t.index ["status", "submitted_at"], name: "index_prescriptions_reporting_status_submitted"
     t.index ["user_id"], name: "index_prescriptions_on_user_id"
     t.check_constraint "status = ANY (ARRAY[0, 1, 2, 3, 4])", name: "prescriptions_status_valid"
+  end
+
+  create_table "product_active_ingredients", force: :cascade do |t|
+    t.boolean "active", default: true, null: false
+    t.bigint "active_ingredient_id", null: false
+    t.datetime "created_at", null: false
+    t.bigint "product_id", null: false
+    t.string "strength"
+    t.string "unit"
+    t.datetime "updated_at", null: false
+    t.index ["active_ingredient_id"], name: "index_product_active_ingredients_on_active_ingredient_id"
+    t.index ["product_id", "active_ingredient_id"], name: "index_product_active_ingredients_unique", unique: true
+    t.index ["product_id"], name: "index_product_active_ingredients_on_product_id"
   end
 
   create_table "product_images", force: :cascade do |t|
@@ -1133,7 +1311,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_17_120000) do
     t.index ["user_id"], name: "index_report_export_events_on_user_id"
     t.check_constraint "format::text = 'csv'::text", name: "report_export_events_format_valid"
     t.check_constraint "range_end > range_start AND row_count >= 0", name: "report_export_events_range_rows_valid"
-    t.check_constraint "report_type::text = ANY (ARRAY['sales'::character varying, 'orders'::character varying, 'products'::character varying, 'inventory'::character varying, 'promotions'::character varying, 'customers'::character varying, 'prescriptions'::character varying, 'fulfilments'::character varying, 'purchasing'::character varying, 'batches'::character varying, 'pos'::character varying]::text[])", name: "report_export_events_type_valid"
+    t.check_constraint "report_type::text = ANY (ARRAY['sales'::character varying, 'orders'::character varying, 'products'::character varying, 'inventory'::character varying, 'promotions'::character varying, 'customers'::character varying, 'prescriptions'::character varying, 'fulfilments'::character varying, 'purchasing'::character varying, 'batches'::character varying, 'pos'::character varying, 'drug_safety'::character varying]::text[])", name: "report_export_events_type_valid"
   end
 
   create_table "report_exports", force: :cascade do |t|
@@ -1327,6 +1505,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_17_120000) do
   add_foreign_key "delivery_methods", "delivery_zones"
   add_foreign_key "delivery_slots", "delivery_zones"
   add_foreign_key "delivery_zone_districts", "delivery_zones"
+  add_foreign_key "drug_safety_acknowledgements", "drug_safety_findings"
+  add_foreign_key "drug_safety_acknowledgements", "users", column: "pharmacist_id"
+  add_foreign_key "drug_safety_evaluations", "prescription_reviews"
+  add_foreign_key "drug_safety_evaluations", "users", column: "actor_id"
+  add_foreign_key "drug_safety_findings", "drug_safety_evaluations"
+  add_foreign_key "drug_safety_findings", "drug_safety_findings", column: "carried_from_id"
+  add_foreign_key "drug_safety_findings", "drug_safety_rules"
+  add_foreign_key "drug_safety_findings", "prescription_review_items"
+  add_foreign_key "drug_safety_findings", "prescription_review_items", column: "related_review_item_id"
+  add_foreign_key "drug_safety_findings", "users", column: "resolved_by_id"
+  add_foreign_key "drug_safety_rule_conditions", "active_ingredients"
+  add_foreign_key "drug_safety_rule_conditions", "drug_safety_rules"
+  add_foreign_key "drug_safety_rules", "users", column: "created_by_id"
   add_foreign_key "fulfilments", "delivery_slots"
   add_foreign_key "fulfilments", "delivery_zones"
   add_foreign_key "fulfilments", "orders"
@@ -1368,6 +1559,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_17_120000) do
   add_foreign_key "orders", "delivery_zones"
   add_foreign_key "orders", "users"
   add_foreign_key "orders", "users", column: "cancelled_by_id"
+  add_foreign_key "patient_allergies", "active_ingredients"
+  add_foreign_key "patient_allergies", "patient_clinical_profiles"
+  add_foreign_key "patient_allergies", "users", column: "recorded_by_id"
+  add_foreign_key "patient_clinical_profiles", "users"
+  add_foreign_key "patient_clinical_profiles", "users", column: "recorded_by_id"
   add_foreign_key "pos_payments", "pos_sales"
   add_foreign_key "pos_sale_batch_allocations", "inventory_batches"
   add_foreign_key "pos_sale_batch_allocations", "inventory_movements"
@@ -1389,6 +1585,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_17_120000) do
   add_foreign_key "prescriptions", "orders", on_delete: :cascade
   add_foreign_key "prescriptions", "users"
   add_foreign_key "prescriptions", "users", column: "reviewed_by_id"
+  add_foreign_key "product_active_ingredients", "active_ingredients"
+  add_foreign_key "product_active_ingredients", "products"
   add_foreign_key "product_images", "products"
   add_foreign_key "product_price_changes", "products"
   add_foreign_key "product_price_changes", "users", column: "changed_by_id"

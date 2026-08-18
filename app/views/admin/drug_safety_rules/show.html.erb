@@ -1,0 +1,41 @@
+<% content_for :title, @rule.arabic_label %>
+<div class="mx-auto max-w-5xl px-4 py-10">
+  <%= link_to "← قواعد السلامة", admin_drug_safety_rules_path, class: "font-bold text-pharmacy-700" %>
+  <header class="mt-4 rounded-2xl bg-white p-6">
+    <div class="flex flex-wrap items-start justify-between gap-3">
+      <div>
+        <h1 class="text-3xl font-black"><%= @rule.arabic_label %></h1>
+        <p class="mt-1 text-slate-600"><span dir="ltr"><%= @rule.identity %></span> · <%= @rule.name %></p>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <%= safety_severity_badge(@rule.severity) %>
+        <span class="rounded-full bg-slate-100 px-3 py-1 font-bold"><%= @rule.rule_type_label %></span>
+        <span class="rounded-full border px-3 py-1 font-bold"><%= @rule.active? ? "نشطة" : (@rule.published? ? "متقاعدة" : "مسودة") %></span>
+      </div>
+    </div>
+    <p class="mt-4 leading-relaxed"><%= @rule.description %></p>
+    <% unless @rule.supported? %><p class="mt-3 rounded-xl bg-amber-50 p-3 font-bold">هذا النوع غير مدعوم للتقييم في هذه المرحلة ولا يمكن تفعيله. المسودة محفوظة كنقطة امتداد مستقبلية.</p><% end %>
+    <div class="mt-5 flex flex-wrap gap-2">
+      <% unless @rule.published? %><%= link_to "تعديل المسودة", edit_admin_drug_safety_rule_path(@rule), class: "rounded-xl border px-4 py-2 font-bold" %><% end %>
+      <% if @rule.active? %>
+        <%= button_to "إيقاف التفعيل", deactivate_admin_drug_safety_rule_path(@rule), method: :patch, class: "rounded-xl border px-4 py-2 font-bold" %>
+      <% elsif @rule.supported? %>
+        <%= button_to "تفعيل", activate_admin_drug_safety_rule_path(@rule), method: :patch, class: "rounded-xl bg-pharmacy-700 px-4 py-2 font-bold text-white" %>
+      <% end %>
+      <%= button_to "إنشاء إصدار جديد", revise_admin_drug_safety_rule_path(@rule), method: :post, class: "rounded-xl border px-4 py-2 font-bold" %>
+    </div>
+  </header>
+
+  <section class="mt-6 rounded-2xl bg-white p-6">
+    <h2 class="text-xl font-black">شروط المطابقة</h2>
+    <ul class="mt-3 space-y-2">
+      <% @rule.conditions.order(:role, :condition_type).each do |condition| %><li class="rounded-xl border p-3"><strong><%= condition.role == "primary" ? "أساسي" : "ثانوي" %>:</strong> <%= condition.description %></li><% end %>
+      <% if @rule.conditions.empty? %><li class="text-slate-600">لا شروط — تعمل القاعدة على كل المواد الفعالة في السياق.</li><% end %>
+    </ul>
+  </section>
+
+  <section class="mt-6 grid gap-4 sm:grid-cols-2">
+    <div class="rounded-2xl bg-white p-6"><h2 class="text-xl font-black">الإصدارات</h2><ul class="mt-3 space-y-2"><% @versions.each do |version| %><li><%= link_to "v#{version.version}", admin_drug_safety_rule_path(version), class: "font-bold text-pharmacy-700", dir: "ltr" %> · <%= version.active? ? "نشطة" : (version.published? ? "متقاعدة" : "مسودة") %> · <%= DrugSafety::SEVERITY_LABELS[version.severity] %></li><% end %></ul></div>
+    <div class="rounded-2xl bg-white p-6"><h2 class="text-xl font-black">الاستخدام</h2><p class="mt-3"><%= @findings_count %> تنبيهًا مسجلًا بهذا الإصدار.</p><% if @rule.evidence_note.present? %><p class="mt-3 text-sm text-slate-700"><strong>مصدر الإعداد:</strong> <%= @rule.evidence_note %></p><% end %><% if @rule.internal_notes.present? %><p class="mt-2 text-sm text-slate-700"><strong>ملاحظات:</strong> <%= @rule.internal_notes %></p><% end %></div>
+  </section>
+</div>

@@ -67,7 +67,19 @@ keys, update/delete prevention, and transactional locking.
   per-line pharmacist decision, its inventory/FEFO consequences, and
   therapeutic substitution.
 - [`app/services/prescriptions/finalize_review.rb`](../app/services/prescriptions/finalize_review.rb)
-  settles the order/prescription once every line has a terminal decision.
+  settles the order/prescription once every line has a terminal decision, and
+  holds off while an unresolved blocking safety finding exists.
+- [`docs/drug_safety_rules.md`](drug_safety_rules.md) and
+  [`app/services/drug_safety/`](../app/services/drug_safety) own the Phase 20
+  decision-support engine: `context.rb` (structured facts only),
+  `evaluate.rb` (pure, deterministic, no side effects), `reevaluate.rb`
+  (idempotent persistence and superseding), `gate.rb` (dispensing gate) and
+  `acknowledge.rb` (pharmacist-only resolution).
+
+Look for: the safety boundary (no prescribing, diagnosis, auto-substitution or
+AI), rules as data rather than code, immutable rule versions plus per-finding
+snapshots, and the fact that a substitution's new context can never be cleared
+by an acknowledgement recorded against the old one.
 - [`app/services/prescriptions/review.rb`](../app/services/prescriptions/review.rb)
   is the earlier whole-prescription entry point, now a compatibility surface
   that delegates terminal decisions to the per-line pipeline.

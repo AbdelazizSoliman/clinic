@@ -29,6 +29,7 @@ module Pos
       @substitution_candidates = Product.active.where(requires_prescription: true)
         .joins(:inventory_batches).merge(InventoryBatch.allocatable).distinct.order(:name)
       @idempotency_key = @sale.completion_idempotency_key || SecureRandom.uuid
+      load_safety_context
     end
 
     def complete
@@ -46,6 +47,13 @@ module Pos
     end
 
     private
+
+    def load_safety_context
+      review = @sale.items.any?(&:requires_prescription?) ? Prescriptions::EnsureReview.call(@sale, actor: current_user) : @sale.prescription_review
+      @safety_evaluation = review&.current_safety_evaluation
+      @safety_findings = review ? DrugSafety::Gate.current_findings(review).includes(:acknowledgements,
+        related_review_item: :original_product).to_a : []
+    end
 
     def payment_specs
       [ { payment_method: params[:payment_method], amount_cents: params[:amount_cents],

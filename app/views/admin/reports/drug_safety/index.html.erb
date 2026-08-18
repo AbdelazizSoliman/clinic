@@ -1,0 +1,35 @@
+<% content_for :title, "تقرير تنبيهات سلامة الدواء" %>
+<div class="mx-auto max-w-7xl px-4 py-10">
+  <h1 class="text-3xl font-black">تنبيهات سلامة الدواء</h1>
+  <p class="mt-2 rounded-xl bg-amber-50 p-4 text-sm">مؤشرات تشغيلية لعمل فريق الصيدلة على القواعد المُعدّة محليًا. ليست تحليلًا طبيًا ولا وبائيًا، ولا تعكس شيوع الحالات السريرية.</p>
+  <%= render "admin/reports/filters" %>
+  <div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div class="rounded-2xl bg-white p-5"><span class="text-sm text-slate-500">تنبيهات مسجلة</span><strong class="mt-2 block text-2xl"><%= @report.cards[:findings] %></strong></div>
+    <div class="rounded-2xl bg-white p-5"><span class="text-sm text-slate-500">تنبيهات توقف الصرف</span><strong class="mt-2 block text-2xl"><%= @report.cards[:blocking] %></strong></div>
+    <div class="rounded-2xl bg-white p-5"><span class="text-sm text-slate-500">حرجة مفتوحة الآن</span><strong class="mt-2 block text-2xl"><%= @report.cards[:open_blocking] %></strong></div>
+    <div class="rounded-2xl bg-white p-5"><span class="text-sm text-slate-500">تجاوزات موثقة</span><strong class="mt-2 block text-2xl"><%= @report.cards[:overrides] %></strong></div>
+  </div>
+
+  <div class="mt-6 grid gap-5 lg:grid-cols-3">
+    <section class="rounded-2xl bg-white p-5"><h2 class="text-xl font-black">حسب الخطورة</h2><ul class="mt-3 space-y-2"><% DrugSafety::SEVERITIES.keys.each do |key| %><li class="flex items-center justify-between gap-2"><%= safety_severity_badge(key) %><strong><%= @report.severity_counts.fetch(key.to_s, 0) %></strong></li><% end %></ul></section>
+    <section class="rounded-2xl bg-white p-5"><h2 class="text-xl font-black">حسب نوع القاعدة</h2><ul class="mt-3 space-y-2"><% @report.rule_type_counts.sort_by { |_type, count| -count }.each do |type, count| %><li class="flex justify-between"><span><%= DrugSafety::RULE_TYPE_LABELS.fetch(type, type) %></span><strong><%= count %></strong></li><% end %><% if @report.rule_type_counts.empty? %><li class="text-slate-600">لا بيانات في الفترة.</li><% end %></ul></section>
+    <section class="rounded-2xl bg-white p-5"><h2 class="text-xl font-black">حسب الحالة</h2><ul class="mt-3 space-y-2"><% DrugSafetyFinding.statuses.keys.each do |key| %><li class="flex justify-between"><span><%= DrugSafety::FINDING_STATUS_LABELS.fetch(key, key) %></span><strong><%= @report.status_counts.fetch(key, 0) %></strong></li><% end %><li class="flex justify-between border-t pt-2"><span>تنبيهات ناتجة عن استبدال</span><strong><%= @report.substitution_findings %></strong></li><li class="flex justify-between"><span>عدد التقييمات</span><strong><%= @report.evaluation_count %></strong></li></ul></section>
+  </div>
+
+  <div class="mt-6 grid gap-5 lg:grid-cols-2">
+    <section class="rounded-2xl bg-white p-5"><h2 class="text-xl font-black">أكثر القواعد مطابقة</h2><ul class="mt-3 space-y-2"><% @report.rule_usage.each do |row| %><li class="flex justify-between gap-3"><span><%= row[:label] %> <small dir="ltr" class="text-slate-500"><%= row[:identity] %></small></span><strong><%= row[:count] %></strong></li><% end %><% if @report.rule_usage.empty? %><li class="text-slate-600">لا بيانات في الفترة.</li><% end %></ul></section>
+    <section class="rounded-2xl bg-white p-5"><h2 class="text-xl font-black">التجاوزات حسب الصيدلي</h2><ul class="mt-3 space-y-2"><% @report.override_by_pharmacist.sort_by { |_name, count| -count }.each do |name, count| %><li class="flex justify-between"><span><%= name %></span><strong><%= count %></strong></li><% end %><% if @report.override_by_pharmacist.empty? %><li class="text-slate-600">لا تجاوزات في الفترة.</li><% end %></ul></section>
+  </div>
+
+  <section class="mt-6 rounded-2xl bg-white p-5">
+    <h2 class="text-xl font-black">تنبيهات حرجة مفتوحة توقف الصرف الآن</h2>
+    <div class="mt-3 overflow-x-auto"><table class="w-full min-w-[720px] text-right"><thead class="bg-slate-50"><tr><th class="p-3">القاعدة</th><th>الخطورة</th><th>المصدر</th><th>المنتج الموصوف</th><th>التاريخ</th></tr></thead><tbody>
+      <% @report.open_blocking.each do |finding| %><% review = finding.prescription_review_item.prescription_review %><tr class="border-t"><td class="p-3"><%= finding.rule_snapshot["arabic_label"] %><small class="block" dir="ltr"><%= finding.rule_identity %></small></td><td><%= safety_severity_badge(finding.severity) %></td><td><%= review.online? ? "أونلاين" : "نقطة بيع" %></td><td><%= finding.prescription_review_item.original_product.name %></td><td><%= l(finding.created_at, format: :short) %></td></tr><% end %>
+      <% if @report.open_blocking.empty? %><tr><td class="p-3 text-slate-600" colspan="5">لا توجد تنبيهات حرجة مفتوحة.</td></tr><% end %>
+    </tbody></table></div>
+  </section>
+
+  <% if current_user.can_export_reports? %>
+    <p class="mt-6"><%= link_to "تصدير CSV", admin_reports_drug_safety_index_path(request.query_parameters.merge(format: :csv)), class: "rounded-xl border px-4 py-3 font-bold" %></p>
+  <% end %>
+</div>

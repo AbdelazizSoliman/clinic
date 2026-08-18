@@ -38,7 +38,19 @@ module DemoData
       [ "rx-capsules-b", "دواء تجريبي ب — 10 كبسولات", "demo-prescription", "demo-cairo-health", 240, nil, 16, true, false ],
       [ "rx-suspension-c", "معلق تجريبي ج 70 مل", "demo-prescription", "demo-family", 175, nil, 8, true, false ],
       [ "inactive-seasonal", "منتج موسمي غير نشط", "demo-cold-allergy", "demo-nile-care", 90, nil, 12, false, false, false ],
-      [ "first-aid-kit", "حقيبة إسعافات أولية منزلية", "demo-first-aid", "demo-family", 420, 480, 10, false, true ]
+      [ "first-aid-kit", "حقيبة إسعافات أولية منزلية", "demo-first-aid", "demo-family", 420, 480, 10, false, true ],
+      [ "rx-tablets-a-generic", "دواء تجريبي أ — نسخة جنيسة 14 قرص", "demo-prescription", "demo-cairo-health", 150, nil, 12, true, false ],
+      [ "rx-capsules-d", "دواء تجريبي د — 10 كبسولات", "demo-prescription", "demo-vita", 210, nil, 14, true, false ]
+    ].freeze
+    # Entirely fictional ingredient identities. They carry no real pharmacological meaning.
+    INGREDIENT_DATA = [
+      [ "DEMO-ALFA", "ألفازين التجريبي" ], [ "DEMO-BETA", "بيتازول التجريبي" ],
+      [ "DEMO-GAMMA", "جامامين التجريبي" ], [ "DEMO-DELTA", "دلتافين التجريبي" ]
+    ].freeze
+    PRODUCT_INGREDIENT_DATA = [
+      [ "rx-tablets-a", "DEMO-ALFA", "500", "مجم" ], [ "rx-tablets-a-generic", "DEMO-ALFA", "500", "مجم" ],
+      [ "rx-capsules-b", "DEMO-BETA", "250", "مجم" ], [ "rx-suspension-c", "DEMO-GAMMA", "125", "مجم/5مل" ],
+      [ "rx-capsules-d", "DEMO-DELTA", "100", "مجم" ]
     ].freeze
 
     def self.call = new.call
@@ -74,15 +86,20 @@ module DemoData
       brands = seed_brands
       products = seed_products(categories, brands, accounts.fetch(:inventory_manager))
       seed_batch_scenarios(products, accounts.fetch(:inventory_manager))
+      ingredients = seed_active_ingredients(products)
+      safety_rules = seed_safety_rules(accounts.fetch(:admin), ingredients)
+      seed_patient_clinical_data(accounts, ingredients)
       zones = seed_delivery_zones
       addresses = seed_addresses(accounts, zones)
       promotions, coupons = seed_promotions(accounts.fetch(:admin), categories, products, zones)
       seed_ready_cart(accounts.fetch(:customer), products, coupons.fetch(:active))
       orders = seed_orders(accounts, addresses, products, zones, promotions, coupons)
+      orders += seed_safety_scenarios(accounts, addresses, products, zones)
       purchasing = seed_purchasing(accounts, products)
       pos = seed_pos(accounts, products)
       setting.class.invalidate_cache
-      build_manifest(accounts, categories, brands, products, zones, orders, promotions, coupons, purchasing, pos)
+      build_manifest(accounts, categories, brands, products, zones, orders, promotions, coupons, purchasing, pos,
+        ingredients, safety_rules)
     end
 
     def seed_accounts
@@ -195,6 +212,78 @@ module DemoData
           idempotency_key: "demo:batch:#{number}")
         batch.events.create!(actor:, event_type: quarantined ? "quarantined" : "created",
           reason: quarantined ? "عزل جودة خيالي للعرض" : "إنشاء سيناريو عرض")
+      end
+    end
+
+    def seed_active_ingredients(products)
+      ingredients = INGREDIENT_DATA.to_h do |code, name|
+        ingredient = ActiveIngredient.find_or_initialize_by(code:)
+        ingredient.update!(name:, active: true, notes: "هوية دوائية خيالية مخصصة لبيانات العرض فقط.")
+        [ code, ingredient ]
+      end
+      PRODUCT_INGREDIENT_DATA.each do |product_key, code, strength, unit|
+        product = products.fetch(product_key)
+        link = product.product_active_ingredients.find_or_initialize_by(active_ingredient: ingredients.fetch(code))
+        link.update!(strength:, unit:, active: true)
+      end
+      ingredients
+    end
+
+    # Fictional rules that exercise every supported rule type. They are demonstration
+    # configuration, not clinical guidance of any kind.
+    def seed_safety_rules(admin, ingredients)
+      definitions = [
+        { code: "DEMO-INT-ALFA-BETA", rule_type: :drug_interaction, severity: :critical, blocking: true,
+          arabic_label: "تداخل تجريبي بين ألفازين وبيتازول",
+          description: "قاعدة عرض توضح تنبيه تداخل حرج يوقف الصرف حتى يقرّه الصيدلي.",
+          conditions: [ [ :primary, :active_ingredient, "DEMO-ALFA" ], [ :secondary, :active_ingredient, "DEMO-BETA" ] ] },
+        { code: "DEMO-DUP-INGREDIENT", rule_type: :duplicate_therapy, severity: :major, blocking: false,
+          arabic_label: "ازدواج في المادة الفعالة",
+          description: "قاعدة عرض تنبّه عند تكرار المادة الفعالة نفسها في أكثر من بند.", conditions: [] },
+        { code: "DEMO-ALG-INGREDIENT", rule_type: :allergy, severity: :major, blocking: false,
+          arabic_label: "تعارض مع حساسية مسجلة",
+          description: "قاعدة عرض تطابق المواد الفعالة مع سجل الحساسية الذي أدخله الصيدلي.", conditions: [] },
+        { code: "DEMO-AGE-GAMMA", rule_type: :age_restriction, severity: :caution, blocking: false,
+          arabic_label: "قيد عمري تجريبي على جامامين",
+          description: "قاعدة عرض تنبّه عند تجاوز العمر المسجل الحد الأقصى المُعدّ محليًا.",
+          conditions: [ [ :primary, :active_ingredient, "DEMO-GAMMA" ], [ :primary, :maximum_age_years, 65 ] ] }
+      ]
+      definitions.to_h do |definition|
+        rule = DrugSafetyRule.find_by(code: definition[:code], version: 1)
+        unless rule
+          rule = DrugSafetyRule.new(code: definition[:code], version: 1, name: definition[:code],
+            arabic_label: definition[:arabic_label], description: definition[:description],
+            rule_type: definition[:rule_type], severity: definition[:severity], blocking: definition[:blocking],
+            evidence_note: "إعداد داخلي لبيانات العرض — ليس مرجعًا دوائيًا معتمدًا.", created_by: admin)
+          definition[:conditions].each do |role, condition_type, value|
+            attributes = { role:, condition_type: }
+            attributes[condition_type == :active_ingredient ? :active_ingredient : :numeric_value] =
+              condition_type == :active_ingredient ? ingredients.fetch(value) : value
+            rule.conditions.build(attributes)
+          end
+          rule.save!
+        end
+        unless rule.active?
+          result = DrugSafety::RuleLifecycle.activate(rule:, actor: admin)
+          raise Refused, result.errors.join("، ") unless result.success?
+        end
+        [ definition[:code], rule.reload ]
+      end
+    end
+
+    def seed_patient_clinical_data(accounts, ingredients)
+      pharmacist = accounts.fetch(:pharmacist)
+      [ [ :customer, Date.new(1988, 4, 12), nil ], [ :prescription_customer, Date.new(1992, 9, 3), "DEMO-DELTA" ],
+        [ :cancelled_customer, Date.current - 70.years, nil ] ].each do |key, birth_date, allergen_code|
+        user = accounts.fetch(key)
+        result = PatientProfiles::Save.new(user:, actor: pharmacist,
+          attributes: { date_of_birth: birth_date, notes: "بيانات سريرية خيالية مسجلة يدويًا للعرض فقط." }).call
+        raise Refused, result.errors.join("، ") unless result.success?
+        next unless allergen_code
+        allergy = PatientProfiles::RecordAllergy.new(profile: result.profile, actor: pharmacist,
+          active_ingredient: ingredients.fetch(allergen_code), severity: "major",
+          notes: "سجل حساسية خيالي للعرض").call
+        raise Refused, allergy.errors.join("، ") unless allergy.success?
       end
     end
 
@@ -439,6 +528,89 @@ module DemoData
       end
     end
 
+    # Four fictional clinical contexts that exercise the safety engine end to end.
+    def seed_safety_scenarios(accounts, addresses, products, zones)
+      pharmacist = accounts.fetch(:pharmacist)
+      scenarios = [
+        [ "DEMO-SAFETY-INTERACTION", :prescription_customer, %w[rx-tablets-a rx-capsules-b], :override_and_approve ],
+        [ "DEMO-SAFETY-DUPLICATE", :prescription_customer, %w[rx-tablets-a rx-tablets-a-generic], :acknowledge ],
+        [ "DEMO-SAFETY-ALLERGY", :prescription_customer, %w[rx-capsules-d], :leave_open ],
+        [ "DEMO-SAFETY-AGE", :cancelled_customer, %w[rx-suspension-c], :leave_open ],
+        [ "DEMO-SAFETY-SUBSTITUTION", :prescription_customer, %w[rx-tablets-a rx-capsules-b], :override_and_substitute ]
+      ]
+      scenarios.map do |number, account_key, product_keys, outcome|
+        next Order.find_by!(number:) if Order.exists?(number:)
+        order = build_safety_order(number, accounts.fetch(account_key), addresses.fetch(account_key),
+          zones.fetch("demo-roda"), product_keys.map { |key| products.fetch(key) })
+        review = Prescriptions::EnsureReview.call(order.prescription, actor: pharmacist)
+        apply_safety_outcome(outcome, review, pharmacist, products)
+        order.reload
+      end
+    end
+
+    def build_safety_order(number, user, address, zone, line_products)
+      submitted_at = @reference_time - 2.days + 11.hours
+      Cart.transaction do
+        cart = user.carts.create!(status: :completed, currency: "EGP", checkout_submission_token: "demo:cart:#{number}")
+        subtotal = line_products.sum { |product| (product.price * 100).round }
+        order = user.orders.create!(cart:, number:, status: "pending_prescription", payment_method: :cash_on_delivery,
+          payment_status: :unpaid, delivery_method: :standard, currency: "EGP",
+          subtotal_cents: subtotal, discount_cents: 0, cart_discount_cents: 0, product_discount_cents: 0,
+          delivery_discount_cents: 0, delivery_fee_cents: zone.delivery_fee_cents,
+          total_cents: subtotal + zone.delivery_fee_cents, customer_email: user.email,
+          customer_mobile_number: user.mobile_number, customer_first_name: user.first_name,
+          customer_last_name: user.last_name, submitted_at:, prescription_required: true, delivery_zone: zone,
+          delivery_zone_code: zone.code, delivery_zone_name: zone.name, delivery_method_name: "توصيل عادي",
+          delivery_estimated_min_minutes: zone.estimated_min_minutes,
+          delivery_estimated_max_minutes: zone.estimated_max_minutes,
+          pricing_calculation_version: Promotions::Calculator::VERSION)
+        line_products.each do |product|
+          cents = (product.price * 100).round
+          order.items.create!(product:, product_name: product.name, product_slug: product.slug,
+            brand_name: product.brand.name, category_name: product.category.name, quantity: 1,
+            unit_price_cents: cents, original_unit_price_cents: cents, final_unit_price_cents: cents,
+            discount_cents: 0, line_total_cents: cents, requires_prescription: true)
+        end
+        order.create_order_address!(address.attributes.symbolize_keys.slice(:label, :recipient_name, :mobile_number,
+          :governorate, :city, :district, :street, :building_number, :floor, :apartment, :landmark, :postal_code,
+          :delivery_notes, :latitude, :longitude))
+        order.create_fulfilment!(delivery_zone: zone, status: :unassigned)
+        order.events.create!(event_type: "order_submitted", to_status: "pending_prescription",
+          customer_visible: true, created_at: submitted_at)
+        prescription = order.build_prescription(user:, status: :submitted, submitted_at:,
+          customer_notes: "ملف خيالي لعرض محرك قواعد السلامة")
+        prescription.images.attach(io: File.open(Rails.root.join("db/demo_assets/prescription.pdf")),
+          filename: "demo-prescription.pdf", content_type: "application/pdf")
+        prescription.save!
+        prescription.update!(scan_status: :clean, scanned_at: submitted_at + 5.minutes)
+        order
+      end
+    end
+
+    def apply_safety_outcome(outcome, review, pharmacist, products)
+      case outcome
+      when :acknowledge
+        resolve_findings!(review, pharmacist, "acknowledged", "إقرار اطلاع تجريبي على تنبيه الازدواج")
+      when :override_and_approve
+        resolve_findings!(review, pharmacist, "overridden", "تجاوز موثق تجريبي بعد مراجعة الصيدلي")
+        review.items.order(:id).each do |item|
+          decide_review_item!(item.reload, pharmacist, "approved", "اعتماد بعد توثيق قرار السلامة")
+        end
+      when :override_and_substitute
+        resolve_findings!(review, pharmacist, "overridden", "تجاوز موثق قبل اختيار بديل علاجي")
+        item = review.items.find_by!(original_product: products.fetch("rx-capsules-b"))
+        decide_review_item!(item, pharmacist, "substituted", "بديل علاجي تجريبي ينشئ سياقًا سريريًا جديدًا",
+          substitute_product: products.fetch("rx-capsules-d"))
+      end
+    end
+
+    def resolve_findings!(review, pharmacist, action, reason)
+      DrugSafety::Gate.current_findings(review.reload).select(&:open?).each do |finding|
+        result = DrugSafety::Acknowledge.new(finding:, actor: pharmacist, action:, reason:).call
+        raise Refused, result.errors.join("، ") unless result.success?
+      end
+    end
+
     def create_promotion_snapshot(order, user, promotion, coupon, discount, submitted_at)
       order.order_promotions.create!(promotion:, coupon:, promotion_name: promotion.name, code: coupon.code,
         promotion_type: promotion.promotion_type, discount_type: promotion.discount_type,
@@ -575,8 +747,11 @@ module DemoData
       result.record
     end
 
-    def build_manifest(accounts, categories, brands, products, zones, orders, promotions, coupons, purchasing, pos)
-      Manifest.new(accounts: accounts.size, categories: categories.size, brands: brands.size, products: products.size,
+    def build_manifest(accounts, categories, brands, products, zones, orders, promotions, coupons, purchasing, pos,
+      ingredients, safety_rules)
+      Manifest.new(active_ingredients: ingredients.size, safety_rules: safety_rules.size,
+        safety_findings: DrugSafetyFinding.count,
+        accounts: accounts.size, categories: categories.size, brands: brands.size, products: products.size,
         inventory_movements: InventoryMovement.where("idempotency_key LIKE 'demo:%'").count,
         customers: accounts.values.count(&:customer?), prescriptions: orders.count { |order| order.prescription.present? },
         orders: orders.size, promotions: promotions.size, coupons: coupons.size, delivery_zones: zones.size,

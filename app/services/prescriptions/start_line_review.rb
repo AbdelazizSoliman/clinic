@@ -21,6 +21,7 @@ module Prescriptions
         @item.update!(status: :under_review)
         @item.decisions.create!(actor: @actor, from_status: from, to_status: "under_review")
         audit("prescription_line_review_started")
+        DrugSafety::Reevaluate.call(review, trigger: :line_review_started, actor: @actor)
       end
       success
     rescue ActiveRecord::StaleObjectError

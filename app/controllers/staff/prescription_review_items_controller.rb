@@ -27,7 +27,7 @@ module Staff
 
     def set_records
       @prescription = Prescription.find(params[:prescription_id])
-      review = Prescriptions::EnsureReview.call(@prescription)
+      review = Prescriptions::EnsureReview.call(@prescription, actor: current_user)
       @review_item = review.items.find(params[:id])
     end
 

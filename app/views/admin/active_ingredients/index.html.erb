@@ -1,0 +1,14 @@
+<% content_for :title, "المواد الفعالة" %>
+<div class="mx-auto max-w-7xl px-4 py-10">
+  <div class="flex flex-wrap items-center justify-between gap-4"><h1 class="text-3xl font-black">المواد الفعالة</h1><%= link_to "مادة جديدة", new_admin_active_ingredient_path, class: "rounded-xl bg-pharmacy-700 px-5 py-3 font-bold text-white" %></div>
+  <p class="mt-2 text-slate-600">هوية دوائية ثابتة تُربط بالمنتجات وتُطابق عليها قواعد السلامة. لا يُطابق النظام بالأسماء النصية الحرة.</p>
+  <%= form_with url: admin_active_ingredients_path, method: :get, class: "mt-6 grid gap-3 rounded-2xl bg-white p-4 sm:grid-cols-3" do |f| %>
+    <%= f.search_field :q, value: params[:q], placeholder: "الاسم أو الرمز", class: "rounded-xl border p-3" %>
+    <%= f.select :active, [["كل الحالات", ""], ["نشطة", "true"], ["موقوفة", "false"]], { selected: params[:active] }, class: "rounded-xl border p-3" %>
+    <%= f.submit "بحث", class: "rounded-xl bg-slate-900 p-3 text-white" %>
+  <% end %>
+  <p class="mt-4"><%= @pagy.count %> مادة</p>
+  <div class="mt-4 overflow-x-auto rounded-2xl bg-white"><table class="w-full min-w-[640px] text-right"><thead class="bg-slate-50"><tr><th class="p-4">المادة</th><th>الرمز</th><th>المنتجات</th><th>الحالة</th></tr></thead><tbody>
+    <% @ingredients.each do |ingredient| %><tr class="border-t"><td class="p-4"><%= link_to ingredient.name, admin_active_ingredient_path(ingredient), class: "font-black text-pharmacy-700" %></td><td dir="ltr"><%= ingredient.code %></td><td><%= ingredient.product_active_ingredients.size %></td><td><%= ingredient.active? ? "نشطة" : "موقوفة" %></td></tr><% end %>
+  </tbody></table></div>
+</div>

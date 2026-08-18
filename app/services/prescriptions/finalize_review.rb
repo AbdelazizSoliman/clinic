@@ -8,6 +8,8 @@ module Prescriptions
 
     def call
       return unless @review.all_items_decided?
+      # Unresolved blocking safety findings hold the review open until a pharmacist resolves them.
+      return if DrugSafety::Gate.blocked?(@review)
       if @review.online?
         finalize_online
       else

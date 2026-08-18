@@ -6,6 +6,11 @@ class PrescriptionReviewItem < ApplicationRecord
   belongs_to :reviewed_by, class_name: "User", optional: true
   has_one :therapeutic_substitution, dependent: :restrict_with_error
   has_many :decisions, class_name: "PrescriptionDecision", dependent: :restrict_with_error
+  # Findings are immutable clinical evidence. The only cascade is a draft POS line removed
+  # before anything was dispensed, where the review item itself disappears with the line.
+  has_many :safety_findings, class_name: "DrugSafetyFinding", dependent: :destroy
+  has_many :related_safety_findings, class_name: "DrugSafetyFinding",
+    foreign_key: :related_review_item_id, dependent: :nullify, inverse_of: :related_review_item
 
   enum :status, { pending: 0, under_review: 1, approved: 2, substituted: 3, rejected: 4 },
     default: :pending, validate: true
@@ -25,6 +30,9 @@ class PrescriptionReviewItem < ApplicationRecord
   def terminal? = approved? || substituted? || rejected?
   def dispensable? = approved? || substituted?
   def effective_product = dispensed_product
+  # The product the safety engine reasons about right now: the dispensed one once decided,
+  # otherwise the prescribed one.
+  def candidate_product = dispensed_product || original_product
   def effective_unit_price_cents = dispensed_unit_price_cents
   def line_adjustment_cents
     dispensed_total = dispensable? ? dispensed_unit_price_cents * quantity : 0

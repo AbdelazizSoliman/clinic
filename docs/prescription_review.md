@@ -212,14 +212,28 @@ Seeding suppresses transactional email enqueueing for the duration of the run
 data never queues or sends mail; this flag is only ever set by the seeder, so
 real requests are unaffected. Every scenario is idempotent on a second run.
 
-## Limitations and Phase 20 boundary
+## Phase 20 safety engine integration
 
-Phase 19 is human pharmacist line-level review and documented substitution
-only. It does **not** implement drug-drug interaction checking, allergy or
-contraindication checking, duplicate-therapy detection, dosage/age/pregnancy/
-renal/hepatic rules, a clinical knowledge base, AI recommendations, OCR
-prescription interpretation, or physician messaging — all of that is Phase 20
-or later. The whole-prescription `Prescriptions::Review#review` action remains
+Phase 20 layers decision support on this workflow without changing its state
+machine. `EnsureReview`, `StartLineReview` and `DecideLine` each re-run
+`DrugSafety::Reevaluate`; `DecideLine` refuses an approve/substitute decision
+while an unresolved blocking finding involves that line (rejection is always
+allowed and never needs safety clearance), re-evaluates again after the decision
+commits, and `FinalizeReview` waits until the safety gate is clear. A
+substitution is treated as a new clinical context: the previous evaluation is
+retained and superseded, the substitute is evaluated in its own right, and an
+acknowledgement recorded against the old context cannot clear the new one.
+See [`docs/drug_safety_rules.md`](drug_safety_rules.md).
+
+## Limitations
+
+Phase 19 itself is human pharmacist line-level review and documented
+substitution only. Interaction, allergy, contraindication, duplicate-therapy,
+age and pregnancy/lactation checking arrived in Phase 20 as configured local
+rules; renal/hepatic and dose-limit rules remain unsupported because the
+required structured data does not exist. A clinical knowledge base, AI
+recommendations, OCR prescription interpretation and physician messaging remain
+out of scope. The whole-prescription `Prescriptions::Review#review` action remains
 reachable (e.g. for a future bulk-reopen path) but the application UI only
 exercises the per-item flow; treat the whole-prescription path as a
 compatibility surface, not the primary API.

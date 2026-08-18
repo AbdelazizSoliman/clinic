@@ -41,9 +41,11 @@ class DemoDataSeederTest < ActiveSupport::TestCase
     end
 
     assert_equal 7, @manifest.accounts
-    assert_equal 28, @manifest.products
-    assert_equal 12, @manifest.orders
-    assert_equal 6, @manifest.prescriptions
+    assert_equal 30, @manifest.products
+    assert_equal 17, @manifest.orders
+    assert_equal 11, @manifest.prescriptions
+    assert_equal 4, @manifest.active_ingredients
+    assert_equal 4, @manifest.safety_rules
     assert_equal 3, @manifest.suppliers
     assert_equal 7, @manifest.purchase_orders
     assert_equal 3, @manifest.purchase_receipts
@@ -101,6 +103,50 @@ class DemoDataSeederTest < ActiveSupport::TestCase
     assert PosSale.find_by!(number: "DEMO-POS-DISCOUNT").manual_discount_cents.positive?
     assert PosSale.find_by!(number: "DEMO-POS-VOID").voided?
     assert CashierSession.find_by!(identifier: "DEMO-POS-OPEN").open?
+    assert_demo_safety_scenarios
+  end
+
+  def assert_demo_safety_scenarios
+    assert_equal 4, DrugSafetyRule.active.count
+    assert DrugSafetyRule.active.all?(&:supported?)
+
+    interaction = safety_findings("DEMO-SAFETY-INTERACTION")
+    assert_equal 1, interaction.size
+    assert_equal "drug_interaction", interaction.first.rule_type
+    assert interaction.first.overridden?, "the demo shows a documented pharmacist override"
+    assert interaction.first.resolved_by.pharmacist?
+    assert_equal 1, interaction.first.acknowledgements.count
+
+    duplicate = safety_findings("DEMO-SAFETY-DUPLICATE")
+    assert_equal 1, duplicate.size
+    assert_equal "duplicate_therapy", duplicate.first.rule_type
+    assert duplicate.first.acknowledged?
+
+    allergy = safety_findings("DEMO-SAFETY-ALLERGY")
+    assert_equal 1, allergy.size
+    assert_equal "allergy", allergy.first.rule_type
+    assert allergy.first.open?
+
+    age = safety_findings("DEMO-SAFETY-AGE")
+    assert_equal 1, age.size
+    assert_equal "age_restriction", age.first.rule_type
+
+    substitution_review = review_for_order("DEMO-SAFETY-SUBSTITUTION")
+    assert_operator substitution_review.safety_evaluations.count, :>=, 2, "substitution creates a new evaluation"
+    retired = substitution_review.safety_evaluations.chronological.first.findings.first
+    assert_equal "drug_interaction", retired.rule_type
+    assert retired.overridden?, "the historical override stays readable"
+    current = safety_findings("DEMO-SAFETY-SUBSTITUTION")
+    assert_equal [ "allergy" ], current.map(&:rule_type), "the substitute is evaluated in its own right"
+    assert current.first.open?
+  end
+
+  def review_for_order(number)
+    PrescriptionReview.find_by!(reviewable: Order.find_by!(number:).prescription)
+  end
+
+  def safety_findings(number)
+    DrugSafety::Gate.current_findings(review_for_order(number)).to_a
   end
 
   test "seeding twice reuses every stable demo record" do

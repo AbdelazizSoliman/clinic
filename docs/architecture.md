@@ -98,6 +98,20 @@ append-only `PrescriptionDecision` timeline and an append-only
 status once every line has a terminal decision and notifies the customer.
 Details: [`docs/prescription_review.md`](prescription_review.md).
 
+Since Phase 20 a deterministic decision-support engine runs alongside that
+workflow. `DrugSafety::Context` gathers structured facts (candidate product per
+line, its `ActiveIngredient` identities and — online only — the patient's
+pharmacist-recorded date of birth, pregnancy/lactation state and allergies);
+`DrugSafety::Evaluate` is a pure function of that context and the immutable
+active `DrugSafetyRule` versions; `DrugSafety::Reevaluate` persists one
+digest-keyed `DrugSafetyEvaluation` with its `DrugSafetyFinding` rows, superseding
+earlier ones without deleting them. `DrugSafety::Gate` blocks approval,
+substitution, review finalisation and POS completion while a blocking finding is
+unresolved, and `DrugSafety::Acknowledge` records the pharmacist-only
+acknowledgement or documented override. The engine never prescribes, diagnoses,
+substitutes or decides; it detects and explains locally configured rules only.
+Details: [`docs/drug_safety_rules.md`](drug_safety_rules.md).
+
 ### Orders
 
 `Order`, `OrderItem`, `OrderAddress`, `OrderEvent`, and `OrderPromotion` preserve
