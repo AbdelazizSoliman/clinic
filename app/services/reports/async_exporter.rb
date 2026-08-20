@@ -27,6 +27,8 @@ module Reports
       when "purchasing" then user.can_view_purchasing_reports?
       when "batches" then user.can_view_inventory_reports?
       when "prescriptions" then user.can_view_prescription_reports?
+      when "drug_safety" then user.can_view_safety_reports?
+      when "search" then user.can_view_search_reports?
       when "fulfilments", "sales", "orders" then user.can_view_business_reports?
       when "customers", "promotions" then user.admin?
       when "products" then user.can_view_business_reports? || user.can_view_inventory_reports?

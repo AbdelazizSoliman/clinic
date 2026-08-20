@@ -1,13 +1,13 @@
 module Prescriptions
   class EnsureReview
-    def self.call(reviewable)
-      new(reviewable).call
+    def self.call(reviewable, actor: nil)
+      new(reviewable, actor:).call
     end
 
-    def initialize(reviewable) = @reviewable = reviewable
+    def initialize(reviewable, actor: nil) = (@reviewable, @actor = reviewable, actor)
 
     def call
-      PrescriptionReview.transaction do
+      review = PrescriptionReview.transaction do
         review = PrescriptionReview.find_or_create_by!(reviewable: @reviewable)
         source_items.each do |source|
           next unless source.requires_prescription?
@@ -19,6 +19,8 @@ module Prescriptions
         end
         review
       end
+      DrugSafety::Reevaluate.call(review, trigger: :context_built, actor: @actor)
+      review
     end
 
     private

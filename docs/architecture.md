@@ -98,6 +98,37 @@ append-only `PrescriptionDecision` timeline and an append-only
 status once every line has a terminal decision and notifies the customer.
 Details: [`docs/prescription_review.md`](prescription_review.md).
 
+Since Phase 20 a deterministic decision-support engine runs alongside that
+workflow. `DrugSafety::Context` gathers structured facts (candidate product per
+line, its `ActiveIngredient` identities and — online only — the patient's
+pharmacist-recorded date of birth, pregnancy/lactation state and allergies);
+`DrugSafety::Evaluate` is a pure function of that context and the immutable
+active `DrugSafetyRule` versions; `DrugSafety::Reevaluate` persists one
+digest-keyed `DrugSafetyEvaluation` with its `DrugSafetyFinding` rows, superseding
+earlier ones without deleting them. `DrugSafety::Gate` blocks approval,
+substitution, review finalisation and POS completion while a blocking finding is
+unresolved, and `DrugSafety::Acknowledge` records the pharmacist-only
+acknowledgement or documented override. The engine never prescribes, diagnoses,
+substitutes or decides; it detects and explains locally configured rules only.
+Details: [`docs/drug_safety_rules.md`](drug_safety_rules.md).
+
+### Product search
+
+Since Phase 21 all product discovery — storefront, POS, prescription substitution and
+staff lookup — runs through one domain in `app/services/search/`.
+`Search::ArabicNormalizer` folds diacritics, tatweel, alef/ya/waw/ta-marbuta variants and
+Arabic-Indic digits for *matching only*; the folded text lives in dedicated `search_name`
+/`search_terms` columns kept current by the `Searchable` model concern, and stored display
+names are never altered. `Search::Query` bounds and tokenizes the input and applies
+data-driven `SearchSynonym` expansion. `Search::Products` builds one PostgreSQL query with a
+deterministic integer rank: exact barcode and SKU occupy the top two tiers, followed by exact
+name, prefix, token and `pg_trgm` `word_similarity` fuzzy tiers, tie-broken on name and id.
+Brand, category and structured `ActiveIngredient` matches use `EXISTS` subqueries, so no join
+can duplicate a product row. Context settings decide the base relation and sellability
+filtering; the substitution context additionally requires an allocatable (unexpired,
+unquarantined) batch. `Search::RecordEvent` writes aggregate `SearchEvent` rows that carry no
+searcher identity. Details: [`docs/search.md`](search.md).
+
 ### Orders
 
 `Order`, `OrderItem`, `OrderAddress`, `OrderEvent`, and `OrderPromotion` preserve

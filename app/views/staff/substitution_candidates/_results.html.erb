@@ -1,0 +1,21 @@
+<p class="text-xs text-slate-600">نتائج بحث عن منتجات متاحة للصرف. البحث لا يرتب البدائل سريريًا ولا يقترح تكافؤًا علاجيًا — الاختيار قرار الصيدلي، وتُعاد تقييمات السلامة بعد تسجيله.</p>
+<% if products.empty? %>
+  <p class="mt-2 rounded-lg bg-amber-50 p-3 text-sm font-bold text-amber-900" role="status">
+    <% if result.query.blank? %>اكتب اسم منتج أو مادة فعالة أو كودًا للبحث.<% else %>لا يوجد منتج مؤهل ومتاح مطابق لهذا البحث. لا يختار النظام بديلًا تلقائيًا.<% end %>
+  </p>
+<% else %>
+  <ul class="mt-2 grid gap-2">
+    <% products.each do |product| %>
+      <li>
+        <label class="flex cursor-pointer items-start gap-3 rounded-lg border p-3 hover:bg-slate-50">
+          <%= radio_button_tag :substitute_product_id, product.id, false, id: "#{field_id}_#{product.id}", class: "mt-1" %>
+          <span class="min-w-0">
+            <span class="block font-bold"><%= product.name %></span>
+            <span class="block text-xs text-slate-600"><span dir="ltr"><%= product.sku %></span> · <%= product.brand.name %> · المتاح <%= product.available_to_sell_quantity %></span>
+            <% if product.active_ingredients.any? %><span class="block text-xs text-slate-500">المواد الفعالة: <%= product.active_ingredients.map(&:name).join("، ") %></span><% end %>
+          </span>
+        </label>
+      </li>
+    <% end %>
+  </ul>
+<% end %>

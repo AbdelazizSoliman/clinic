@@ -92,6 +92,15 @@ ar:
       expired: "منتهية"
     coupon_applied: "تم تطبيق كود الخصم"
     coupon_invalid: "الكود غير صالح أو غير متاح لهذه السلة"
+  clinical:
+    pregnancy:
+      pregnancy_unknown: "غير مسجل"
+      not_pregnant: "لا يوجد حمل مسجل"
+      pregnant: "حمل مسجل"
+    lactation:
+      lactation_unknown: "غير مسجل"
+      not_lactating: "لا توجد رضاعة مسجلة"
+      lactating: "رضاعة مسجلة"
   reports:
     errors:
       invalid_date: "نطاق التاريخ غير صالح. راجع تاريخ البداية والنهاية."

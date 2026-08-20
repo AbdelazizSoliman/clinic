@@ -67,7 +67,20 @@ keys, update/delete prevention, and transactional locking.
   per-line pharmacist decision, its inventory/FEFO consequences, and
   therapeutic substitution.
 - [`app/services/prescriptions/finalize_review.rb`](../app/services/prescriptions/finalize_review.rb)
-  settles the order/prescription once every line has a terminal decision.
+  settles the order/prescription once every line has a terminal decision, and
+  holds off while an unresolved blocking safety finding exists.
+- [`docs/drug_safety_rules.md`](drug_safety_rules.md) and
+  [`app/services/drug_safety/`](../app/services/drug_safety) own the Phase 20
+  decision-support engine: `context.rb` (structured facts only),
+  `evaluate.rb` (pure, deterministic, no side effects), `reevaluate.rb`
+  (idempotent persistence and superseding), `gate.rb` (dispensing gate) and
+  `acknowledge.rb` (pharmacist-only resolution).
+
+Look for: the safety boundary (no prescribing, diagnosis, auto-substitution or
+AI), rules as data rather than code, immutable rule versions plus per-finding
+snapshots, and the fact that a substitution's new context can never be cleared
+by an acknowledgement recorded against the old one.
+
 - [`app/services/prescriptions/review.rb`](../app/services/prescriptions/review.rb)
   is the earlier whole-prescription entry point, now a compatibility surface
   that delegates terminal decisions to the per-line pipeline.
@@ -83,7 +96,25 @@ keys, update/delete prevention, and transactional locking.
 Look for: scan-state gating, no public storage key, role/ownership enforcement,
 and release behavior after rejection.
 
-## 5. Order and fulfilment transitions
+## 5. Product search
+
+- [`docs/search.md`](search.md) documents the normalization policy, ranking tiers,
+  index strategy and measured query plans.
+- [`app/services/search/arabic_normalizer.rb`](../app/services/search/arabic_normalizer.rb)
+  is a pure, unit-tested folding table; note that it is used for matching only and never
+  rewrites stored display text.
+- [`app/services/search/products.rb`](../app/services/search/products.rb) builds one
+  parameterized query. Every value is bound; the single ORDER BY literal is composed by
+  `sanitize_sql_array` and covered by
+  [`test/services/search/injection_safety_test.rb`](../test/services/search/injection_safety_test.rb).
+
+Look for: exact barcode and SKU pinned above every fuzzy match, `EXISTS` instead of joins so
+no product is duplicated, the substitution context requiring an allocatable batch, and the
+fact that search surfaces products without ever asserting therapeutic equivalence — the
+Phase 19 decision and Phase 20 re-evaluation still run after a pharmacist selects one.
+
+
+## 6. Order and fulfilment transitions
 
 - [`app/services/orders/transition.rb`](../app/services/orders/transition.rb)
   lists allowed order edges and couples ready/cancelled states to inventory.
@@ -95,7 +126,7 @@ and release behavior after rejection.
 Look for: explicit transition maps, authorization within services, optimistic
 locking, repeat safety, and order events/notifications.
 
-## 6. Pricing, promotions, and delivery
+## 7. Pricing, promotions, and delivery
 
 - [`app/services/promotions/calculator.rb`](../app/services/promotions/calculator.rb)
   provides deterministic line/cart/delivery discount calculation.
@@ -107,7 +138,7 @@ locking, repeat safety, and order events/notifications.
 Look for: integer-cent arithmetic at order boundaries, calculation-version and
 promotion snapshots, database locks at checkout, and bounded delivery capacity.
 
-## 7. Authentication and authorization
+## 8. Authentication and authorization
 
 - [`app/models/user.rb`](../app/models/user.rb) shows roles, capabilities,
   encrypted TOTP, recovery-code consumption, and session-version triggers.
@@ -121,7 +152,7 @@ Then inspect [`test/controllers/phase14_security_test.rb`](../test/controllers/p
 and [`test/controllers/phase8_requests_test.rb`](../test/controllers/phase8_requests_test.rb)
 for cross-role and ownership regression coverage.
 
-## 8. Reports and background delivery
+## 9. Reports and background delivery
 
 - [`app/services/reports/async_exporter.rb`](../app/services/reports/async_exporter.rb)
   captures safe filters, authorization, deduplication, and active-export limits.
@@ -136,7 +167,7 @@ Look for: ownership revalidation at execution/download, formula-safe CSV,
 retention cleanup, job heartbeats, and business transactions independent of mail
 delivery success.
 
-## 9. Demo architecture
+## 10. Demo architecture
 
 - [`app/services/demo_data/seeder.rb`](../app/services/demo_data/seeder.rb)
   creates the deterministic fictional graph and protects execution boundaries.
@@ -153,7 +184,7 @@ delivery success.
 Look for: no primary-key manifest, no normal-authentication bypass, suppressed
 external work during seeding, and explicit refusal outside safe demo settings.
 
-## 10. Build and operational evidence
+## 11. Build and operational evidence
 
 - [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) runs tests, audits,
   assets, framework loading, and Docker verification.
@@ -166,7 +197,7 @@ external work during seeding, and explicit refusal outside safe demo settings.
 The repository contains operational preparation, not evidence that a permanent
 public deployment or external scanner/SMTP/storage provider is currently active.
 
-## 11. Suppliers, purchasing, and receiving
+## 12. Suppliers, purchasing, and receiving
 
 - [`docs/purchasing.md`](purchasing.md) defines roles, states, receiving
   invariants, reporting, and the Phase 17 boundary.

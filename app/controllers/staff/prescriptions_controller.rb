@@ -15,11 +15,12 @@ module Staff
     end
 
     def show
-      @review = Prescriptions::EnsureReview.call(@prescription)
+      @review = Prescriptions::EnsureReview.call(@prescription, actor: current_user)
       @review_items = @review.items.includes(:original_product, :dispensed_product, :reviewed_by,
         :therapeutic_substitution, :decisions).order(:id)
-      @substitution_candidates = Product.active.where(requires_prescription: true)
-        .joins(:inventory_batches).merge(InventoryBatch.allocatable).distinct.order(:name)
+      @safety_evaluation = @review.current_safety_evaluation
+      @safety_findings = DrugSafety::Gate.current_findings(@review).includes(:acknowledgements,
+        related_review_item: :original_product).to_a
     end
 
     def review

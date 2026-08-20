@@ -5,11 +5,18 @@
       <% if PharmacySetting.current.logo.attached? %><%= image_tag PharmacySetting.current.logo.variant(:header), class: "size-10 rounded-xl object-cover", alt: "شعار #{PharmacySetting.current.pharmacy_name}" %><% else %><span class="grid size-10 place-items-center rounded-xl bg-pharmacy-600 text-2xl font-black text-white" aria-hidden="true">+</span><% end %>
       <span class="text-xl font-black text-pharmacy-900"><%= PharmacySetting.current.pharmacy_name %></span>
     <% end %>
-    <%= form_with url: products_path, method: :get, class: "order-3 flex w-full flex-1 sm:order-none sm:w-auto", role: "search" do |form| %>
-      <%= form.label :q, "ابحث عن دواء أو منتج", class: "sr-only" %>
-      <%= form.search_field :q, value: params[:q], placeholder: "ابحث عن دواء، فيتامين أو منتج...", class: "w-full rounded-r-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm focus:border-pharmacy-500" %>
-      <%= form.button "بحث", class: "rounded-l-xl bg-pharmacy-600 px-5 py-3 text-sm font-bold text-white hover:bg-pharmacy-700" %>
-    <% end %>
+    <div class="order-3 w-full flex-1 sm:order-none sm:w-auto" data-controller="product-search" data-product-search-url-value="<%= search_suggestions_path %>">
+      <%= form_with url: products_path, method: :get, class: "relative flex", role: "search" do |form| %>
+        <%= form.label :q, "ابحث عن دواء أو منتج", class: "sr-only" %>
+        <%= form.search_field :q, value: params[:q], placeholder: "ابحث عن دواء، فيتامين أو منتج...", autocomplete: "off",
+              role: "combobox", aria: { expanded: "false", controls: "search-suggestions-panel", autocomplete: "list" },
+              data: { product_search_target: "input", action: "input->product-search#search keydown->product-search#navigate" },
+              class: "w-full rounded-r-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm focus:border-pharmacy-500" %>
+        <%= form.button "بحث", class: "rounded-l-xl bg-pharmacy-600 px-5 py-3 text-sm font-bold text-white hover:bg-pharmacy-700" %>
+        <span data-product-search-target="status" class="pointer-events-none absolute inset-x-0 -bottom-1 hidden h-0.5 animate-pulse bg-pharmacy-500" role="status"><span class="sr-only">جارٍ تحميل الاقتراحات</span></span>
+        <div id="search-suggestions-panel" data-product-search-target="panel" class="absolute inset-x-0 top-full z-50 mt-1 hidden overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl"></div>
+      <% end %>
+    </div>
     <div class="mr-auto flex items-center gap-2">
       <% if user_signed_in? %><%= link_to "عرض تجريبي", demo_path, class: "rounded-xl p-2 text-sm font-bold text-amber-800 hover:bg-amber-50" if demo_mode? %><%= link_to account_path, class: "rounded-xl p-2 text-sm font-bold text-slate-700 hover:bg-slate-100", aria: { label: "حساب #{current_user.full_name}" } do %>👤 <span class="hidden lg:inline"><%= current_user.first_name %></span><% end %><%= button_to "خروج", destroy_user_session_path, method: :delete, class: "hidden text-xs font-bold text-slate-600 sm:block" %><% else %><%= link_to "دخول", new_user_session_path, class: "rounded-xl p-2 text-sm font-bold text-slate-700 hover:bg-slate-100" %><%= link_to "حساب جديد", new_user_registration_path, class: "hidden text-xs font-bold text-pharmacy-700 sm:block" if PharmacySetting.current.customer_registration_enabled? %><% end %>
       <% if user_signed_in? %><%= link_to wishlist_path, class: "relative rounded-xl p-2 text-sm font-bold text-slate-700 hover:bg-slate-100" do %>♥ <span class="hidden lg:inline">المفضلة</span><%= render "wishlists/badge", count: wishlist_count %><% end %><% else %><%= link_to wishlist_path, data: { controller: "shopping-count", shopping_count_type_value: "wishlist" }, class: "relative rounded-xl p-2 text-sm font-bold text-slate-700 hover:bg-slate-100", aria: { label: "المفضلة، 0 منتجات" } do %>♥ <span class="hidden lg:inline">المفضلة</span><span data-shopping-count-target="badge" class="absolute -left-1 -top-1 grid size-5 place-items-center rounded-full bg-rose-500 text-xs text-white opacity-0 transition-opacity">0</span><% end %><% end %>

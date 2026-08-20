@@ -98,6 +98,43 @@ module Reports
         end
       Result.new(headers: %w[الإيصال التاريخ الكاشير الجلسة الخام_قرش الخصم_التلقائي_قرش الخصم_اليدوي_قرش الصافي_قرش طرق_الدفع الوحدات التشغيلات بنود_الروشتة], rows:)
     end
+    # Rule-match workflow rows only: no patient identity and no matched clinical facts.
+    def drug_safety
+      rows = DrugSafetyFinding.where(created_at: @range.range)
+        .includes(:drug_safety_rule, :resolved_by, drug_safety_evaluation: {},
+          prescription_review_item: [ :original_product, :dispensed_product, { prescription_review: :reviewable } ])
+        .order(:created_at).limit(CsvExporter::MAX_ROWS + 1).map do |finding|
+          review = finding.prescription_review_item.prescription_review
+          [ finding.created_at, finding.rule_identity, finding.rule_type_label, finding.severity,
+            finding.blocking ? "نعم" : "لا", finding.status_label, review.online? ? "أونلاين" : "نقطة بيع",
+            context_reference(review), finding.prescription_review_item.original_product.name,
+            finding.prescription_review_item.dispensed_product&.name, finding.resolved_by&.full_name,
+            finding.resolved_at, finding.drug_safety_evaluation.sequence ]
+        end
+      Result.new(headers: %w[التاريخ القاعدة النوع الخطورة موقف الحالة المصدر المرجع المنتج_الموصوف المنتج_المصروف
+        المُقِر تاريخ_الإقرار إصدار_التقييم], rows:)
+    end
+
+    def context_reference(review)
+      review.online? ? review.reviewable.order.number : review.reviewable.number
+    end
+
+    # Aggregate rows only: one row per distinct normalized query, never per event, and
+    # never anything that identifies a searcher.
+    def search
+      scope = SearchEvent.where(created_at: @range.range).with_text
+        .group(:normalized_query, :context)
+        .order(Arel.sql("COUNT(*) DESC"), Arel.sql("normalized_query ASC")).limit(CsvExporter::MAX_ROWS + 1)
+      totals = scope.count
+      zero = scope.where(zero_result: true).count
+      results = scope.sum(:result_count)
+      rows = totals.map do |(query, context), count|
+        [ query, context, count, zero.fetch([ query, context ], 0),
+          count.zero? ? 0 : (results.fetch([ query, context ], 0).to_f / count).round(1) ]
+      end
+      Result.new(headers: %w[العباره_الموحده السياق عدد_عمليات_البحث بلا_نتائج متوسط_عدد_النتائج], rows:)
+    end
+
     def batch_numbers(item)
       return nil unless item.reviewable_item.is_a?(OrderItem)
       item.reviewable_item.inventory_reservation&.inventory_batches&.pluck(:batch_number)&.join("+")

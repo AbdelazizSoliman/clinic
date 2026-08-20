@@ -3,6 +3,7 @@ class PrescriptionReview < ApplicationRecord
   belongs_to :started_by, class_name: "User", optional: true
   has_many :items, class_name: "PrescriptionReviewItem", dependent: :restrict_with_error
   has_many :decisions, through: :items
+  has_many :safety_evaluations, class_name: "DrugSafetyEvaluation", dependent: :restrict_with_error
 
   enum :status, { pending: 0, under_review: 1, completed: 2 }, default: :pending, validate: true
 
@@ -13,6 +14,8 @@ class PrescriptionReview < ApplicationRecord
   def online? = reviewable_type == "Prescription"
   def pos? = reviewable_type == "PosSale"
   def all_items_decided? = items.exists? && items.where(status: %i[pending under_review]).none?
+  def current_safety_evaluation = safety_evaluations.current.order(:sequence).last
+  def patient = online? ? reviewable.user : nil
 
   private
 

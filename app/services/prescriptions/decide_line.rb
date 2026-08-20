@@ -31,6 +31,13 @@ module Prescriptions
         end
         review.update!(status: :under_review, started_at: Time.current, started_by: @actor) if review.pending?
         review.reviewable.update!(status: :under_review) if review.online? && review.reviewable.submitted?
+        unless @decision == "rejected"
+          blocking = safety_block_for_current_context(review)
+          if blocking.any?
+            transaction_errors << DrugSafety::Gate.blocked_message(blocking)
+            raise ActiveRecord::Rollback
+          end
+        end
         product = effective_product
         price = product && (product.price * 100).round
         from = @item.status
@@ -46,6 +53,10 @@ module Prescriptions
         @item.decisions.create!(actor: @actor, from_status: from, to_status: @decision,
           reason: @reason, notes: @notes, metadata: decision_metadata)
         audit("prescription_line_#{@decision}")
+        # A decision — above all a substitution — is a new clinical context, so the engine reruns
+        # against the product that will actually be dispensed.
+        DrugSafety::Reevaluate.call(review, actor: @actor,
+          trigger: @decision == "substituted" ? :substitution_recorded : :decision_recorded)
         FinalizeReview.call(review, actor: @actor) if review.reload.all_items_decided?
         Pos::Recalculate.call(review.reviewable) if review.pos?
       end
@@ -73,6 +84,13 @@ module Prescriptions
     def effective_product
       return nil if @decision == "rejected"
       @decision == "substituted" ? @substitute : @item.original_product
+    end
+
+    # Re-runs the engine on the context as it stands, then reports the unresolved blocking
+    # findings that involve this line. Rejection never needs safety clearance.
+    def safety_block_for_current_context(review)
+      DrugSafety::Reevaluate.call(review, trigger: :decision_recorded, actor: @actor)
+      DrugSafety::Gate.blocking_findings_for_item(@item)
     end
 
     def create_substitution!

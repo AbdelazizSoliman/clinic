@@ -1,7 +1,10 @@
+<%# Fixtures bypass model callbacks, so the normalized search projection is explicit. %>
 eva:
   name: إيفا فارما
   slug: eva-pharma
+  search_name: <%= Search::ArabicNormalizer.normalize("إيفا فارما") %>
 
 vichy:
   name: فيشي
   slug: vichy
+  search_name: <%= Search::ArabicNormalizer.normalize("فيشي") %>

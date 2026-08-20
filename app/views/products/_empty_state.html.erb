@@ -3,7 +3,25 @@
   <% if @products_query.invalid_price_range? %>
     <h2 class="mt-4 text-xl font-black">نطاق السعر غير صحيح</h2><p class="mt-2 text-sm text-slate-600">راجع أقل وأعلى سعر ثم حاول مرة أخرى.</p>
   <% elsif @active_browsing_params["q"].present? %>
-    <h2 class="mt-4 text-xl font-black">لا توجد نتائج لعبارة «<%= @active_browsing_params["q"] %>»</h2><p class="mt-2 text-sm text-slate-600">جرّب كلمة أقصر أو امسح بعض الفلاتر.</p>
+    <h2 class="mt-4 text-xl font-black">لا توجد نتائج لعبارة «<%= @active_browsing_params["q"] %>»</h2>
+    <p class="mt-2 text-sm text-slate-600">البحث يتجاهل التشكيل ويوحّد صور الألف والياء، لذا جرّب كلمة أقصر أو تهجئة مختلفة، أو امسح بعض الفلاتر.</p>
+    <% nearby = search_fallback_suggestions(@active_browsing_params["q"]) %>
+    <% if nearby.any? %>
+      <div class="mt-6"><p class="text-sm font-black text-slate-800">هل تقصد؟</p>
+        <ul class="mt-3 flex flex-wrap justify-center gap-2">
+          <% nearby.each do |suggestion| %>
+            <li><%= link_to suggestion.label, lookup_suggestion_path(suggestion), data: { turbo_frame: "products_browser", turbo_action: "advance" }, class: "rounded-full border border-slate-300 px-4 py-2 text-sm font-bold hover:border-pharmacy-500" %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+    <div class="mt-6"><p class="text-sm font-black text-slate-800">تصفّح الأقسام</p>
+      <ul class="mt-3 flex flex-wrap justify-center gap-2">
+        <% @categories.first(6).each do |category| %>
+          <li><%= link_to category.name, products_path(category: category.slug), data: { turbo_frame: "products_browser", turbo_action: "advance" }, class: "rounded-full bg-slate-100 px-4 py-2 text-sm font-bold hover:bg-slate-200" %></li>
+        <% end %>
+      </ul>
+    </div>
   <% elsif @locked_category && active_filter_chips.empty? %>
     <h2 class="mt-4 text-xl font-black">لا توجد منتجات في هذا القسم بعد</h2><p class="mt-2 text-sm text-slate-600">سنضيف منتجات جديدة قريبًا.</p>
   <% else %>

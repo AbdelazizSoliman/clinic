@@ -33,16 +33,18 @@ class ProductsQuery
     SORTS.include?(params["sort"]) ? params["sort"] : "recommended"
   end
 
+  # The central search service backing this query, or nil when no search term was given.
+  def search_service = @search
+
   private
 
+  # Storefront discovery delegates to the central search domain: Arabic normalization,
+  # identifier priority, token matching and typo tolerance all come from one place.
   def search(relation)
     return relation if params["q"].blank?
 
-    query = "%#{ActiveRecord::Base.sanitize_sql_like(params["q"].strip)}%"
-    relation.left_joins(:brand, :category).where(
-      "products.name ILIKE :query OR products.short_description ILIKE :query OR brands.name ILIKE :query OR categories.name ILIKE :query",
-      query: query
-    ).distinct
+    @search = Search::Products.new(query: params["q"], context: :storefront, relation:)
+    @search.relation
   end
 
   def filter_by_slug(relation, association, slug)
@@ -74,6 +76,10 @@ class ProductsQuery
   def truthy?(key) = params[key] == "true"
 
   def sort(relation)
+    # An explicit sort always wins; relevance ordering only applies to the default
+    # "recommended" sort of an actual search.
+    return relation.reorder(*@search.rank_ordering) if @search && sort_key == "recommended"
+
     case sort_key
     when "price_asc" then relation.order(price: :asc, id: :desc)
     when "price_desc" then relation.order(price: :desc, id: :desc)

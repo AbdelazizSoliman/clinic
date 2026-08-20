@@ -6,8 +6,8 @@ module Admin
     def call
       scope = @relation
       if @params[:q].present?
-        term = "%#{Product.sanitize_sql_like(@params[:q])}%"
-        scope = scope.where("products.name ILIKE :term OR products.sku ILIKE :term OR products.barcode ILIKE :term", term:)
+        # Staff lookup sees inactive products too; status is labelled in the results table.
+        scope = ::Search::Products.new(query: @params[:q], context: :staff, relation: scope).relation
       end
       scope = scope.where(category_id: @params[:category_id]) if @params[:category_id].present?
       scope = scope.where(brand_id: @params[:brand_id]) if @params[:brand_id].present?

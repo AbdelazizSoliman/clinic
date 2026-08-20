@@ -1,0 +1,9 @@
+{
+  "ignored_warnings": [
+    {
+      "fingerprint": "02d759661c9052013823db81c4e37be4b6312f5a96bf21790d0e6806fcca1b23",
+      "note": "Reviewed and safe. PostgreSQL cannot bind parameters in an ORDER BY expression, so the relevance CASE must be emitted as a literal. Every value inside it is escaped by ActiveRecord::Base.sanitize_sql_array (Search::Products::Fragment#to_literal) and the surrounding template is a frozen literal defined in Search::Products. Proven by test/services/search/injection_safety_test.rb, which asserts that quotes, wildcards and statement terminators are neutralised and that no data changes."
+    }
+  ],
+  "brakeman_version": "8.0.5"
+}

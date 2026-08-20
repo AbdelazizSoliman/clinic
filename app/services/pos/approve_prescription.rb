@@ -10,7 +10,7 @@ module Pos
       return failure(@item, "اعتماد أدوية الروشتة متاح للصيدلي فقط") unless @actor&.can_approve_pos_prescriptions?
       return failure(@item, "عملية البيع ليست مسودة") unless @item.pos_sale.draft?
       return success(@item) unless @item.requires_prescription?
-      review = Prescriptions::EnsureReview.call(@item.pos_sale)
+      review = Prescriptions::EnsureReview.call(@item.pos_sale, actor: @actor)
       review_item = review.items.find_by!(reviewable_item: @item)
       result = Prescriptions::DecideLine.new(item: review_item, actor: @actor,
         decision: :approved, reason: @reason).call

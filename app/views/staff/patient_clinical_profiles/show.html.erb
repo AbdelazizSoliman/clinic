@@ -1,0 +1,45 @@
+<% content_for :title, "البيانات السريرية المسجلة" %>
+<div class="mx-auto max-w-4xl px-4 py-10">
+  <h1 class="text-3xl font-black">البيانات السريرية المسجلة — <%= @patient.full_name %></h1>
+  <p class="mt-2 rounded-xl bg-amber-50 p-4 text-sm">تُدخَل هذه البيانات يدويًا بواسطة الصيدلي فقط. لا يستنتج النظام أي حالة سريرية من الملاحظات أو الطلبات أو النوع أو العمر، ولا يقدم تشخيصًا أو توصية علاجية.</p>
+
+  <section class="mt-6 rounded-2xl bg-white p-6 shadow-sm">
+    <h2 class="text-xl font-black">الحالة المسجلة</h2>
+    <%= form_with model: @profile, url: staff_patient_clinical_profile_path(@patient), method: :patch, scope: :patient_clinical_profile, class: "mt-4 grid gap-4" do |form| %>
+      <%= hidden_field_tag :lock_version, @profile.lock_version %>
+      <div><%= form.label :date_of_birth, "تاريخ الميلاد — يُستخدم لحساب العمر وقت المراجعة فقط" %><%= form.date_field :date_of_birth, class: "mt-1 w-full rounded-xl border p-3" %></div>
+      <div><%= form.label :pregnancy_status, "حالة الحمل المسجلة" %><%= form.select :pregnancy_status, PatientClinicalProfile.pregnancy_statuses.keys.map { |key| [ t("clinical.pregnancy.#{key}"), key ] }, {}, class: "mt-1 w-full rounded-xl border p-3" %></div>
+      <div><%= form.label :lactation_status, "حالة الرضاعة المسجلة" %><%= form.select :lactation_status, PatientClinicalProfile.lactation_statuses.keys.map { |key| [ t("clinical.lactation.#{key}"), key ] }, {}, class: "mt-1 w-full rounded-xl border p-3" %></div>
+      <div><%= form.label :notes, "ملاحظة تشغيلية مختصرة" %><%= form.text_area :notes, rows: 3, class: "mt-1 w-full rounded-xl border p-3" %></div>
+      <%= form.submit "حفظ البيانات المسجلة", class: "rounded-xl bg-pharmacy-700 px-5 py-3 font-black text-white" %>
+    <% end %>
+    <% if @profile.persisted? %>
+      <p class="mt-3 text-xs text-slate-600">آخر تسجيل: <%= @profile.recorded_by.full_name %> · <%= l(@profile.recorded_at, format: :short) %></p>
+    <% end %>
+  </section>
+
+  <section class="mt-6 rounded-2xl bg-white p-6 shadow-sm">
+    <h2 class="text-xl font-black">الحساسية المسجلة تجاه مواد فعالة</h2>
+    <% if @profile.persisted? %>
+      <ul class="mt-4 space-y-2">
+        <% @profile.allergies.sort_by { |allergy| allergy.active_ingredient.name }.each do |allergy| %>
+          <li class="flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3 <%= "opacity-60" unless allergy.active? %>">
+            <span><strong><%= allergy.active_ingredient.name %></strong> · <%= safety_severity_badge(allergy.severity) %><% if allergy.notes.present? %><span class="block text-sm text-slate-600"><%= allergy.notes %></span><% end %></span>
+            <% if allergy.active? %>
+              <%= button_to "إيقاف السجل", staff_patient_clinical_profile_allergy_path(@patient, allergy), method: :delete, class: "rounded-lg border px-3 py-2 font-bold" %>
+            <% else %><span class="text-sm font-bold">موقوف</span><% end %>
+          </li>
+        <% end %>
+        <% if @profile.allergies.empty? %><li class="text-slate-600">لا توجد سجلات حساسية.</li><% end %>
+      </ul>
+      <%= form_with url: staff_patient_clinical_profile_allergies_path(@patient), class: "mt-5 grid gap-3 rounded-xl border p-4 sm:grid-cols-[2fr_1fr_2fr_auto]" do %>
+        <div><%= label_tag :active_ingredient_id, "المادة الفعالة" %><%= select_tag :active_ingredient_id, options_from_collection_for_select(@ingredients, :id, :name), include_blank: "اختر مادة", required: true, class: "mt-1 w-full rounded-lg border p-2" %></div>
+        <div><%= label_tag :severity, "الخطورة" %><%= select_tag :severity, options_for_select(DrugSafety::SEVERITIES.keys.map { |key| [ DrugSafety::SEVERITY_LABELS[key.to_s], key ] }, "major"), class: "mt-1 w-full rounded-lg border p-2" %></div>
+        <div><%= label_tag :notes, "ملاحظة" %><%= text_field_tag :notes, nil, class: "mt-1 w-full rounded-lg border p-2" %></div>
+        <%= submit_tag "تسجيل", class: "self-end rounded-lg bg-slate-800 px-4 py-2 font-bold text-white" %>
+      <% end %>
+    <% else %>
+      <p class="mt-3 text-slate-600">احفظ الملف السريري أولًا لتتمكن من تسجيل الحساسية.</p>
+    <% end %>
+  </section>
+</div>

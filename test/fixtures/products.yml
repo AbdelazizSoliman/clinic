@@ -1,3 +1,6 @@
+<%# Fixtures bypass model callbacks, so the normalized search projections are explicit. %>
+
+
 featured:
   name: بانادول أدفانس
   slug: panadol-advance
@@ -11,6 +14,8 @@ featured:
   active: true
   category: medicines
   brand: eva
+  search_name: <%= Search::ArabicNormalizer.normalize("بانادول أدفانس") %>
+  search_terms: <%= Search::ArabicNormalizer.normalize("بانادول أدفانس panadol-advance مسكن للآلام") %>
 
 skin_product:
   name: كريم مرطب
@@ -24,6 +29,8 @@ skin_product:
   active: true
   category: skin_care
   brand: vichy
+  search_name: <%= Search::ArabicNormalizer.normalize("كريم مرطب") %>
+  search_terms: <%= Search::ArabicNormalizer.normalize("كريم مرطب moisturizing-cream ترطيب يومي") %>
 
 inactive:
   name: منتج غير نشط
@@ -35,3 +42,5 @@ inactive:
   active: false
   category: medicines
   brand: eva
+  search_name: <%= Search::ArabicNormalizer.normalize("منتج غير نشط") %>
+  search_terms: <%= Search::ArabicNormalizer.normalize("منتج غير نشط inactive-product") %>

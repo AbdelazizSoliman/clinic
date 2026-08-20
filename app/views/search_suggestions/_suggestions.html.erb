@@ -1,0 +1,32 @@
+<% if query.blank? || (products.empty? && lookups.empty?) %>
+  <% if query.present? %>
+    <div class="p-4 text-sm text-slate-600" role="status">
+      <p class="font-bold">لا توجد اقتراحات لعبارة «<%= query.raw %>»</p>
+      <p class="mt-1">جرّب كلمة أقصر أو تهجئة مختلفة، أو تصفّح الأقسام.</p>
+    </div>
+  <% end %>
+<% else %>
+  <ul role="listbox" aria-label="اقتراحات البحث" class="max-h-80 overflow-y-auto py-1">
+    <% products.each_with_index do |product, index| %>
+      <li role="option" id="suggestion-product-<%= product.id %>" aria-selected="false" tabindex="-1"
+          data-product-search-target="option" data-url="<%= product_path(product) %>"
+          class="cursor-pointer px-4 py-2.5 text-sm hover:bg-pharmacy-50 focus:bg-pharmacy-50 focus:outline-none data-[active=true]:bg-pharmacy-50">
+        <%= link_to product_path(product), class: "flex items-center justify-between gap-3", tabindex: -1 do %>
+          <span class="min-w-0"><span class="block truncate font-bold text-slate-900"><%= product.name %></span>
+            <span class="block truncate text-xs text-slate-500"><%= product.brand.name %><%= " · #{product.strength}" if product.strength.present? %></span></span>
+          <span class="shrink-0 text-xs text-slate-500" dir="ltr"><%= number_to_currency(product.price, unit: "ج.م", format: "%n %u") %></span>
+        <% end %>
+      </li>
+    <% end %>
+    <% lookups.each do |suggestion| %>
+      <li role="option" id="suggestion-<%= suggestion.kind %>-<%= suggestion.value.parameterize %>" aria-selected="false" tabindex="-1"
+          data-product-search-target="option" data-url="<%= lookup_suggestion_path(suggestion) %>"
+          class="cursor-pointer px-4 py-2.5 text-sm hover:bg-pharmacy-50 focus:outline-none data-[active=true]:bg-pharmacy-50">
+        <%= link_to lookup_suggestion_path(suggestion), class: "flex items-center gap-2", tabindex: -1 do %>
+          <span class="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-bold text-slate-700"><%= lookup_suggestion_label(suggestion.kind) %></span>
+          <span class="truncate font-bold text-slate-800"><%= suggestion.label %></span>
+        <% end %>
+      </li>
+    <% end %>
+  </ul>
+<% end %>

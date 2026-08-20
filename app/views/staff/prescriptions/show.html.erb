@@ -12,7 +12,11 @@
     <section class="rounded-2xl bg-white p-5">
       <h2 class="text-xl font-black">الملفات المرفوعة</h2>
       <div class="mt-4 grid gap-3"><% @prescription.images.each do |image| %><%= link_to image.filename.to_s, staff_prescription_file_path(@prescription, image.id), target: "_blank", rel: "noopener", class: "rounded-xl border p-4 font-bold" %><% end %></div>
-      <p class="mt-5 rounded-xl bg-amber-50 p-4 text-sm">لا تسجل معلومات طبية غير لازمة. Phase 20 سيضيف قواعد السلامة والتداخلات.</p>
+      <p class="mt-5 rounded-xl bg-amber-50 p-4 text-sm">لا تسجل معلومات طبية غير لازمة. تنبيهات السلامة أدناه دعم قرار فقط ولا تحل محل حكمك السريري.</p>
+      <% if current_user.can_manage_clinical_profiles? %>
+        <%= link_to "البيانات السريرية المسجلة للمريض", staff_patient_clinical_profile_path(@prescription.user), class: "mt-4 block rounded-xl border p-3 text-center font-bold text-pharmacy-700" %>
+      <% end %>
+      <%= render "drug_safety/banner", findings: @safety_findings, evaluation: @safety_evaluation %>
     </section>
 
     <section class="space-y-5">
@@ -26,6 +30,9 @@
             <div class="mt-4 rounded-xl bg-emerald-50 p-4"><strong>المنتج المصروف:</strong> <%= item.dispensed_product.name %> · <%= number_to_currency(item.dispensed_unit_price_cents / 100.0, unit: "ج.م") %><% if item.substituted? %><span class="mr-2 rounded bg-emerald-700 px-2 py-1 text-xs text-white">بديل علاجي</span><% end %></div>
           <% elsif item.rejected? %><div class="mt-4 rounded-xl bg-rose-50 p-4 text-rose-900">مرفوض: <%= item.reason %></div><% end %>
 
+          <%= render "drug_safety/findings", item:, findings: safety_findings_for(@safety_findings, item),
+                can_resolve: current_user.can_resolve_safety_findings? %>
+
           <% unless item.terminal? %>
             <% if item.pending? %><%= button_to "بدء مراجعة البند", start_staff_prescription_review_item_path(@prescription, item), method: :patch, params: { lock_version: item.lock_version }, class: "mt-4 rounded-xl border px-4 py-2 font-bold" %><% end %>
             <% if current_user.can_make_prescription_decisions? %>
@@ -34,7 +41,14 @@
                 <div><%= label_tag :reason, "سبب القرار *" %><%= text_field_tag :reason, nil, required: true, class: "mt-1 w-full rounded-xl border p-3" %></div>
                 <div><%= label_tag :notes, "ملاحظات صيدلي مختصرة" %><%= text_area_tag :notes, nil, rows: 2, class: "mt-1 w-full rounded-xl border p-3" %></div>
                 <div><%= label_tag :physician_instruction_reference, "مرجع تعليمات الطبيب — اختياري" %><%= text_field_tag :physician_instruction_reference, nil, class: "mt-1 w-full rounded-xl border p-3" %></div>
-                <div><%= label_tag :substitute_product_id, "البديل العلاجي عند الاستبدال" %><%= select_tag :substitute_product_id, options_from_collection_for_select(@substitution_candidates.where.not(id: item.original_product_id), :id, :name), include_blank: "اختر بديلًا", class: "mt-1 w-full rounded-xl border p-3" %></div>
+                <div data-controller="product-search" data-product-search-url-value="<%= staff_substitution_candidates_path %>" data-search-param-exclude_id="<%= item.original_product_id %>" data-search-param-field_id="substitute_<%= item.id %>">
+                  <%= label_tag "substitute_search_#{item.id}", "ابحث عن بديل عند الاستبدال — بالاسم أو المادة الفعالة أو الكود" %>
+                  <%= search_field_tag "substitute_search_#{item.id}", nil, id: "substitute_search_#{item.id}", autocomplete: "off",
+                        data: { product_search_target: "input", action: "input->product-search#search keydown->product-search#navigate" },
+                        class: "mt-1 w-full rounded-xl border p-3" %>
+                  <span data-product-search-target="status" class="mt-1 hidden text-xs text-slate-500" role="status">جارٍ البحث…</span>
+                  <div data-product-search-target="panel" class="mt-2 hidden rounded-xl border border-slate-200 p-3" aria-live="polite"></div>
+                </div>
                 <div class="grid gap-2 sm:grid-cols-3"><button name="decision" value="approved" class="rounded-xl bg-emerald-700 px-4 py-3 font-bold text-white">اعتماد الأصلي</button><button name="decision" value="substituted" class="rounded-xl bg-blue-700 px-4 py-3 font-bold text-white">اعتماد البديل</button><button name="decision" value="rejected" class="rounded-xl bg-rose-700 px-4 py-3 font-bold text-white">رفض البند</button></div>
               <% end %>
             <% end %>

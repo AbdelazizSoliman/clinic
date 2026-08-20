@@ -1,11 +1,14 @@
+<%# Fixtures bypass model callbacks, so the normalized search projection is explicit. %>
 medicines:
   name: الأدوية والعلاجات
   slug: medicines
   description: أدوية وعلاجات موثوقة
   icon: 💊
+  search_name: <%= Search::ArabicNormalizer.normalize("الأدوية والعلاجات") %>
 
 skin_care:
   name: العناية بالبشرة
   slug: skin-care
   description: منتجات العناية بالبشرة
   icon: ✨
+  search_name: <%= Search::ArabicNormalizer.normalize("العناية بالبشرة") %>

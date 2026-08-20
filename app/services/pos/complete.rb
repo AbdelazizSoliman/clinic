@@ -29,6 +29,7 @@ module Pos
         product_ids = items.filter_map { |item| effective_product(item)&.id }
         products = Product.where(id: product_ids).order(:id).lock.index_by(&:id)
         errors.concat(validate_items(items, products))
+        errors.concat(safety_errors)
         payment_attributes = normalize_payments(@sale.total_cents, errors)
         raise ActiveRecord::Rollback if errors.any?
 
@@ -71,6 +72,15 @@ module Pos
           "الكمية المتاحة من #{item.product_name} غير كافية"
         end
       end
+    end
+
+    # Unresolved blocking findings stop the sale. Only a pharmacist can clear them, and never
+    # from the completion path itself.
+    def safety_errors
+      review = @sale.prescription_review
+      return [] unless review
+      blocking = DrugSafety::Gate.blocking_findings(review.reload)
+      blocking.any? ? [ DrugSafety::Gate.blocked_message(blocking) ] : []
     end
 
     def normalize_payments(total, errors)

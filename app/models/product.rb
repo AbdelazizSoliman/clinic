@@ -1,4 +1,8 @@
 class Product < ApplicationRecord
+  include Searchable
+
+  searchable_by :name, term_sources: %i[slug short_description strength dosage_form manufacturer sku barcode]
+
   belongs_to :category
   belongs_to :brand
   has_many :wishlist_items, dependent: :destroy
@@ -13,6 +17,8 @@ class Product < ApplicationRecord
     foreign_key: :original_product_id, dependent: :restrict_with_error
   has_many :prescription_review_items_as_dispensed, class_name: "PrescriptionReviewItem",
     foreign_key: :dispensed_product_id, dependent: :restrict_with_error
+  has_many :product_active_ingredients, dependent: :destroy
+  has_many :active_ingredients, through: :product_active_ingredients
 
   scope :active, -> { where(active: true) }
   scope :featured, -> { active.where(featured: true) }
@@ -61,6 +67,15 @@ class Product < ApplicationRecord
   def low_stock? = available? && available_to_sell_quantity <= low_stock_threshold
   def out_of_stock? = available_to_sell_quantity <= 0
   def primary_image = images.find(&:primary?) || images.first
+
+  # Stable clinical identity used by the drug safety engine. Free-text `active_ingredient`
+  # is display metadata only and is never matched against rules.
+  def clinical_ingredient_ids
+    product_active_ingredients.select { |link| link.active? && link.active_ingredient.active? }
+      .map(&:active_ingredient_id).sort
+  end
+
+  def clinical_identity_recorded? = product_active_ingredients.any?(&:active?)
   def published? = active? && published_at.present? && discontinued_at.nil?
 
   def deletable?

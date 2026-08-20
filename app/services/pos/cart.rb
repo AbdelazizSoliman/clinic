@@ -53,7 +53,7 @@ module Pos
     def remove(item:)
       return failure(@sale, "غير مصرح") unless authorized? && item.pos_sale_id == @sale.id && @sale.draft?
       return failure(@sale, "لا يمكن حذف بند بعد القرار السريري") if item.prescription_review_item&.terminal?
-      PosSale.transaction { item.destroy!; Recalculate.call(@sale) }
+      PosSale.transaction { item.destroy!; Recalculate.call(@sale); reevaluate_safety }
       success(@sale)
     end
 
@@ -61,9 +61,15 @@ module Pos
 
     def sync_review_item(item)
       return unless item.requires_prescription?
-      review = Prescriptions::EnsureReview.call(@sale)
+      review = Prescriptions::EnsureReview.call(@sale, actor: @actor)
       review_item = review.items.find_by!(reviewable_item: item)
       review_item.update!(quantity: item.quantity) unless review_item.quantity == item.quantity
+      DrugSafety::Reevaluate.call(review, trigger: :cart_changed, actor: @actor)
+    end
+
+    def reevaluate_safety
+      review = @sale.prescription_review
+      DrugSafety::Reevaluate.call(review.reload, trigger: :cart_changed, actor: @actor) if review
     end
 
     def authorized? = @actor&.can_operate_pos? && (@sale.cashier_id == @actor.id || @actor.admin?)
