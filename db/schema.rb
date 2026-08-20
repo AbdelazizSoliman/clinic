@@ -10,9 +10,10 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_18_090000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_18_140000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+  enable_extension "pg_trgm"
 
   create_table "active_ingredients", force: :cascade do |t|
     t.boolean "active", default: true, null: false
@@ -21,10 +22,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_18_090000) do
     t.string "name", null: false
     t.string "normalized_name", null: false
     t.text "notes"
+    t.string "search_name"
     t.datetime "updated_at", null: false
     t.index ["active"], name: "index_active_ingredients_on_active"
     t.index ["code"], name: "index_active_ingredients_on_code", unique: true
     t.index ["normalized_name"], name: "index_active_ingredients_on_normalized_name", unique: true
+    t.index ["search_name"], name: "index_active_ingredients_on_search_name_trgm", opclass: :gin_trgm_ops, using: :gin
   end
 
   create_table "active_storage_attachments", force: :cascade do |t|
@@ -101,11 +104,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_18_090000) do
     t.text "description"
     t.integer "lock_version", default: 0, null: false
     t.string "name", null: false
+    t.string "search_name"
     t.string "slug", null: false
     t.datetime "updated_at", null: false
     t.string "website_url"
     t.index ["active"], name: "index_brands_on_active"
     t.index ["name"], name: "index_brands_on_name", unique: true
+    t.index ["search_name"], name: "index_brands_on_search_name_trgm", opclass: :gin_trgm_ops, using: :gin
     t.index ["slug"], name: "index_brands_on_slug", unique: true
   end
 
@@ -172,10 +177,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_18_090000) do
     t.integer "lock_version", default: 0, null: false
     t.string "name", null: false
     t.integer "position", default: 0, null: false
+    t.string "search_name"
     t.string "slug", null: false
     t.datetime "updated_at", null: false
     t.index ["active", "position"], name: "index_categories_on_active_and_position"
     t.index ["name"], name: "index_categories_on_name", unique: true
+    t.index ["search_name"], name: "index_categories_on_search_name_trgm", opclass: :gin_trgm_ops, using: :gin
     t.index ["slug"], name: "index_categories_on_slug", unique: true
     t.check_constraint "\"position\" >= 0", name: "categories_position_nonnegative"
   end
@@ -1054,18 +1061,23 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_18_090000) do
     t.decimal "price", precision: 10, scale: 2, null: false
     t.datetime "published_at"
     t.boolean "requires_prescription", default: false, null: false
+    t.string "search_name"
+    t.text "search_terms"
     t.string "short_description"
     t.string "sku"
     t.string "slug", null: false
     t.integer "stock_quantity", default: 0, null: false
     t.string "strength"
     t.datetime "updated_at", null: false
+    t.index "upper((sku)::text)", name: "index_products_on_upper_sku", where: "(sku IS NOT NULL)"
     t.index ["active", "low_stock_threshold"], name: "index_products_on_active_and_low_stock_threshold"
     t.index ["active"], name: "index_products_on_active"
     t.index ["barcode"], name: "index_products_on_barcode", unique: true, where: "(barcode IS NOT NULL)"
     t.index ["brand_id"], name: "index_products_on_brand_id"
     t.index ["category_id"], name: "index_products_on_category_id"
     t.index ["featured"], name: "index_products_on_featured"
+    t.index ["search_name"], name: "index_products_on_search_name_trgm", opclass: :gin_trgm_ops, using: :gin
+    t.index ["search_terms"], name: "index_products_on_search_terms_trgm", opclass: :gin_trgm_ops, using: :gin
     t.index ["sku"], name: "index_products_on_sku", unique: true, where: "(sku IS NOT NULL)"
     t.index ["slug"], name: "index_products_on_slug", unique: true
     t.check_constraint "compare_at_price IS NULL OR compare_at_price >= 0::numeric", name: "products_compare_at_price_non_negative"
@@ -1311,7 +1323,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_18_090000) do
     t.index ["user_id"], name: "index_report_export_events_on_user_id"
     t.check_constraint "format::text = 'csv'::text", name: "report_export_events_format_valid"
     t.check_constraint "range_end > range_start AND row_count >= 0", name: "report_export_events_range_rows_valid"
-    t.check_constraint "report_type::text = ANY (ARRAY['sales'::character varying, 'orders'::character varying, 'products'::character varying, 'inventory'::character varying, 'promotions'::character varying, 'customers'::character varying, 'prescriptions'::character varying, 'fulfilments'::character varying, 'purchasing'::character varying, 'batches'::character varying, 'pos'::character varying, 'drug_safety'::character varying]::text[])", name: "report_export_events_type_valid"
+    t.check_constraint "report_type::text = ANY (ARRAY['sales'::character varying, 'orders'::character varying, 'products'::character varying, 'inventory'::character varying, 'promotions'::character varying, 'customers'::character varying, 'prescriptions'::character varying, 'fulfilments'::character varying, 'purchasing'::character varying, 'batches'::character varying, 'pos'::character varying, 'drug_safety'::character varying, 'search'::character varying]::text[])", name: "report_export_events_type_valid"
   end
 
   create_table "report_exports", force: :cascade do |t|
@@ -1333,6 +1345,41 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_18_090000) do
     t.index ["status", "expires_at"], name: "index_report_exports_on_status_and_expires_at"
     t.index ["user_id", "status", "created_at"], name: "index_report_exports_on_user_id_and_status_and_created_at"
     t.index ["user_id"], name: "index_report_exports_on_user_id"
+  end
+
+  create_table "search_events", force: :cascade do |t|
+    t.string "context", null: false
+    t.datetime "created_at", null: false
+    t.string "normalized_query"
+    t.string "query_fingerprint", null: false
+    t.integer "result_count", default: 0, null: false
+    t.bigint "selected_product_id"
+    t.integer "token_count", default: 0, null: false
+    t.boolean "zero_result", default: false, null: false
+    t.index ["context", "created_at"], name: "index_search_events_on_context_and_created_at"
+    t.index ["query_fingerprint", "created_at"], name: "index_search_events_on_fingerprint_and_created_at"
+    t.index ["selected_product_id"], name: "index_search_events_on_selected_product_id"
+    t.index ["zero_result", "created_at"], name: "index_search_events_on_zero_result_and_created_at"
+    t.check_constraint "char_length(normalized_query::text) <= 120", name: "search_events_query_bounded"
+    t.check_constraint "context::text = ANY (ARRAY['storefront'::character varying, 'pos'::character varying, 'substitution'::character varying, 'staff'::character varying, 'suggestion'::character varying]::text[])", name: "search_events_context_valid"
+    t.check_constraint "result_count >= 0 AND token_count >= 0", name: "search_events_counts_nonnegative"
+    t.check_constraint "zero_result = (result_count = 0)", name: "search_events_zero_result_consistent"
+  end
+
+  create_table "search_synonyms", force: :cascade do |t|
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.string "expansion", null: false
+    t.string "normalized_expansion", null: false
+    t.string "normalized_term", null: false
+    t.text "notes"
+    t.string "term", null: false
+    t.datetime "updated_at", null: false
+    t.index ["active", "normalized_term"], name: "index_search_synonyms_lookup"
+    t.index ["normalized_term", "normalized_expansion"], name: "index_search_synonyms_unique_pair", unique: true
+    t.check_constraint "char_length(normalized_expansion::text) >= 2 AND char_length(normalized_expansion::text) <= 60", name: "search_synonyms_expansion_length"
+    t.check_constraint "char_length(normalized_term::text) >= 2 AND char_length(normalized_term::text) <= 60", name: "search_synonyms_term_length"
+    t.check_constraint "normalized_term::text <> normalized_expansion::text", name: "search_synonyms_pair_differs"
   end
 
   create_table "security_events", force: :cascade do |t|
@@ -1624,6 +1671,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_18_090000) do
   add_foreign_key "purchase_receipts", "users", column: "received_by_id"
   add_foreign_key "report_export_events", "users"
   add_foreign_key "report_exports", "users"
+  add_foreign_key "search_events", "products", column: "selected_product_id"
   add_foreign_key "security_events", "users"
   add_foreign_key "security_events", "users", column: "actor_id"
   add_foreign_key "settings_audit_events", "users", column: "actor_id"

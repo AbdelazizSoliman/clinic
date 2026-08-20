@@ -63,7 +63,8 @@ Status meanings:
 | Per-item prescription review | Item decisions and therapeutic substitution workflow | Demo-ready | Pharmacist | `PrescriptionReview`, `Prescriptions::DecideLine`, Phase 19 |
 | Drug safety rules | Versioned local rules for interaction, duplicate therapy, allergy, age, pregnancy/lactation and contraindication; pharmacist acknowledgement, documented override, blocking gate, reports and CSV | Demo-ready | Pharmacist (clinical), admin (rules) | `DrugSafety::*`, `DrugSafetyRule`, Phase 20 |
 | Renal/hepatic and dose-limit rules | Needs structured clinical status and structured dose data that the application does not store | Planned | — | Phase 21+ |
-| Advanced Arabic search | Normalization, typo tolerance, richer ranking | Planned | — | Phase 21 |
+| Advanced Arabic search | Arabic normalization, exact identifier priority, token and ingredient matching, typo tolerance, suggestions, synonyms and search reports | Demo-ready | All roles | `Search::*`, pg_trgm, Phase 21 |
+| Transliteration and stemming | Latin↔Arabic transliteration, root/stem matching | Planned | — | Phase 22+ |
 | Returns | Returns, refunds, reverse inventory/logistics | Planned | — | Phase 22 |
 | Loyalty and wallet | Points, credits, wallet ledger | Planned | — | Phase 23 |
 | Multi-branch operations | Branch-specific stock and fulfilment | Planned | — | Phase 24 |

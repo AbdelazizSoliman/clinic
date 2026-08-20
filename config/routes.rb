@@ -7,6 +7,7 @@ Rails.application.routes.draw do
   root "home#index"
   get "demo", to: "demo#show", as: :demo
   resources :products, only: %i[index show]
+  get "search/suggestions", to: "search_suggestions#index", as: :search_suggestions
   resources :categories, only: :show
   resource :cart, only: :show do
     post :clear
@@ -92,6 +93,7 @@ Rails.application.routes.draw do
       get "files/:attachment_id", to: "prescription_files#show", as: :file
     end
     resources :safety_findings, only: :update
+    resources :substitution_candidates, only: :index
     resources :patients, only: [] do
       resource :clinical_profile, only: %i[show update], controller: "patient_clinical_profiles" do
         resources :allergies, only: %i[create destroy], controller: "patient_allergies"
@@ -123,6 +125,7 @@ Rails.application.routes.draw do
       resources :customers, only: :index
       resources :prescriptions, only: :index
       resources :drug_safety, only: :index, controller: "drug_safety"
+      resources :search, only: :index, controller: "search"
       resources :fulfilments, only: :index
       resources :purchasing, only: :index
       resources :batches, only: :index
@@ -131,6 +134,9 @@ Rails.application.routes.draw do
     end
     root "inventory#index"
     resources :active_ingredients, except: :destroy do
+      member { patch :deactivate }
+    end
+    resources :search_synonyms, except: :destroy do
       member { patch :deactivate }
     end
     resources :drug_safety_rules, only: %i[index show new create edit update] do

@@ -41,7 +41,14 @@
                 <div><%= label_tag :reason, "سبب القرار *" %><%= text_field_tag :reason, nil, required: true, class: "mt-1 w-full rounded-xl border p-3" %></div>
                 <div><%= label_tag :notes, "ملاحظات صيدلي مختصرة" %><%= text_area_tag :notes, nil, rows: 2, class: "mt-1 w-full rounded-xl border p-3" %></div>
                 <div><%= label_tag :physician_instruction_reference, "مرجع تعليمات الطبيب — اختياري" %><%= text_field_tag :physician_instruction_reference, nil, class: "mt-1 w-full rounded-xl border p-3" %></div>
-                <div><%= label_tag :substitute_product_id, "البديل العلاجي عند الاستبدال" %><%= select_tag :substitute_product_id, options_from_collection_for_select(@substitution_candidates.where.not(id: item.original_product_id), :id, :name), include_blank: "اختر بديلًا", class: "mt-1 w-full rounded-xl border p-3" %></div>
+                <div data-controller="product-search" data-product-search-url-value="<%= staff_substitution_candidates_path %>" data-search-param-exclude_id="<%= item.original_product_id %>" data-search-param-field_id="substitute_<%= item.id %>">
+                  <%= label_tag "substitute_search_#{item.id}", "ابحث عن بديل عند الاستبدال — بالاسم أو المادة الفعالة أو الكود" %>
+                  <%= search_field_tag "substitute_search_#{item.id}", nil, id: "substitute_search_#{item.id}", autocomplete: "off",
+                        data: { product_search_target: "input", action: "input->product-search#search keydown->product-search#navigate" },
+                        class: "mt-1 w-full rounded-xl border p-3" %>
+                  <span data-product-search-target="status" class="mt-1 hidden text-xs text-slate-500" role="status">جارٍ البحث…</span>
+                  <div data-product-search-target="panel" class="mt-2 hidden rounded-xl border border-slate-200 p-3" aria-live="polite"></div>
+                </div>
                 <div class="grid gap-2 sm:grid-cols-3"><button name="decision" value="approved" class="rounded-xl bg-emerald-700 px-4 py-3 font-bold text-white">اعتماد الأصلي</button><button name="decision" value="substituted" class="rounded-xl bg-blue-700 px-4 py-3 font-bold text-white">اعتماد البديل</button><button name="decision" value="rejected" class="rounded-xl bg-rose-700 px-4 py-3 font-bold text-white">رفض البند</button></div>
               <% end %>
             <% end %>

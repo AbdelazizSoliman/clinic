@@ -94,6 +94,14 @@ The demo customer clinical profiles hold fictional dates of birth and one
 fictional allergy; the rules are demonstration configuration and carry no real
 clinical meaning or guidance. Re-seeding creates no duplicate findings.
 
+Search scenarios (Phase 21) use deterministic products with deliberate Arabic spelling
+variety: `demo-alef-syrup` ("شراب إبراهيم") is reachable from the bare-alef spelling
+"شراب ابراهيم", and `demo-maqsura-cream` ("اليومى") is reachable from "اليومي". The demo also
+covers exact SKU and barcode lookup, brand search, structured active-ingredient search, a
+one-character typo ("فتامين" finds "فيتامين"), and a zero-result query. Three linguistic
+search synonyms are seeded (singular/plural and one common misspelling); they widen search
+only and carry no clinical meaning.
+
 The bundled PDF is synthetic and contains no medical information. The seed task
 temporarily uses Active Job's test adapter so prescription scan and mail jobs are
 not executed, and suppresses transactional-email enqueueing so exercising the

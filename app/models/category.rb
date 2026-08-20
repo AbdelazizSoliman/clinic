@@ -1,4 +1,8 @@
 class Category < ApplicationRecord
+  include Searchable
+
+  searchable_by :name
+
   has_many :products, dependent: :restrict_with_error
   has_one_attached :image
 

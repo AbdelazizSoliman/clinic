@@ -16,6 +16,16 @@ module ProductBrowsing
     @browsing_path = path
     @locked_category = locked_category
     @active_browsing_params = browsing_params.to_h.except("page")
+    record_search_event
+  end
+
+  # Only the first page of an actual search is recorded, so paging through results does
+  # not inflate the counts.
+  def record_search_event
+    return if @products_query.search_service.nil? || params[:page].present?
+
+    Search::RecordEvent.call(result: Search::Result.new(query: @products_query.search_service.query_object,
+      context: :storefront, records: @products, limit: @pagy.limit))
   end
 
   def browsing_params

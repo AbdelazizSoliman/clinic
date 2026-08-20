@@ -311,6 +311,15 @@ Deterministic and idempotent, with fictional ingredients (`DEMO-ALFA`,
 
 None of this is real clinical guidance; it exists to exercise the workflow.
 
+## Phase 21 interaction
+
+Phase 21 added Arabic-aware search to the pharmacist's substitution lookup and to admin
+ingredient administration. It changed nothing about this engine: search only helps a
+pharmacist *find* a product, the safety gate still blocks approval and substitution, and the
+engine still re-evaluates the new clinical context after a substitution is recorded. Search
+synonyms are purely linguistic and are never consulted by rule evaluation. See
+[`docs/search.md`](search.md).
+
 ## Phase 21 boundary
 
 Out of scope here and deferred: renal/hepatic evaluation (needs structured

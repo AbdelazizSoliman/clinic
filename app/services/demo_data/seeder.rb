@@ -40,7 +40,16 @@ module DemoData
       [ "inactive-seasonal", "منتج موسمي غير نشط", "demo-cold-allergy", "demo-nile-care", 90, nil, 12, false, false, false ],
       [ "first-aid-kit", "حقيبة إسعافات أولية منزلية", "demo-first-aid", "demo-family", 420, 480, 10, false, true ],
       [ "rx-tablets-a-generic", "دواء تجريبي أ — نسخة جنيسة 14 قرص", "demo-prescription", "demo-cairo-health", 150, nil, 12, true, false ],
-      [ "rx-capsules-d", "دواء تجريبي د — 10 كبسولات", "demo-prescription", "demo-vita", 210, nil, 14, true, false ]
+      [ "rx-capsules-d", "دواء تجريبي د — 10 كبسولات", "demo-prescription", "demo-vita", 210, nil, 14, true, false ],
+      [ "alef-syrup", "شراب إبراهيم للأطفال 120 مل", "demo-pain-fever", "demo-family", 65, nil, 16, false, false ],
+      [ "maqsura-cream", "كريم الشفاء اليومى 60 جم", "demo-skin-care", "demo-lotus", 155, nil, 11, false, false ]
+    ].freeze
+    # Deterministic search synonyms. Purely linguistic: they widen what a query can find
+    # and never assert that two products are clinically interchangeable.
+    SYNONYM_DATA = [
+      [ "فيتامينات", "فيتامين", "صيغة الجمع الشائعة لنفس كلمة البحث" ],
+      [ "مسكن", "مسكنات", "مفرد/جمع في تسمية القسم" ],
+      [ "بارسيتامول", "باراسيتامول", "تهجئة شائعة بحرف ألف ناقص" ]
     ].freeze
     # Entirely fictional ingredient identities. They carry no real pharmacological meaning.
     INGREDIENT_DATA = [
@@ -87,6 +96,7 @@ module DemoData
       products = seed_products(categories, brands, accounts.fetch(:inventory_manager))
       seed_batch_scenarios(products, accounts.fetch(:inventory_manager))
       ingredients = seed_active_ingredients(products)
+      synonyms = seed_search_synonyms
       safety_rules = seed_safety_rules(accounts.fetch(:admin), ingredients)
       seed_patient_clinical_data(accounts, ingredients)
       zones = seed_delivery_zones
@@ -99,7 +109,7 @@ module DemoData
       pos = seed_pos(accounts, products)
       setting.class.invalidate_cache
       build_manifest(accounts, categories, brands, products, zones, orders, promotions, coupons, purchasing, pos,
-        ingredients, safety_rules)
+        ingredients, safety_rules, synonyms)
     end
 
     def seed_accounts
@@ -231,6 +241,17 @@ module DemoData
 
     # Fictional rules that exercise every supported rule type. They are demonstration
     # configuration, not clinical guidance of any kind.
+    def seed_search_synonyms
+      SYNONYM_DATA.to_h do |term, expansion, notes|
+        synonym = SearchSynonym.find_or_initialize_by(
+          normalized_term: Search::ArabicNormalizer.normalize(term),
+          normalized_expansion: Search::ArabicNormalizer.normalize(expansion)
+        )
+        synonym.update!(term:, expansion:, notes:, active: true)
+        [ term, synonym ]
+      end
+    end
+
     def seed_safety_rules(admin, ingredients)
       definitions = [
         { code: "DEMO-INT-ALFA-BETA", rule_type: :drug_interaction, severity: :critical, blocking: true,
@@ -748,8 +769,9 @@ module DemoData
     end
 
     def build_manifest(accounts, categories, brands, products, zones, orders, promotions, coupons, purchasing, pos,
-      ingredients, safety_rules)
+      ingredients, safety_rules, synonyms)
       Manifest.new(active_ingredients: ingredients.size, safety_rules: safety_rules.size,
+        search_synonyms: synonyms.size,
         safety_findings: DrugSafetyFinding.count,
         accounts: accounts.size, categories: categories.size, brands: brands.size, products: products.size,
         inventory_movements: InventoryMovement.where("idempotency_key LIKE 'demo:%'").count,

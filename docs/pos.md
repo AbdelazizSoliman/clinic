@@ -115,6 +115,14 @@ no linked patient, so only interaction and duplicate-therapy rules can match
 there. Ordinary OTC sales are entirely unaffected. See
 [`docs/drug_safety_rules.md`](drug_safety_rules.md).
 
+Since Phase 21 the POS text search runs through the central search domain: Arabic
+normalization, multi-token Arabic/English matching and structured active-ingredient lookup,
+with exact barcode and SKU still pinned to the top two ranking tiers and flagged in the
+results as an exact identifier match. The barcode field, its Enter-to-add behaviour and the
+rest of the keyboard workflow are unchanged, and barcode scanning remains an exact lookup
+rather than a fuzzy search. A missing identifier now says so explicitly instead of showing a
+bare empty list. See [`docs/search.md`](search.md).
+
 Phase 22 owns returns, refunds and completed-sale reversal. Real gateways,
 stored cards, offline mode, printer and drawer hardware, loyalty, customer
 credit, multi-branch scope and ERP integration remain out of scope.

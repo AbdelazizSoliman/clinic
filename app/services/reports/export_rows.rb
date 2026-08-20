@@ -119,6 +119,22 @@ module Reports
       review.online? ? review.reviewable.order.number : review.reviewable.number
     end
 
+    # Aggregate rows only: one row per distinct normalized query, never per event, and
+    # never anything that identifies a searcher.
+    def search
+      scope = SearchEvent.where(created_at: @range.range).with_text
+        .group(:normalized_query, :context)
+        .order(Arel.sql("COUNT(*) DESC"), Arel.sql("normalized_query ASC")).limit(CsvExporter::MAX_ROWS + 1)
+      totals = scope.count
+      zero = scope.where(zero_result: true).count
+      results = scope.sum(:result_count)
+      rows = totals.map do |(query, context), count|
+        [ query, context, count, zero.fetch([ query, context ], 0),
+          count.zero? ? 0 : (results.fetch([ query, context ], 0).to_f / count).round(1) ]
+      end
+      Result.new(headers: %w[العباره_الموحده السياق عدد_عمليات_البحث بلا_نتائج متوسط_عدد_النتائج], rows:)
+    end
+
     def batch_numbers(item)
       return nil unless item.reviewable_item.is_a?(OrderItem)
       item.reviewable_item.inventory_reservation&.inventory_batches&.pluck(:batch_number)&.join("+")

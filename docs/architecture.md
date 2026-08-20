@@ -112,6 +112,23 @@ acknowledgement or documented override. The engine never prescribes, diagnoses,
 substitutes or decides; it detects and explains locally configured rules only.
 Details: [`docs/drug_safety_rules.md`](drug_safety_rules.md).
 
+### Product search
+
+Since Phase 21 all product discovery — storefront, POS, prescription substitution and
+staff lookup — runs through one domain in `app/services/search/`.
+`Search::ArabicNormalizer` folds diacritics, tatweel, alef/ya/waw/ta-marbuta variants and
+Arabic-Indic digits for *matching only*; the folded text lives in dedicated `search_name`
+/`search_terms` columns kept current by the `Searchable` model concern, and stored display
+names are never altered. `Search::Query` bounds and tokenizes the input and applies
+data-driven `SearchSynonym` expansion. `Search::Products` builds one PostgreSQL query with a
+deterministic integer rank: exact barcode and SKU occupy the top two tiers, followed by exact
+name, prefix, token and `pg_trgm` `word_similarity` fuzzy tiers, tie-broken on name and id.
+Brand, category and structured `ActiveIngredient` matches use `EXISTS` subqueries, so no join
+can duplicate a product row. Context settings decide the base relation and sellability
+filtering; the substitution context additionally requires an allocatable (unexpired,
+unquarantined) batch. `Search::RecordEvent` writes aggregate `SearchEvent` rows that carry no
+searcher identity. Details: [`docs/search.md`](search.md).
+
 ### Orders
 
 `Order`, `OrderItem`, `OrderAddress`, `OrderEvent`, and `OrderPromotion` preserve

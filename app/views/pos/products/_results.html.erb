@@ -1,2 +1,23 @@
-<% if products.empty? %><p class="rounded-xl bg-rose-50 p-3 text-rose-800">لا يوجد منتج مطابق.</p><% end %>
-<% products.each do |product| %><article class="flex items-center justify-between gap-3 rounded-xl border p-3"><div><strong><%= product.name %></strong><small class="block text-slate-500"><%= product.sku %> · المتاح <%= product.available_to_sell_quantity %><%= " · روشتة" if product.requires_prescription? %></small></div><% if sale %><%= button_to "إضافة", pos_sale_items_path(sale), params: { product_id: product.id, quantity: 1 }, class: "rounded-lg bg-pharmacy-700 px-3 py-2 text-white", disabled: !product.available? %><% end %></article><% end %>
+<% if result.query.blank? %>
+  <p class="rounded-xl bg-slate-50 p-3 text-sm text-slate-600">اكتب حرفين على الأقل للبحث بالاسم أو المادة الفعالة أو الكود.</p>
+<% elsif products.empty? %>
+  <div class="rounded-xl bg-rose-50 p-3 text-rose-900" role="status">
+    <p class="font-bold">لا يوجد منتج مطابق لعبارة «<%= result.query.raw %>».</p>
+    <p class="mt-1 text-sm">تأكد من الباركود أو الـSKU، أو ابحث بجزء من اسم المنتج أو بالمادة الفعالة.</p>
+  </div>
+<% else %>
+  <% if result.exact_identifier_match %>
+    <p class="mb-2 rounded-xl bg-emerald-50 p-2 text-xs font-bold text-emerald-900" role="status">مطابقة دقيقة لمعرّف تشغيلي (باركود أو SKU) — أول نتيجة.</p>
+  <% end %>
+  <% products.each_with_index do |product, index| %>
+    <article class="flex items-center justify-between gap-3 rounded-xl border p-3 <%= "border-emerald-600" if index.zero? && result.exact_identifier_match %>">
+      <div>
+        <strong><%= product.name %></strong>
+        <small class="block text-slate-500"><span dir="ltr"><%= product.sku %></span> · المتاح <%= product.available_to_sell_quantity %><%= " · روشتة" if product.requires_prescription? %><%= " · غير متاح للبيع" unless product.available? %></small>
+      </div>
+      <% if sale %>
+        <%= button_to "إضافة", pos_sale_items_path(sale), params: { product_id: product.id, quantity: 1 }, class: "rounded-lg bg-pharmacy-700 px-3 py-2 text-white", disabled: !product.available? %>
+      <% end %>
+    </article>
+  <% end %>
+<% end %>

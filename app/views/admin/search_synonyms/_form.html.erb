@@ -1,0 +1,9 @@
+<%= form_with model: [ :admin, synonym ], class: "grid gap-4 rounded-2xl bg-white p-6" do |form| %>
+  <% if synonym.errors.any? %><div class="rounded-xl bg-rose-50 p-4 text-rose-900"><ul><% synonym.errors.full_messages.each do |message| %><li><%= message %></li><% end %></ul></div><% end %>
+  <p class="rounded-xl bg-amber-50 p-4 text-sm">المرادف يوسّع نتائج البحث فقط. لا يعني أن المنتجين متكافئان علاجيًا، ولا يُستخدم في قواعد سلامة الدواء أو قرارات الاستبدال.</p>
+  <div><%= form.label :term, "المصطلح كما يكتبه المستخدم" %><%= form.text_field :term, required: true, class: "mt-1 w-full rounded-xl border p-3" %></div>
+  <div><%= form.label :expansion, "المصطلح البديل الذي يُبحث عنه أيضًا" %><%= form.text_field :expansion, required: true, class: "mt-1 w-full rounded-xl border p-3" %></div>
+  <div><%= form.label :notes, "ملاحظة داخلية" %><%= form.text_area :notes, rows: 2, class: "mt-1 w-full rounded-xl border p-3" %></div>
+  <label class="flex items-center gap-2 font-bold"><%= form.check_box :active %> مفعّل</label>
+  <%= form.submit "حفظ", class: "rounded-xl bg-pharmacy-700 px-5 py-3 font-black text-white" %>
+<% end %>

@@ -7,4 +7,7 @@
   lactation, contraindication. Renal, hepatic and dose-limit rules stay deferred
   because the application stores no structured renal/hepatic status and no
   structured dose, frequency or duration.
+- Phase 21 — advanced Arabic search: complete. See [search.md](search.md).
+  PostgreSQL + pg_trgm only; no external search service. Transliteration, stemming and
+  query-history suggestions remain deferred.
 - Phase 22 — customer returns, refunds and completed-sale reversal: deferred.

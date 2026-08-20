@@ -1,4 +1,8 @@
 class ActiveIngredient < ApplicationRecord
+  include Searchable
+
+  searchable_by :name
+
   has_many :product_active_ingredients, dependent: :restrict_with_error
   has_many :products, through: :product_active_ingredients
   has_many :patient_allergies, dependent: :restrict_with_error

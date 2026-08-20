@@ -79,6 +79,13 @@ module DemoGuidance
       promotion ? @routes.admin_promotion_path(promotion) : @routes.admin_promotions_path
     end
 
+    # Alternate alef spelling: the stored product is "شراب إبراهيم"; the query uses bare alef.
+    def search_arabic_variation = @routes.products_path(q: "شراب ابراهيم")
+    def search_mixed_query = @routes.products_path(q: "فيتامين c")
+    def search_zero_result = @routes.products_path(q: "منتج غير موجود اطلاقا")
+    def search_synonyms = allowed?(:can_manage_search_synonyms?) && @routes.admin_search_synonyms_path
+    def search_reports = allowed?(:can_view_search_reports?) && @routes.admin_reports_search_index_path(preset: "last_30_days")
+
     def safety_interaction = safety_prescription("DEMO-SAFETY-INTERACTION")
     def safety_substitution = safety_prescription("DEMO-SAFETY-SUBSTITUTION")
     def safety_allergy = safety_prescription("DEMO-SAFETY-ALLERGY")

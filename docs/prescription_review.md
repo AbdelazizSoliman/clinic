@@ -225,6 +225,16 @@ retained and superseded, the substitute is evaluated in its own right, and an
 acknowledgement recorded against the old context cannot clear the new one.
 See [`docs/drug_safety_rules.md`](drug_safety_rules.md).
 
+## Phase 21 substitution lookup
+
+Phase 21 replaced the full `<select>` of every allocatable prescription product with a
+pharmacist-only search panel (`Staff::SubstitutionCandidatesController`) that renders radio
+options inside the existing decision form. Search filters for an active, prescription-required
+product with an allocatable batch, and finds candidates by name, SKU, barcode or structured
+active ingredient. It deliberately makes no therapeutic claim: the panel states so in the UI,
+the results are unordered with respect to clinical suitability, and selection still flows
+through `DecideLine` with its Phase 19 guards and Phase 20 re-evaluation intact.
+
 ## Limitations
 
 Phase 19 itself is human pharmacist line-level review and documented

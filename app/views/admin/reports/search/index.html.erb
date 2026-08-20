@@ -1,0 +1,24 @@
+<% content_for :title, "تقرير البحث" %>
+<div class="mx-auto max-w-7xl px-4 py-10">
+  <h1 class="text-3xl font-black">بحث المنتجات</h1>
+  <p class="mt-2 rounded-xl bg-amber-50 p-4 text-sm">مؤشرات تشغيلية لما كُتب في مربع البحث وعدد النتائج المطابقة. لا تُخزَّن هوية الباحث ولا أي بيانات سريرية، ولا تُحفظ نصوص البحث في سياق البدائل العلاجية.</p>
+  <%= render "admin/reports/filters" %>
+  <div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div class="rounded-2xl bg-white p-5"><span class="text-sm text-slate-500">عمليات بحث</span><strong class="mt-2 block text-2xl"><%= @report.cards[:searches] %></strong></div>
+    <div class="rounded-2xl bg-white p-5"><span class="text-sm text-slate-500">بحث بلا نتائج</span><strong class="mt-2 block text-2xl"><%= @report.cards[:zero_results] %></strong></div>
+    <div class="rounded-2xl bg-white p-5"><span class="text-sm text-slate-500">عبارات مختلفة</span><strong class="mt-2 block text-2xl"><%= @report.cards[:distinct_queries] %></strong></div>
+    <div class="rounded-2xl bg-white p-5"><span class="text-sm text-slate-500">نسبة اختيار منتج</span><strong class="mt-2 block text-2xl"><%= @report.selection_ratio ? "#{@report.selection_ratio}%" : "—" %></strong></div>
+  </div>
+
+  <div class="mt-6 grid gap-5 lg:grid-cols-3">
+    <section class="rounded-2xl bg-white p-5"><h2 class="text-xl font-black">الأكثر بحثًا</h2><ul class="mt-3 space-y-2"><% @report.top_queries.each do |row| %><li class="flex justify-between gap-3"><span dir="auto" class="truncate"><%= row[:query] %></span><strong><%= row[:count] %></strong></li><% end %><% if @report.top_queries.empty? %><li class="text-slate-600">لا بيانات في الفترة.</li><% end %></ul></section>
+    <section class="rounded-2xl bg-white p-5"><h2 class="text-xl font-black">بحث بلا نتائج</h2><ul class="mt-3 space-y-2"><% @report.zero_result_queries.each do |row| %><li class="flex justify-between gap-3"><span dir="auto" class="truncate"><%= row[:query] %></span><strong><%= row[:count] %></strong></li><% end %><% if @report.zero_result_queries.empty? %><li class="text-slate-600">لا توجد عمليات بحث بلا نتائج.</li><% end %></ul></section>
+    <section class="rounded-2xl bg-white p-5"><h2 class="text-xl font-black">حسب السياق</h2><ul class="mt-3 space-y-2"><% @report.context_counts.sort_by { |_context, count| -count }.each do |context, count| %><li class="flex justify-between"><span><%= search_context_label(context) %></span><strong><%= count %></strong></li><% end %><% if @report.context_counts.empty? %><li class="text-slate-600">لا بيانات في الفترة.</li><% end %></ul></section>
+  </div>
+
+  <section class="mt-6 rounded-2xl bg-white p-5"><h2 class="text-xl font-black">منتجات اختيرت بعد بحث</h2><ul class="mt-3 space-y-2"><% @report.selected_products.each do |row| %><li class="flex justify-between gap-3"><span class="truncate"><%= row[:name] %></span><strong><%= row[:count] %></strong></li><% end %><% if @report.selected_products.empty? %><li class="text-slate-600">لم يُسجَّل اختيار منتج بعد بحث في هذه الفترة.</li><% end %></ul></section>
+
+  <% if current_user.can_export_reports? %>
+    <p class="mt-6"><%= link_to "تصدير CSV", admin_reports_search_index_path(request.query_parameters.merge(format: :csv)), class: "rounded-xl border px-4 py-3 font-bold" %></p>
+  <% end %>
+</div>

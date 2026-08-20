@@ -4,7 +4,7 @@ module Admin
 
     def index
       scope = ActiveIngredient.order(:name)
-      scope = scope.where("name ILIKE :q OR code ILIKE :q", q: "%#{ActiveIngredient.sanitize_sql_like(params[:q])}%") if params[:q].present?
+      scope = scope.where(ingredient_match, ingredient_pattern, ingredient_code) if params[:q].present?
       scope = scope.where(active: params[:active] == "true") if %w[true false].include?(params[:active])
       @pagy, @ingredients = pagy(scope, limit: 25)
     end
@@ -42,6 +42,13 @@ module Admin
     end
 
     private
+
+    # Reuses the shared normalizer so admins find ingredients with the same Arabic
+    # spelling tolerance as the storefront, without coupling clinical administration to
+    # the public product-search service.
+    def ingredient_match = "search_name LIKE ? OR upper(code) = ?"
+    def ingredient_pattern = "%#{ActiveIngredient.sanitize_sql_like(Search::ArabicNormalizer.normalize(params[:q]))}%"
+    def ingredient_code = Search::ArabicNormalizer.normalize_identifier(params[:q]).upcase
 
     def set_ingredient = @ingredient = ActiveIngredient.find(params[:id])
     def ingredient_params = params.require(:active_ingredient).permit(:code, :name, :active, :notes)

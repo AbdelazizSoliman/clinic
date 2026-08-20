@@ -1,4 +1,8 @@
 class Product < ApplicationRecord
+  include Searchable
+
+  searchable_by :name, term_sources: %i[slug short_description strength dosage_form manufacturer sku barcode]
+
   belongs_to :category
   belongs_to :brand
   has_many :wishlist_items, dependent: :destroy

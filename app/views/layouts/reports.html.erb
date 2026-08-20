@@ -25,6 +25,7 @@
         <%= link_to "العملاء", admin_reports_customers_path if current_user.admin? %>
         <%= link_to "الروشتات", admin_reports_prescriptions_path if current_user.can_view_prescription_reports? %>
         <%= link_to "تنبيهات السلامة", admin_reports_drug_safety_index_path if current_user.can_view_safety_reports? %>
+        <%= link_to "البحث", admin_reports_search_index_path if current_user.can_view_search_reports? %>
         <%= link_to "التوصيل", admin_reports_fulfilments_path if current_user.can_view_fulfilment_reports? %>
         <%= link_to "عن النسخة التجريبية", demo_path if demo_mode? %>
         <%= link_to "المتجر", root_path, class: "mr-auto" %>

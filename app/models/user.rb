@@ -61,6 +61,8 @@ class User < ApplicationRecord
   def can_manage_clinical_profiles? = pharmacist?
   def can_manage_safety_rules? = admin?
   def can_view_safety_reports? = admin? || pharmacist?
+  def can_view_search_reports? = admin? || order_manager?
+  def can_manage_search_synonyms? = admin? || inventory_manager?
   def can_operate_orders? = order_manager? || admin?
   def can_manage_delivery? = order_manager? || admin?
   alias_method :can_assign_delivery?, :can_manage_delivery?

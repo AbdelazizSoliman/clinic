@@ -41,11 +41,12 @@ class DemoDataSeederTest < ActiveSupport::TestCase
     end
 
     assert_equal 7, @manifest.accounts
-    assert_equal 30, @manifest.products
+    assert_equal 32, @manifest.products
     assert_equal 17, @manifest.orders
     assert_equal 11, @manifest.prescriptions
     assert_equal 4, @manifest.active_ingredients
     assert_equal 4, @manifest.safety_rules
+    assert_equal 3, @manifest.search_synonyms
     assert_equal 3, @manifest.suppliers
     assert_equal 7, @manifest.purchase_orders
     assert_equal 3, @manifest.purchase_receipts
@@ -104,7 +105,40 @@ class DemoDataSeederTest < ActiveSupport::TestCase
     assert PosSale.find_by!(number: "DEMO-POS-VOID").voided?
     assert CashierSession.find_by!(identifier: "DEMO-POS-OPEN").open?
     assert_demo_safety_scenarios
+    assert_demo_search_scenarios
   end
+
+  # Every demo product must carry a usable normalized projection, and the deliberate
+  # Arabic spelling variations must be reachable from their alternate spellings.
+  def assert_demo_search_scenarios
+    assert_empty Product.where("slug LIKE 'demo-%'").where(search_name: nil), "demo products need projections"
+    assert_empty Brand.where("slug LIKE 'demo-%'").where(search_name: nil)
+
+    alef = Product.find_by!(slug: "demo-alef-syrup")
+    assert_includes search("شراب ابراهيم"), alef, "bare-alef query finds the hamza spelling"
+    assert_includes search("شراب إبراهيم"), alef
+
+    maqsura = Product.find_by!(slug: "demo-maqsura-cream")
+    assert_includes search("اليومي"), maqsura, "ya query finds the alef-maqsura spelling"
+
+    vitamin = Product.find_by!(slug: "demo-vitamin-c")
+    assert_includes search(vitamin.sku.downcase), vitamin, "exact SKU"
+    assert_includes search(vitamin.barcode), vitamin, "exact barcode"
+    assert_equal vitamin, Search::Products.call(query: vitamin.barcode, context: :pos).exact_identifier_match
+
+    assert_includes search("فيتامين"), vitamin
+    assert_includes search("فتامين"), vitamin, "single-character typo still finds the product"
+    assert_includes search(Brand.find_by!(slug: "demo-vita").name), vitamin, "brand search"
+
+    ingredient = ActiveIngredient.find_by!(code: "DEMO-ALFA")
+    assert_includes Search::Products.call(query: ingredient.name, context: :staff).records,
+      Product.find_by!(slug: "demo-rx-tablets-a"), "structured ingredient search"
+
+    assert_empty search("منتج غير موجود اطلاقا"), "zero-result example stays empty"
+    assert_equal 3, SearchSynonym.active.count
+  end
+
+  def search(query) = Search::Products.call(query:, context: :storefront).records
 
   def assert_demo_safety_scenarios
     assert_equal 4, DrugSafetyRule.active.count

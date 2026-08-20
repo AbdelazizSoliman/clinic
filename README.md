@@ -1,5 +1,12 @@
 # Saydaliyati — Arabic RTL Pharmacy Commerce and Operations
 
+Phase 21 adds Arabic-aware product search across the storefront, POS, prescription
+substitution and staff lookup: diacritic/alef/ya normalization, exact barcode and SKU
+priority, multi-token Arabic+English matching, structured active-ingredient search,
+conservative typo tolerance, keyboard-accessible suggestions and privacy-conscious search
+reports — PostgreSQL and pg_trgm only, with no external search service.
+See [docs/search.md](docs/search.md).
+
 Phase 20 adds a deterministic drug safety rules engine: locally configured,
 immutably versioned rules for interactions, duplicate therapy, allergies, age
 limits and recorded pregnancy/lactation states, surfaced to pharmacists with
@@ -293,6 +300,7 @@ the test and audit jobs against PostgreSQL.
 - [Pharmacy POS](docs/pos.md)
 - [Per-item prescription review and substitution](docs/prescription_review.md)
 - [Drug safety rules engine](docs/drug_safety_rules.md)
+- [Advanced Arabic search](docs/search.md)
 - [Portfolio engineering case study](docs/portfolio_case_study.md)
 - [Feature matrix and roadmap](docs/feature_matrix.md)
 - [Technical reviewer guide](docs/reviewer_guide.md)
