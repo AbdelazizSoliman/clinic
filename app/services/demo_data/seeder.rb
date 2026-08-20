@@ -107,6 +107,7 @@ module DemoData
       orders += seed_safety_scenarios(accounts, addresses, products, zones)
       purchasing = seed_purchasing(accounts, products)
       pos = seed_pos(accounts, products)
+      seed_return_scenarios(accounts, pos)
       setting.class.invalidate_cache
       build_manifest(accounts, categories, brands, products, zones, orders, promotions, coupons, purchasing, pos,
         ingredients, safety_rules, synonyms)
@@ -766,6 +767,83 @@ module DemoData
           tendered_cents: sale.total_cents } ]).call
       raise Refused, result.errors.join("، ") unless result.success?
       result.record
+    end
+
+    def seed_return_scenarios(accounts, pos)
+      admin = accounts.fetch(:admin)
+      operator = accounts.fetch(:order_manager)
+      inventory_manager = accounts.fetch(:inventory_manager)
+      pharmacist = accounts.fetch(:pharmacist)
+      refund_session = CashierSession.find_by(identifier: "DEMO-POS-REFUND") ||
+        Pos::OpenSession.new(actor: admin, opening_cash_cents: 25_000, identifier: "DEMO-POS-REFUND").call.record
+      pos[:sessions] << refund_session unless pos[:sessions].include?(refund_session)
+
+      cash_sale = PosSale.find_by!(number: "DEMO-POS-MULTI")
+      unless ReturnRequest.exists?(number: "DEMO-RETURN-POS-CASH")
+        result = Returns::Create.new(source: cash_sale, actor: operator,
+          items: [ { source_item_id: cash_sale.items.order(:id).first.id, quantity: 1,
+            reason: "customer_changed_mind", condition: "unopened" } ]).call
+        raise Refused, result.errors.join("، ") unless result.success?
+        request = result.record
+        request.update!(number: "DEMO-RETURN-POS-CASH")
+        Returns::Review.new(return_request: request, actor: admin, approve: true).call
+        Returns::Receive.new(return_request: request, actor: inventory_manager,
+          dispositions: { request.items.first.id => "restock" }, idempotency_key: "demo:return:pos-cash:receive").call
+        Returns::Refund.new(return_request: request, actor: admin, amount_cents: request.refundable_cents,
+          payment_method: "cash", idempotency_key: "demo:return:pos-cash:refund").call
+      end
+
+      rx_sale = PosSale.find_by!(number: "DEMO-POS-RX")
+      unless ReturnRequest.exists?(number: "DEMO-RETURN-RX-QUARANTINE")
+        result = Returns::Create.new(source: rx_sale, actor: operator,
+          items: [ { source_item_id: rx_sale.items.first.id, quantity: 1,
+            reason: "quality_issue", condition: "unknown" } ]).call
+        raise Refused, result.errors.join("، ") unless result.success?
+        request = result.record
+        request.update!(number: "DEMO-RETURN-RX-QUARANTINE")
+        Returns::Review.new(return_request: request, actor: admin, approve: true).call
+        Returns::Inspect.new(item: request.items.first, actor: pharmacist, condition: "compromised",
+          disposition: "quarantine", notes: "فحص صيدلي تجريبي").call
+        Returns::Receive.new(return_request: request, actor: pharmacist, dispositions: {},
+          idempotency_key: "demo:return:rx:receive").call
+      end
+
+      card_sale = PosSale.find_by(number: "DEMO-POS-CARD-RETURN")
+      unless card_sale
+        card_sale = refund_session.pos_sales.create!(cashier: admin, number: "DEMO-POS-CARD-RETURN")
+        product = Product.find_by!(slug: "demo-adhesive-bandages")
+        Pos::Cart.new(sale: card_sale, actor: admin).add(product:)
+        completed = Pos::Complete.new(sale: card_sale, actor: admin, idempotency_key: "demo:pos:card-return",
+          payments: [ { payment_method: "external_card", amount_cents: card_sale.total_cents,
+            external_reference: "TERM-DEMO-SALE" } ]).call
+        raise Refused, completed.errors.join("، ") unless completed.success?
+      end
+      unless ReturnRequest.exists?(number: "DEMO-RETURN-CARD-WRITEOFF")
+        result = Returns::Create.new(source: card_sale, actor: admin,
+          items: [ { source_item_id: card_sale.items.first.id, quantity: 1,
+            reason: "damaged", condition: "damaged" } ]).call
+        raise Refused, result.errors.join("، ") unless result.success?
+        request = result.record
+        request.update!(number: "DEMO-RETURN-CARD-WRITEOFF")
+        Returns::Review.new(return_request: request, actor: admin, approve: true).call
+        Returns::Receive.new(return_request: request, actor: inventory_manager,
+          dispositions: { request.items.first.id => "write_off" }, idempotency_key: "demo:return:card:receive").call
+        refund = Returns::Refund.new(return_request: request, actor: admin, amount_cents: request.refundable_cents,
+          payment_method: "external_card", idempotency_key: "demo:return:card:refund").call.record
+        Returns::ConfirmRefund.new(refund:, actor: admin, external_reference: "TERM-DEMO-REFUND").call
+      end
+
+      delivered = Order.delivered.where("number LIKE 'DEMO-%'").first
+      unless ReturnRequest.exists?(number: "DEMO-RETURN-REJECTED")
+        result = Returns::Create.new(source: delivered, actor: delivered.user,
+          items: [ { source_item_id: delivered.items.first.id, quantity: 1,
+            reason: "other", reason_notes: "سيناريو رفض تجريبي", condition: "unknown" } ]).call
+        if result.success?
+          result.record.update!(number: "DEMO-RETURN-REJECTED")
+          Returns::Review.new(return_request: result.record, actor: admin, approve: false,
+            notes: "رفض تشغيلي تجريبي").call
+        end
+      end
     end
 
     def build_manifest(accounts, categories, brands, products, zones, orders, promotions, coupons, purchasing, pos,

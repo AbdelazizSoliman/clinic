@@ -6,6 +6,7 @@ class PosSale < ApplicationRecord
   has_many :items, class_name: "PosSaleItem", dependent: :restrict_with_error, inverse_of: :pos_sale
   has_many :payments, class_name: "PosPayment", dependent: :restrict_with_error
   has_one :prescription_review, as: :reviewable, dependent: :restrict_with_error
+  has_many :return_requests, as: :source, dependent: :restrict_with_error
 
   enum :status, { draft: 0, completed: 1, voided: 2 }, default: :draft, validate: true
 

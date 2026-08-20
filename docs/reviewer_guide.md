@@ -220,3 +220,5 @@ batch provenance, expiry, quarantine, movements, reservations, orders, and
 customers. The batch report demonstrates FEFO-ready availability and
 received-cost valuation. The deterministic demo includes expired, near-expiry,
 and quarantined examples.
+
+For Phase 22, open **المرتجعات** from staff navigation, locate a delivered order or completed POS receipt, approve it, inspect prescription lines as the pharmacist, receive to the original batch, then post the refund as admin. Retry receipt/refund to observe idempotency and verify the original transaction remains unchanged.

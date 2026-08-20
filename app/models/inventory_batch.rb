@@ -26,11 +26,11 @@ class InventoryBatch < ApplicationRecord
   scope :fefo, -> { order(:expiry_date, :received_at, :id) }
   scope :not_quarantined, -> { where(quarantined_at: nil) }
   scope :unexpired, ->(on = Date.current) { where("expiry_date >= ?", on) }
-  scope :allocatable, ->(on = Date.current) { not_quarantined.unexpired(on).where("on_hand_quantity > reserved_quantity") }
+  scope :allocatable, ->(on = Date.current) { not_quarantined.unexpired(on).where("on_hand_quantity > reserved_quantity + returned_quarantine_quantity") }
   scope :expired, ->(on = Date.current) { where(expiry_date: ...on) }
   scope :near_expiry, ->(days:, on: Date.current) { unexpired(on).where(expiry_date: on..(on + days.days)) }
 
-  def available_quantity = on_hand_quantity - reserved_quantity
+  def available_quantity = on_hand_quantity - reserved_quantity - returned_quarantine_quantity
   def consumed_quantity = [ original_quantity - on_hand_quantity, 0 ].max
   def quarantined? = quarantined_at.present?
   def expired?(on = Date.current) = expiry_date < on
@@ -48,6 +48,7 @@ class InventoryBatch < ApplicationRecord
 
   def quantity_consistency
     errors.add(:reserved_quantity, "لا يمكن أن تتجاوز الرصيد الفعلي") if reserved_quantity.to_i > on_hand_quantity.to_i
+    errors.add(:returned_quarantine_quantity, "لا يمكن أن يتجاوز الرصيد الفعلي") if returned_quarantine_quantity.to_i > on_hand_quantity.to_i
   end
 
   def expiry_after_manufacture

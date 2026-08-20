@@ -18,6 +18,7 @@
           <%= link_to "الروشتات", staff_prescriptions_path if current_user.can_review_prescriptions? %>
           <%= link_to "المتابعات", staff_follow_ups_path %>
           <%= link_to "نقطة البيع", pos_root_path if current_user.can_operate_pos? %>
+          <%= link_to "المرتجعات", staff_returns_path if current_user.can_initiate_returns? || current_user.can_review_returns? || current_user.can_disposition_returns? %>
           <%= link_to "التوصيل", staff_fulfilments_path if current_user.can_manage_delivery? %>
           <%= link_to "مناطق التوصيل", staff_delivery_zones_path if current_user.can_manage_delivery? %>
           <%= link_to "التقارير", admin_reports_root_path if current_user.can_view_business_reports? || current_user.can_view_prescription_reports? %>

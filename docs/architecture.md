@@ -324,3 +324,7 @@ allocations, and fulfilment consumption reference batches.
 locks eligible batches and sorts by expiry, receipt time, and stable ID;
 expired and quarantined stock is excluded. See
 [`batch_inventory.md`](batch_inventory.md).
+
+## Phase 22 reverse logistics
+
+Returns are a shared polymorphic aggregate constrained to immutable `Order` and `PosSale` sources. Return items reverse original allocation rows into the same batches; refunds are separate append-only records. See [`returns.md`](returns.md).

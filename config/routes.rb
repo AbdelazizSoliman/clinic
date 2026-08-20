@@ -25,6 +25,7 @@ Rails.application.routes.draw do
   resources :orders, only: %i[index show create], param: :number do
     get "prescription_files/:attachment_id", to: "prescription_files#show", as: :prescription_file
     member { patch :cancel }
+    resources :returns, only: %i[new create], controller: "customer_returns"
     resources :follow_ups, only: [] do
       member { post :respond }
     end
@@ -94,6 +95,16 @@ Rails.application.routes.draw do
     end
     resources :safety_findings, only: :update
     resources :substitution_candidates, only: :index
+    resources :returns, only: %i[index new create show], param: :number do
+      member do
+        patch :review
+        post :receive
+        post :refund
+        patch :close
+        patch "refunds/:refund_id/confirm", action: :confirm_refund, as: :confirm_refund
+      end
+      patch "items/:item_id/inspect", action: :inspect_item, on: :member, as: :inspect_item
+    end
     resources :patients, only: [] do
       resource :clinical_profile, only: %i[show update], controller: "patient_clinical_profiles" do
         resources :allergies, only: %i[create destroy], controller: "patient_allergies"
@@ -130,6 +141,7 @@ Rails.application.routes.draw do
       resources :purchasing, only: :index
       resources :batches, only: :index
       resources :pos, only: :index
+      resources :returns, only: :index
       get "pos", to: "pos#index", as: :pos_index
     end
     root "inventory#index"

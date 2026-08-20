@@ -75,3 +75,5 @@ Status meanings:
 “Partial” does not mean unsafe fallback behavior is enabled. Production-like
 email, storage, scanner, and external error reporting remain disabled or
 fail-closed until an operator supplies and verifies isolated services.
+
+| Returns and reverse logistics | Implemented | Shared online/POS aggregate, partial quantities, batch traceability, inspection, disposition, refunds, receipt, report/CSV |

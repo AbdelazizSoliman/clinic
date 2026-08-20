@@ -4,6 +4,7 @@ class PosSaleItem < ApplicationRecord
   belongs_to :prescription_approved_by, class_name: "User", optional: true
   has_many :batch_allocations, class_name: "PosSaleBatchAllocation", dependent: :restrict_with_error
   has_one :prescription_review_item, as: :reviewable_item, dependent: :destroy
+  has_many :return_items, as: :source_item, dependent: :restrict_with_error
 
   validates :product_id, uniqueness: { scope: :pos_sale_id }
   validates :product_name, presence: true

@@ -50,8 +50,8 @@ class DemoDataSeederTest < ActiveSupport::TestCase
     assert_equal 3, @manifest.suppliers
     assert_equal 7, @manifest.purchase_orders
     assert_equal 3, @manifest.purchase_receipts
-    assert_equal 3, @manifest.cashier_sessions
-    assert_equal 6, @manifest.pos_sales
+    assert_equal 4, @manifest.cashier_sessions
+    assert_equal 7, @manifest.pos_sales
     assert_empty ActionMailer::Base.deliveries
     assert_equal 0, TransactionalEmailDelivery.count
 
@@ -104,6 +104,10 @@ class DemoDataSeederTest < ActiveSupport::TestCase
     assert PosSale.find_by!(number: "DEMO-POS-DISCOUNT").manual_discount_cents.positive?
     assert PosSale.find_by!(number: "DEMO-POS-VOID").voided?
     assert CashierSession.find_by!(identifier: "DEMO-POS-OPEN").open?
+    assert ReturnRequest.find_by!(number: "DEMO-RETURN-POS-CASH").refunded?
+    assert ReturnRequest.find_by!(number: "DEMO-RETURN-RX-QUARANTINE").received?
+    assert ReturnRequest.find_by!(number: "DEMO-RETURN-CARD-WRITEOFF").refunded?
+    assert ReturnRequest.find_by!(number: "DEMO-RETURN-REJECTED").rejected?
     assert_demo_safety_scenarios
     assert_demo_search_scenarios
   end

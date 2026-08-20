@@ -10,4 +10,5 @@
 - Phase 21 — advanced Arabic search: complete. See [search.md](search.md).
   PostgreSQL + pg_trgm only; no external search service. Transliteration, stemming and
   query-history suggestions remain deferred.
-- Phase 22 — customer returns, refunds and completed-sale reversal: deferred.
+- Phase 22 — append-only customer/POS returns, reverse batch logistics, controlled refunds, receipts and reporting: implemented.
+- Phase 23 — supplier returns/credits, real gateway integration, loyalty reversal, recall and multi-branch reverse logistics: deferred.

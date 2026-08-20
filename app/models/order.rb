@@ -14,6 +14,7 @@ class Order < ApplicationRecord
   has_one :fulfilment, dependent: :destroy
   has_many :order_promotions, dependent: :destroy
   has_many :promotion_redemptions, dependent: :restrict_with_error
+  has_many :return_requests, as: :source, dependent: :restrict_with_error
 
   enum :status, { pending_prescription: 0, submitted: 1, confirmed: 2, preparing: 3, ready_for_delivery: 4, out_for_delivery: 5, delivered: 6, cancelled: 7, rejected: 8 }, validate: true
   enum :payment_method, { cash_on_delivery: 0, card_placeholder: 1, wallet_placeholder: 2 }, validate: true
@@ -29,6 +30,7 @@ class Order < ApplicationRecord
   validates :customer_email, :customer_mobile_number, :customer_first_name, :customer_last_name, :submitted_at, presence: true
   validate :total_matches_components
   validate :cancellation_consistency
+  validate :delivered_order_is_immutable, on: :update
 
   def customer_cancellable? = pending_prescription? || submitted?
   def staff_cancellable? = pending_prescription? || submitted? || confirmed?
@@ -51,5 +53,10 @@ class Order < ApplicationRecord
     errors.add(:cancellation_reason, "مطلوب") if cancellation_reason.blank?
     errors.add(:cancelled_at, "مطلوب") if cancelled_at.blank?
     errors.add(:cancellation_source, "مطلوب") if cancellation_source.blank?
+  end
+
+  def delivered_order_is_immutable
+    return unless status_was == "delivered"
+    errors.add(:base, "الطلب المسلم سجل تاريخي غير قابل للتعديل") if changes.except("updated_at").any?
   end
 end

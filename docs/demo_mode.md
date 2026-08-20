@@ -153,3 +153,5 @@ payment, SMS, or courier integration. Email, object storage, and malware
 scanning require separately isolated demo services when those workflows are
 shown. A real-browser run also requires a supported browser installed in the
 verification environment.
+
+Phase 22 demo guidance uses fictional completed order/POS sources and stable return identifiers only. Returned batches, dispositions, inspections, and refund markers never trigger external communication or real payment activity.

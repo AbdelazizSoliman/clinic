@@ -1,6 +1,7 @@
 class CashierSession < ApplicationRecord
   belongs_to :user
   has_many :pos_sales, dependent: :restrict_with_error
+  has_many :refunds, dependent: :restrict_with_error
 
   enum :status, { open: 0, closed: 1 }, default: :open, validate: true
 
@@ -14,7 +15,7 @@ class CashierSession < ApplicationRecord
 
   def expected_cash
     opening_cash_cents + pos_sales.completed.joins(:payments)
-      .merge(PosPayment.cash).sum(:amount_cents)
+      .merge(PosPayment.cash).sum(:amount_cents) - refunds.completed.cash.sum(:amount_cents)
   end
 
   private

@@ -1,0 +1,1 @@
+<main class="mx-auto max-w-7xl px-4 py-8" dir="rtl"><h1 class="text-3xl font-black">تقرير المرتجعات</h1><%= render "admin/reports/filters" %><p class="mt-4 rounded bg-white p-4">عدد المرتجعات: <%= @returns.count %> · الاستردادات المكتملة: <%= @refund_total %> قرش</p><%= link_to "CSV", url_for(format: :csv, preset: params[:preset], from: params[:from], to: params[:to]) %></main>

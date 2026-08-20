@@ -247,3 +247,5 @@ out of scope. The whole-prescription `Prescriptions::Review#review` action remai
 reachable (e.g. for a future bulk-reopen path) but the application UI only
 exercises the per-item flow; treat the whole-prescription path as a
 compatibility surface, not the primary API.
+
+Prescription returns preserve the original review, substitution, decisions, acknowledgements, findings, and batch allocations. A pharmacist records a new return inspection; returning physical stock does not rerun drug-safety rules.

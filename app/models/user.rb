@@ -84,6 +84,12 @@ class User < ApplicationRecord
   def can_approve_pos_prescriptions? = pharmacist?
   def can_approve_pos_discounts? = admin?
   def can_view_pos_reports? = admin? || order_manager? || inventory_manager?
+  def can_initiate_returns? = can_operate_orders? || can_operate_pos? || pharmacist? || inventory_manager?
+  def can_review_returns? = admin? || order_manager?
+  def can_inspect_returns? = pharmacist?
+  def can_disposition_returns? = admin? || inventory_manager? || pharmacist?
+  def can_refund_returns? = admin?
+  def can_view_return_reports? = admin? || order_manager? || inventory_manager?
 
   def active_for_authentication?
     super && active?

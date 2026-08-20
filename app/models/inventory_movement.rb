@@ -5,8 +5,10 @@ class InventoryMovement < ApplicationRecord
   belongs_to :inventory_batch, optional: true
   enum :movement_type, { opening_balance: 0, manual_increase: 1, manual_decrease: 2, correction: 3,
     reservation_consumed: 4, return_to_stock: 5, damaged: 6, expired: 7, system_adjustment: 8,
-    purchase_received: 9, batch_loss: 10, supplier_replacement: 11, pos_sale: 12 }, validate: true
-  validates :quantity_delta, numericality: { only_integer: true, other_than: 0 }
+    purchase_received: 9, batch_loss: 10, supplier_replacement: 11, pos_sale: 12,
+    return_restock: 13, return_quarantine: 14, return_write_off: 15, return_destroy_pending: 16 }, validate: true
+  validates :quantity_delta, numericality: { only_integer: true }
+  validate { errors.add(:quantity_delta, "يجب ألا يساوي صفراً") if quantity_delta.zero? && !return_write_off? && !return_destroy_pending? }
   validates :quantity_before, :quantity_after, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
   validates :reason, presence: true
   validates :idempotency_key, uniqueness: true, allow_nil: true

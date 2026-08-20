@@ -334,3 +334,5 @@ application does not provide medical advice. Prescription decisions in a real
 operation require appropriately licensed pharmacy professionals. This
 repository demonstrates software engineering and product workflow design; it
 is not a medical, legal, or regulatory certification.
+
+Phase 22 adds append-only, batch-traced online/POS returns, controlled dispositions, refunds, Arabic return receipts, cashier reconciliation, and operational reporting. See [docs/returns.md](docs/returns.md).

@@ -46,3 +46,5 @@ Arabic pages and CSV cover batch inventory, expiry, quarantine, supplier and
 receipt provenance, movements, FEFO exceptions, and received-cost valuation.
 Phase 17 excludes POS, returns, substitutions, multi-branch inventory, RFID or
 barcode printing, warehouse optimization, ERP, analytics, and AI.
+
+Returned stock always traces to its original allocation. Sellable restocks increase the same safe batch; quarantined custody increases `returned_quarantine_quantity`, which is excluded from FEFO availability; write-off/destroy decisions remain append-only movements.
