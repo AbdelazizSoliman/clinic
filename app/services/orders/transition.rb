@@ -34,6 +34,8 @@ module Orders
           return failure("تعذر استهلاك الحجز لعدم كفاية المخزون") unless Inventory::ConsumeReservations.new(@order).call
         end
         @order.update!(status: @to_status, confirmed_at: (@to_status == "confirmed" ? Time.current : @order.confirmed_at))
+        Loyalty::Earn.new(source: @order, customer: @order.user, actor: @actor,
+          idempotency_key: "order-loyalty-earn:#{@order.id}").call if @to_status == "delivered"
         @order.inventory_reservations.active.update_all(expires_at: nil, updated_at: Time.current) if @to_status == "confirmed"
         @order.events.create!(actor: @actor, event_type: EVENTS.fetch(@to_status), from_status: from, to_status: @to_status, customer_visible: true)
         notify_customer

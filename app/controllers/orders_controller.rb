@@ -20,7 +20,8 @@ class OrdersController < ApplicationController
       payment_method: order_params[:payment_method], submission_token: order_params[:submission_token],
       delivery_slot_id: order_params[:delivery_slot_id],
       prescription_files: order_params[:prescription_files], prescription_notes: order_params[:prescription_notes],
-      delivery_notes: order_params[:delivery_notes]
+      delivery_notes: order_params[:delivery_notes], loyalty_points: order_params[:loyalty_points],
+      wallet_amount_cents: order_params[:wallet_amount_cents]
     ).call
     if result.success?
       @current_cart = nil
@@ -38,7 +39,8 @@ class OrdersController < ApplicationController
   end
 
   def order_params
-    params.require(:order).permit(:address_id, :delivery_method, :delivery_slot_id, :payment_method, :submission_token, :prescription_notes, :delivery_notes, prescription_files: [])
+    params.require(:order).permit(:address_id, :delivery_method, :delivery_slot_id, :payment_method, :submission_token,
+      :prescription_notes, :delivery_notes, :loyalty_points, :wallet_amount_cents, prescription_files: [])
   end
 
   def prepare_checkout(errors)
@@ -58,5 +60,7 @@ class OrdersController < ApplicationController
       delivery_slot: @selected_delivery_slot).call
     @cart_issues = errors
     @recommendations = Product.includes(:brand, :category).discounted.available.limit(4)
+    @loyalty_points = current_user.loyalty_account&.points_balance.to_i
+    @wallet_balance_cents = current_user.wallet_account&.balance_cents.to_i
   end
 end

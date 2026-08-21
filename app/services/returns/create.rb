@@ -62,7 +62,7 @@ module Returns
       lines = source_items.order(:id).to_a
       gross = lines.to_h { |line| [ line.id, line.unit_price_cents.to_i * line.quantity ] }
       pool = if @source.is_a?(Order)
-        @source.subtotal_cents - @source.discount_cents + @source.prescription_adjustment_cents
+        @source.subtotal_cents - @source.discount_cents - @source.loyalty_discount_cents + @source.prescription_adjustment_cents
       else
         @source.total_cents - @source.tax_cents
       end

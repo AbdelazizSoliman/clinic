@@ -4,7 +4,7 @@ module Orders
     OPERATIONAL_PAYMENT_METHOD = "cash_on_delivery"
     DELIVERY_METHODS = Order.delivery_methods.keys.freeze
 
-    def initialize(user:, cart:, address_id:, delivery_method:, payment_method:, submission_token:, delivery_slot_id: nil, prescription_files: [], prescription_notes: nil, delivery_notes: nil)
+    def initialize(user:, cart:, address_id:, delivery_method:, payment_method:, submission_token:, delivery_slot_id: nil, prescription_files: [], prescription_notes: nil, delivery_notes: nil, loyalty_points: 0, wallet_amount_cents: 0)
       @user = user
       @cart = cart
       @address_id = address_id
@@ -15,6 +15,8 @@ module Orders
       @prescription_notes = prescription_notes
       @delivery_notes = delivery_notes
       @delivery_slot_id = delivery_slot_id
+      @loyalty_points = loyalty_points.to_i
+      @wallet_amount_cents = wallet_amount_cents.to_i
     end
 
     def call
@@ -57,6 +59,7 @@ module Orders
         end
 
         order = create_order!(totals, prescription_required)
+        apply_loyalty_and_wallet!(order)
         order.events.create!(event_type: "order_submitted", to_status: order.status, customer_visible: true)
         create_items_and_reservations!(order, totals)
         create_commercial_records!(order, totals)
@@ -126,6 +129,7 @@ module Orders
         product_discount_cents: totals.product_discount_cents, cart_discount_cents: totals.cart_discount_cents,
         delivery_discount_cents: totals.delivery_discount_cents, pricing_calculation_version: totals.calculation_version,
         delivery_fee_cents: totals.delivery_fee_cents, total_cents: totals.total_cents,
+        cash_on_delivery_due_cents: totals.total_cents,
         delivery_zone: @delivery_zone, delivery_slot: @delivery_slot, delivery_zone_code: @delivery_zone.code,
         delivery_zone_name: @delivery_zone.name, delivery_method_name: @delivery_method_record.name,
         delivery_estimated_min_minutes: @delivery_zone.estimated_min_minutes,
@@ -135,6 +139,35 @@ module Orders
         customer_first_name: @user.first_name, customer_last_name: @user.last_name,
         delivery_notes: @delivery_notes.to_s.squish.presence, prescription_required:, submitted_at: Time.current
       )
+    end
+
+    def apply_loyalty_and_wallet!(order)
+      if @loyalty_points.positive?
+        merchandise = order.subtotal_cents - order.discount_cents + order.prescription_adjustment_cents
+        redemption = Loyalty::Redeem.new(customer: @user, source: order, requested_points: @loyalty_points,
+          maximum_value_cents: [ merchandise, order.total_cents ].min,
+          idempotency_key: "order-loyalty-redeem:#{order.id}").call
+        unless redemption.success?
+          order.errors.add(:base, redemption.errors.join("، "))
+          raise ActiveRecord::RecordInvalid, order
+        end
+        order.update!(loyalty_points_redeemed: redemption.points, loyalty_discount_cents: redemption.value_cents,
+          total_cents: order.total_cents - redemption.value_cents,
+          cash_on_delivery_due_cents: order.total_cents - redemption.value_cents)
+      end
+      return unless @wallet_amount_cents.positive?
+      if @wallet_amount_cents > order.total_cents
+        order.errors.add(:wallet_paid_cents, "تتجاوز إجمالي الطلب")
+        raise ActiveRecord::RecordInvalid, order
+      end
+      debit = Wallet::Debit.new(customer: @user, amount_cents: @wallet_amount_cents, source: order,
+        actor: @user, reason: "دفع من المحفظة للطلب #{order.number}", idempotency_key: "order-wallet-payment:#{order.id}").call
+      unless debit.success?
+        order.errors.add(:base, debit.errors.join("، "))
+        raise ActiveRecord::RecordInvalid, order
+      end
+      order.update!(wallet_paid_cents: @wallet_amount_cents,
+        cash_on_delivery_due_cents: order.total_cents - @wallet_amount_cents)
     end
 
     def create_items_and_reservations!(order, totals)

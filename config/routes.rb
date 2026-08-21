@@ -53,6 +53,7 @@ Rails.application.routes.draw do
     resources :products, only: :index
   end
   resource :account, only: %i[show edit update], controller: "account"
+  resource :benefits, only: :show
   namespace :account do
     resources :addresses, except: :show do
       member do
@@ -112,6 +113,11 @@ Rails.application.routes.draw do
     end
   end
   namespace :admin do
+    resource :loyalty_wallet, only: :show, controller: "loyalty_wallet" do
+      post :create_rule
+      post :adjust_loyalty
+      post :adjust_wallet
+    end
     resource :security, only: :show, controller: "security"
     resources :email_deliveries, only: :index do
       member { patch :retry }
@@ -142,6 +148,7 @@ Rails.application.routes.draw do
       resources :batches, only: :index
       resources :pos, only: :index
       resources :returns, only: :index
+      resources :loyalty_wallet, only: :index
       get "pos", to: "pos#index", as: :pos_index
     end
     root "inventory#index"

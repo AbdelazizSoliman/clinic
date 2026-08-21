@@ -30,6 +30,6 @@
       </nav>
     </header>
     <%= render "shared/flash" %>
-    <main><%= yield %><%= render "staff/orders/phase8_actions", order: @order if controller_name == "orders" && action_name == "show" && @order %></main>
+    <main><%= yield %><%= render "staff/orders/phase8_actions", order: @order if controller_name == "orders" && action_name == "show" && @order %><%= render "staff/returns/wallet_refund", return_request: @return_request if controller_name == "returns" && action_name == "show" && @return_request %></main>
   </body>
 </html>

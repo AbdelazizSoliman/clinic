@@ -80,10 +80,31 @@ class ReturnsTest < ActiveSupport::TestCase
     assert_empty request.items.first.batch_allocations
   end
 
+  test "refund to wallet and loyalty reversal are idempotent" do
+    LoyaltyRule.create!(code: "RETURN-EARN", name: "كسب المرتجع", rule_type: :earning,
+      points_awarded: 1, spend_threshold_cents: 100)
+    customer = users(:customer)
+    sale = complete_sale(quantity: 1, customer:)
+    earned = customer.loyalty_account.ledger_entries.earn.find_by!(source: sale)
+    request = create_return(sale, sale.items.first, 1)
+    Returns::Review.new(return_request: request, actor: @admin, approve: true).call
+    Returns::Receive.new(return_request: request, actor: @inventory_manager,
+      dispositions: { request.items.first.id => "restock" }, idempotency_key: "receive-wallet-refund").call
+    result = Returns::Refund.new(return_request: request, actor: @admin,
+      amount_cents: request.refundable_cents, payment_method: "wallet", idempotency_key: "wallet-refund-return").call
+    assert result.success?, result.errors.join(", ")
+    assert_equal request.refundable_cents, customer.wallet_account.balance_cents
+    assert_equal earned.points, customer.loyalty_account.ledger_entries.earn_reversal.where(source: sale).sum(:points)
+    retry_result = Returns::Refund.new(return_request: request, actor: @admin,
+      amount_cents: request.refundable_cents, payment_method: "wallet", idempotency_key: "wallet-refund-return").call
+    assert_equal result.record, retry_result.record
+    assert_equal 1, WalletLedgerEntry.refund.where(source: result.record).count
+  end
+
   private
 
-  def complete_sale(quantity:)
-    sale = @session.pos_sales.create!(cashier: @cashier, number: "POS-RETURN-#{SecureRandom.hex(4)}")
+  def complete_sale(quantity:, customer: nil)
+    sale = @session.pos_sales.create!(cashier: @cashier, customer:, number: "POS-RETURN-#{SecureRandom.hex(4)}")
     Pos::Cart.new(sale:, actor: @cashier).add(product: @product, quantity:)
     result = Pos::Complete.new(sale:, actor: @cashier, idempotency_key: "complete-#{sale.number}",
       payments: [ { payment_method: "cash", amount_cents: sale.total_cents, tendered_cents: sale.total_cents } ]).call

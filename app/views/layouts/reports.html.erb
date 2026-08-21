@@ -20,6 +20,7 @@
         <%= link_to "المنتجات", admin_reports_products_path if current_user.can_view_business_reports? || current_user.can_view_inventory_reports? %>
         <%= link_to "المخزون", admin_reports_inventory_index_path if current_user.can_view_inventory_reports? %>
         <%= link_to "المرتجعات", admin_reports_returns_path if current_user.can_view_return_reports? %>
+        <%= link_to "الولاء والمحفظة", admin_reports_loyalty_wallet_index_path if current_user.can_view_loyalty_wallet_reports? %>
         <%= link_to "التشغيلات والصلاحية", admin_reports_batches_path if current_user.can_view_inventory_reports? %>
         <%= link_to "المشتريات", admin_reports_purchasing_index_path if current_user.can_view_purchasing_reports? %>
         <%= link_to "العروض", admin_reports_promotions_path if current_user.admin? %>

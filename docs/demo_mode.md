@@ -155,3 +155,5 @@ shown. A real-browser run also requires a supported browser installed in the
 verification environment.
 
 Phase 22 demo guidance uses fictional completed order/POS sources and stable return identifiers only. Returned batches, dispositions, inspections, and refund markers never trigger external communication or real payment activity.
+
+Phase 23 adds stable fictional rules, points and wallet credit, online earning, expired points, and an identified mixed-payment POS sale. Re-seeding does not duplicate economic value.

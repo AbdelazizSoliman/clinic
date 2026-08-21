@@ -335,4 +335,4 @@ operation require appropriately licensed pharmacy professionals. This
 repository demonstrates software engineering and product workflow design; it
 is not a medical, legal, or regulatory certification.
 
-Phase 22 adds append-only, batch-traced online/POS returns, controlled dispositions, refunds, Arabic return receipts, cashier reconciliation, and operational reporting. See [docs/returns.md](docs/returns.md).
+Phase 22 adds append-only returns and refunds. Phase 23 adds separate immutable loyalty-point and monetary-wallet ledgers shared by online checkout, identified POS sales, and returns. See [docs/returns.md](docs/returns.md) and [docs/loyalty_wallet.md](docs/loyalty_wallet.md).

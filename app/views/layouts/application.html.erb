@@ -22,6 +22,7 @@
   <body class="min-h-screen bg-slate-50 text-slate-900 antialiased" data-controller="browser-cart-migration<%= " wishlist-migration" if user_signed_in? %>">
     <%= render "shared/demo_banner" %>
     <%= render "shared/header" %>
+    <% if user_signed_in? && current_user.customer? %><div class="bg-pharmacy-50 px-4 py-2 text-center text-sm"><%= link_to "نقاطي ومحفظتي", benefits_path, class: "font-bold text-pharmacy-800" %></div><% end %>
     <%= render "shared/flash" %>
     <main>
       <%= yield %>

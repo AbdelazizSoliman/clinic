@@ -25,12 +25,14 @@ class Order < ApplicationRecord
   validates :number, presence: true, uniqueness: true
   validates :currency, inclusion: { in: %w[EGP] }
   validates :subtotal_cents, :discount_cents, :product_discount_cents, :cart_discount_cents,
-    :delivery_discount_cents, :delivery_fee_cents, :total_cents,
+    :delivery_discount_cents, :delivery_fee_cents, :loyalty_discount_cents, :wallet_paid_cents,
+    :cash_on_delivery_due_cents, :total_cents,
     numericality: { only_integer: true, greater_than_or_equal_to: 0 }
   validates :customer_email, :customer_mobile_number, :customer_first_name, :customer_last_name, :submitted_at, presence: true
   validate :total_matches_components
   validate :cancellation_consistency
   validate :delivered_order_is_immutable, on: :update
+  before_validation :synchronize_payment_breakdown
 
   def customer_cancellable? = pending_prescription? || submitted?
   def staff_cancellable? = pending_prescription? || submitted? || confirmed?
@@ -40,11 +42,15 @@ class Order < ApplicationRecord
   private
 
   def total_matches_components
-    expected = subtotal_cents - discount_cents + delivery_fee_cents - delivery_discount_cents +
+    expected = subtotal_cents - discount_cents - loyalty_discount_cents + delivery_fee_cents - delivery_discount_cents +
       prescription_adjustment_cents
     return if total_cents == expected
 
     errors.add(:total_cents, "لا يطابق مكونات الإجمالي")
+  end
+
+  validate do
+    errors.add(:base, "تفصيل الدفع لا يطابق الإجمالي") unless wallet_paid_cents + cash_on_delivery_due_cents == total_cents
   end
 
   def cancellation_consistency
@@ -58,5 +64,10 @@ class Order < ApplicationRecord
   def delivered_order_is_immutable
     return unless status_was == "delivered"
     errors.add(:base, "الطلب المسلم سجل تاريخي غير قابل للتعديل") if changes.except("updated_at").any?
+  end
+
+  def synchronize_payment_breakdown
+    return unless new_record? || will_save_change_to_total_cents? || will_save_change_to_wallet_paid_cents?
+    self.cash_on_delivery_due_cents = total_cents.to_i - wallet_paid_cents.to_i
   end
 end

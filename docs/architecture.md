@@ -328,3 +328,7 @@ expired and quarantined stock is excluded. See
 ## Phase 22 reverse logistics
 
 Returns are a shared polymorphic aggregate constrained to immutable `Order` and `PosSale` sources. Return items reverse original allocation rows into the same batches; refunds are separate append-only records. See [`returns.md`](returns.md).
+
+## Phase 23 loyalty and wallet
+
+Separate per-customer accounts derive balances from immutable ledgers. Configured loyalty rules turn commercial snapshots into points/discount value; wallet entries remain monetary payment facts. See [`loyalty_wallet.md`](loyalty_wallet.md).

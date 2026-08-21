@@ -51,7 +51,7 @@ class DemoDataSeederTest < ActiveSupport::TestCase
     assert_equal 7, @manifest.purchase_orders
     assert_equal 3, @manifest.purchase_receipts
     assert_equal 4, @manifest.cashier_sessions
-    assert_equal 7, @manifest.pos_sales
+    assert_equal 8, @manifest.pos_sales
     assert_empty ActionMailer::Base.deliveries
     assert_equal 0, TransactionalEmailDelivery.count
 

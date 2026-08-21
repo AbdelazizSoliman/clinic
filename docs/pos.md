@@ -128,3 +128,5 @@ stored cards, offline mode, printer and drawer hardware, loyalty, customer
 credit, multi-branch scope and ERP integration remain out of scope.
 
 Completed POS sales remain immutable. Phase 22 represents item returns and cash/external-terminal refunds as linked records; expected cash is opening cash plus cash sales minus completed cash refunds in that session. See [`returns.md`](returns.md).
+
+Phase 23 permits an explicit optional customer. Identified customers may redeem points and use mixed wallet/cash/terminal payment; anonymous sales remain unchanged. Wallet components never affect expected cash.

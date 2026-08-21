@@ -21,8 +21,10 @@ module Returns
         refund = @request.refunds.create!(source: @request.source, actor: @actor, amount_cents: @amount,
           payment_method: @method, status:, refunded_at: (Time.current if status == :completed),
           external_reference: @external_reference, cashier_session: session, idempotency_key: @key, notes: @notes)
+        credit_wallet!(refund) if refund.wallet?
         audit(@actor, @request, "refund_created", refund_id: refund.id, amount_cents: @amount, method: @method)
         audit(@actor, @request, "refund_completed", refund_id: refund.id) if refund.completed?
+        Loyalty::ApplyReturnEffects.new(refund:, actor: @actor).call if refund.completed?
         update_request_status!
       end
       success(refund)
@@ -48,10 +50,22 @@ module Returns
 
     def source_method_capacity
       source = @request.source
+      return source.total_cents if @method == "wallet"
       return source.payments.where(payment_method: @method).sum(:amount_cents) if source.is_a?(PosSale)
       expected = source.cash_on_delivery? ? "cash_on_delivery" : "external_card"
       raise_error("طريقة الاسترداد لا تطابق الدفع الأصلي") unless @method == expected
-      source.total_cents
+      source.cash_on_delivery_due_cents
+    end
+
+    def credit_wallet!(refund)
+      customer = @request.source.is_a?(Order) ? @request.source.user : @request.source.customer
+      raise_error("يلزم عميل معرف لإضافة الاسترداد إلى المحفظة") unless customer&.customer?
+      result = Wallet::Credit.new(customer:, amount_cents: @amount, entry_type: :refund, source: refund,
+        actor: @actor, reason: "استرداد المرتجع #{@request.number}", idempotency_key: "wallet-refund:#{refund.id}").call
+      raise_error(result.errors.join("، ")) unless result.success?
+      Notifications::Create.call(user: customer, actor: @actor, notifiable: customer.wallet_account,
+        kind: "wallet_refund_credited", title: "تم إيداع الاسترداد في المحفظة",
+        body: "أضيف مبلغ الاسترداد إلى محفظتك", key: "wallet-refund-credited-#{refund.id}")
     end
 
     def cash_session

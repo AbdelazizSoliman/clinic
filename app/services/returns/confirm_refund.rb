@@ -11,6 +11,7 @@ module Returns
         raise ActiveRecord::RecordInvalid, @refund unless @refund.pending? && @refund.external_card? && @reference.present?
         @refund.update!(status: :completed, refunded_at: Time.current, external_reference: @reference)
         audit(@actor, @refund.return_request, "refund_completed", refund_id: @refund.id)
+        Loyalty::ApplyReturnEffects.new(refund: @refund, actor: @actor).call
         request = @refund.return_request
         request.update!(status: :refunded) if request.refunds.completed.sum(:amount_cents) == request.refundable_cents
       end

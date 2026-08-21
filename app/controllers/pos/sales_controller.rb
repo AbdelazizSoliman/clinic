@@ -17,7 +17,8 @@ module Pos
     def create
       session = current_user.cashier_sessions.open.first
       return redirect_to(pos_root_path, alert: "افتح جلسة صندوق أولًا") unless session
-      sale = session.pos_sales.create!(cashier: current_user, number: NumberGenerator.sale)
+      customer = User.customer.active.find_by(email: params[:customer_email].to_s.strip.downcase) if params[:customer_email].present?
+      sale = session.pos_sales.create!(cashier: current_user, number: NumberGenerator.sale, customer:)
       AdminAuditEvent.create!(actor: current_user, auditable: sale, action: "pos_sale_created")
       redirect_to pos_sale_path(sale)
     rescue ActiveRecord::RecordInvalid => error
@@ -33,7 +34,7 @@ module Pos
     def complete
       result = Complete.new(sale: @sale, actor: current_user,
         idempotency_key: params[:idempotency_key],
-        payments: payment_specs).call
+        payments: payment_specs, loyalty_points: params[:loyalty_points]).call
       redirect_to pos_sale_path(result.record || @sale),
         result.success? ? { notice: "اكتملت عملية البيع" } : { alert: result.errors.join("، ") }
     end
@@ -54,8 +55,11 @@ module Pos
     end
 
     def payment_specs
-      [ { payment_method: params[:payment_method], amount_cents: params[:amount_cents],
-        tendered_cents: params[:tendered_cents], external_reference: params[:external_reference] } ]
+      specs = []
+      specs << { payment_method: "wallet", amount_cents: params[:wallet_amount_cents] } if params[:wallet_amount_cents].to_i.positive?
+      specs << { payment_method: params[:payment_method], amount_cents: params[:amount_cents],
+        tendered_cents: params[:tendered_cents], external_reference: params[:external_reference] } if params[:amount_cents].to_i.positive?
+      specs
     end
   end
 end

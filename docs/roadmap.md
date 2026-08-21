@@ -11,4 +11,5 @@
   PostgreSQL + pg_trgm only; no external search service. Transliteration, stemming and
   query-history suggestions remain deferred.
 - Phase 22 — append-only customer/POS returns, reverse batch logistics, controlled refunds, receipts and reporting: implemented.
-- Phase 23 — supplier returns/credits, real gateway integration, loyalty reversal, recall and multi-branch reverse logistics: deferred.
+- Phase 23 — deterministic loyalty and wallet ledgers across online, POS, and returns: implemented.
+- Phase 24 — scheduled expiration operations and later approved financial extensions: deferred.

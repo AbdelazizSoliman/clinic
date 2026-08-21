@@ -15,6 +15,7 @@ module DemoGuidance
     def cart = @routes.cart_path
     def checkout = @routes.checkout_path
     def customer_orders = @routes.orders_path
+    def customer_benefits = @user&.customer? && @routes.benefits_path
 
     def customer_delivered_order
       order = @user.orders.find_by(number: "DEMO-DELIVERED-OLD") if @user&.customer?
@@ -55,6 +56,7 @@ module DemoGuidance
       sale ? @routes.pos_sale_path(sale) : @routes.pos_sales_path
     end
     def pos_reports = allowed?(:can_view_pos_reports?) && @routes.admin_reports_pos_path(preset: "last_30_days")
+    def loyalty_wallet_admin = allowed?(:can_manage_loyalty_wallet?) && @routes.admin_loyalty_wallet_path
 
     def inventory_dashboard = allowed?(:can_manage_inventory?) && @routes.admin_root_path
     def inventory_low = allowed?(:can_manage_inventory?) && @routes.admin_low_stock_inventory_path

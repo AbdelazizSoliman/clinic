@@ -2,8 +2,9 @@ module Pos
   class Complete
     include Support
 
-    def initialize(sale:, actor:, idempotency_key:, payments:)
+    def initialize(sale:, actor:, idempotency_key:, payments:, loyalty_points: 0)
       @sale, @actor, @key, @payment_specs = sale, actor, idempotency_key.to_s.strip, Array(payments)
+      @loyalty_points = loyalty_points.to_i
     end
 
     def call
@@ -25,6 +26,7 @@ module Pos
           raise ActiveRecord::Rollback
         end
         Recalculate.call(@sale)
+        apply_loyalty_redemption!(errors)
         items = @sale.items.includes(:product, prescription_review_item: :dispensed_product).order(:product_id).to_a
         product_ids = items.filter_map { |item| effective_product(item)&.id }
         products = Product.where(id: product_ids).order(:id).lock.index_by(&:id)
@@ -35,11 +37,15 @@ module Pos
 
         consume_batches!(items, products, errors)
         raise ActiveRecord::Rollback if errors.any?
+        apply_wallet_payments!(payment_attributes, errors)
+        raise ActiveRecord::Rollback if errors.any?
         payment_attributes.each { |attributes| @sale.payments.create!(attributes) }
         audit(@actor, @sale, "pos_payment_recorded",
           methods: payment_attributes.map { |attributes| attributes[:payment_method] },
           amount_cents: payment_attributes.sum { |attributes| attributes[:amount_cents] })
         @sale.update!(status: :completed, completed_at: Time.current, completion_idempotency_key: @key)
+        Loyalty::Earn.new(source: @sale, customer: @sale.customer, actor: @actor,
+          idempotency_key: "pos-loyalty-earn:#{@sale.id}").call if @sale.customer
         audit(@actor, @sale, "pos_sale_completed",
           number: @sale.number, total_cents: @sale.total_cents, session: @sale.cashier_session.identifier)
       end
@@ -53,6 +59,40 @@ module Pos
     end
 
     private
+
+    def apply_loyalty_redemption!(errors)
+      return if @loyalty_points.zero?
+      unless @sale.customer&.customer?
+        errors << "يلزم ربط عميل لاستبدال النقاط"
+        return
+      end
+      redemption = Loyalty::Redeem.new(customer: @sale.customer, source: @sale,
+        requested_points: @loyalty_points, maximum_value_cents: @sale.total_cents,
+        actor: @actor, idempotency_key: "pos-loyalty-redeem:#{@sale.id}").call
+      unless redemption.success?
+        errors.concat(redemption.errors)
+        return
+      end
+      @sale.update!(loyalty_points_redeemed: redemption.points, loyalty_discount_cents: redemption.value_cents,
+        total_cents: @sale.total_cents - redemption.value_cents)
+    end
+
+    def apply_wallet_payments!(attributes, errors)
+      wallet_amount = attributes.select { |entry| entry[:payment_method] == "wallet" }.sum { |entry| entry[:amount_cents] }
+      return if wallet_amount.zero?
+      unless @sale.customer&.customer?
+        errors << "يلزم ربط عميل لاستخدام المحفظة"
+        return
+      end
+      debit = Wallet::Debit.new(customer: @sale.customer, amount_cents: wallet_amount, source: @sale,
+        actor: @actor, reason: "دفع محفظة لنقطة البيع #{@sale.number}",
+        idempotency_key: "pos-wallet-payment:#{@sale.id}").call
+      if debit.success?
+        @sale.update!(wallet_paid_cents: wallet_amount)
+      else
+        errors.concat(debit.errors)
+      end
+    end
 
     def authorized?
       @actor&.can_operate_pos? && (@sale.cashier_id == @actor.id || @actor.admin?)
@@ -100,9 +140,11 @@ module Pos
           end
           { payment_method: method, amount_cents: amount, tendered_cents: tendered,
             change_cents: tendered - amount }
-        else
+        elsif method == "external_card"
           { payment_method: method, amount_cents: amount, change_cents: 0,
             external_reference: spec[:external_reference].to_s.squish.presence }
+        else
+          { payment_method: method, amount_cents: amount, change_cents: 0 }
         end
       end
       errors << "إجمالي المدفوعات يجب أن يساوي إجمالي البيع" unless attributes.sum { |entry| entry[:amount_cents] } == total

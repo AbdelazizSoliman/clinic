@@ -77,3 +77,4 @@ email, storage, scanner, and external error reporting remain disabled or
 fail-closed until an operator supplies and verifies isolated services.
 
 | Returns and reverse logistics | Implemented | Shared online/POS aggregate, partial quantities, batch traceability, inspection, disposition, refunds, receipt, report/CSV |
+| Loyalty and wallet | Implemented | Configurable points, expiration allocation, immutable wallet ledger, online/POS mixed payment, return effects, UI and CSV |

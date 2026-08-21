@@ -20,6 +20,9 @@ class User < ApplicationRecord
   has_many :cashier_sessions, dependent: :restrict_with_error
   has_many :pos_sales, foreign_key: :cashier_id, dependent: :restrict_with_error
   has_one :patient_clinical_profile, dependent: :destroy
+  has_one :loyalty_account, dependent: :restrict_with_error
+  has_one :wallet_account, dependent: :restrict_with_error
+  has_many :customer_pos_sales, class_name: "PosSale", foreign_key: :customer_id, dependent: :restrict_with_error
 
   enum :role, { customer: 0, admin: 1, pharmacist: 2, order_manager: 3, inventory_manager: 4 }, default: :customer, validate: true
 
@@ -90,6 +93,22 @@ class User < ApplicationRecord
   def can_disposition_returns? = admin? || inventory_manager? || pharmacist?
   def can_refund_returns? = admin?
   def can_view_return_reports? = admin? || order_manager? || inventory_manager?
+  def can_manage_loyalty_wallet? = admin?
+  def can_view_loyalty_wallet_reports? = admin? || order_manager?
+
+  def ensure_loyalty_account!
+    raise ActiveRecord::RecordInvalid, self unless customer?
+    loyalty_account || create_loyalty_account!
+  rescue ActiveRecord::RecordNotUnique
+    reload.loyalty_account
+  end
+
+  def ensure_wallet_account!
+    raise ActiveRecord::RecordInvalid, self unless customer?
+    wallet_account || create_wallet_account!
+  rescue ActiveRecord::RecordNotUnique
+    reload.wallet_account
+  end
 
   def active_for_authentication?
     super && active?

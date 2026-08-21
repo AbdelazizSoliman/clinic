@@ -19,6 +19,8 @@ class ShoppingController < ApplicationController
       delivery_slot: @selected_delivery_slot).call
     @cart_issues = cart_issues
     @recommendations = Product.includes(:brand, :category).discounted.available.limit(4)
+    @loyalty_points = current_user.loyalty_account&.points_balance.to_i
+    @wallet_balance_cents = current_user.wallet_account&.balance_cents.to_i
   end
 
   private

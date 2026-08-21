@@ -18,6 +18,7 @@ module Orders
         return failure("لا يمكن الإلغاء بعد تجهيز المخزون") if @order.inventory_reservations.consumed.exists?
 
         Inventory::ReleaseReservations.new(@order).call
+        reverse_customer_value!
         Promotions::ReleaseRedemptions.call(@order)
         @order.update!(status: :cancelled, cancellation_reason: @reason.to_s.squish, cancellation_source: @source,
           cancelled_by: @source == "system" ? nil : @actor, cancelled_at: Time.current)
@@ -34,6 +35,16 @@ module Orders
     end
 
     private
+
+    def reverse_customer_value!
+      Loyalty::ReverseRedemption.new(source: @order, actor: @actor, reason: "استعادة نقاط طلب ملغى",
+        idempotency_key: "order-loyalty-cancel:#{@order.id}").call
+      payment = WalletLedgerEntry.payment.find_by(source: @order)
+      return unless payment
+      Wallet::Credit.new(customer: @order.user, amount_cents: payment.amount_cents, entry_type: :reversal_credit,
+        source: @order, actor: @actor, reason: "إعادة دفع محفظة لطلب ملغى",
+        idempotency_key: "order-wallet-cancel:#{@order.id}").call
+    end
 
     def authorized?
       case @source

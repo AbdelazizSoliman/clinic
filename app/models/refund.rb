@@ -4,7 +4,7 @@ class Refund < ApplicationRecord
   belongs_to :actor, class_name: "User"
   belongs_to :cashier_session, optional: true
 
-  enum :payment_method, { cash: 0, external_card: 1, cash_on_delivery: 2 }, validate: true
+  enum :payment_method, { cash: 0, external_card: 1, cash_on_delivery: 2, wallet: 3 }, validate: true
   enum :status, { pending: 0, completed: 1, failed: 2, cancelled: 3 }, default: :pending, validate: true
   validates :amount_cents, numericality: { only_integer: true, greater_than: 0 }
   validates :idempotency_key, presence: true, uniqueness: true

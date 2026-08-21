@@ -102,12 +102,14 @@ module DemoData
       zones = seed_delivery_zones
       addresses = seed_addresses(accounts, zones)
       promotions, coupons = seed_promotions(accounts.fetch(:admin), categories, products, zones)
+      seed_loyalty_rules(accounts.fetch(:admin))
       seed_ready_cart(accounts.fetch(:customer), products, coupons.fetch(:active))
       orders = seed_orders(accounts, addresses, products, zones, promotions, coupons)
       orders += seed_safety_scenarios(accounts, addresses, products, zones)
       purchasing = seed_purchasing(accounts, products)
       pos = seed_pos(accounts, products)
       seed_return_scenarios(accounts, pos)
+      seed_loyalty_wallet(accounts, products, orders, pos)
       setting.class.invalidate_cache
       build_manifest(accounts, categories, brands, products, zones, orders, promotions, coupons, purchasing, pos,
         ingredients, safety_rules, synonyms)
@@ -422,7 +424,8 @@ module DemoData
           payment_status: status == "delivered" ? :paid : :unpaid, delivery_method: :standard, currency: "EGP",
           subtotal_cents: subtotal, discount_cents: discount, cart_discount_cents: discount,
           product_discount_cents: 0, delivery_discount_cents: 0, delivery_fee_cents: fee,
-          total_cents: subtotal - discount + fee, customer_email: user.email, customer_mobile_number: user.mobile_number,
+          total_cents: subtotal - discount + fee, cash_on_delivery_due_cents: subtotal - discount + fee,
+          customer_email: user.email, customer_mobile_number: user.mobile_number,
           customer_first_name: user.first_name, customer_last_name: user.last_name, submitted_at:,
           confirmed_at: %w[confirmed preparing ready_for_delivery out_for_delivery delivered].include?(status) ? submitted_at + 1.hour : nil,
           prescription_required: prescription_status.present?, delivery_zone: zone, delivery_zone_code: zone.code,
@@ -511,6 +514,7 @@ module DemoData
           payment_status: :unpaid, delivery_method: :standard, currency: "EGP",
           subtotal_cents: subtotal, discount_cents: 0, cart_discount_cents: 0, product_discount_cents: 0,
           delivery_discount_cents: 0, delivery_fee_cents: fee, total_cents: subtotal + fee,
+          cash_on_delivery_due_cents: subtotal + fee,
           customer_email: user.email, customer_mobile_number: user.mobile_number,
           customer_first_name: user.first_name, customer_last_name: user.last_name, submitted_at:,
           prescription_required: true, delivery_zone: zone, delivery_zone_code: zone.code,
@@ -579,7 +583,8 @@ module DemoData
           payment_status: :unpaid, delivery_method: :standard, currency: "EGP",
           subtotal_cents: subtotal, discount_cents: 0, cart_discount_cents: 0, product_discount_cents: 0,
           delivery_discount_cents: 0, delivery_fee_cents: zone.delivery_fee_cents,
-          total_cents: subtotal + zone.delivery_fee_cents, customer_email: user.email,
+          total_cents: subtotal + zone.delivery_fee_cents,
+          cash_on_delivery_due_cents: subtotal + zone.delivery_fee_cents, customer_email: user.email,
           customer_mobile_number: user.mobile_number, customer_first_name: user.first_name,
           customer_last_name: user.last_name, submitted_at:, prescription_required: true, delivery_zone: zone,
           delivery_zone_code: zone.code, delivery_zone_name: zone.name, delivery_method_name: "توصيل عادي",
@@ -843,6 +848,54 @@ module DemoData
           Returns::Review.new(return_request: result.record, actor: admin, approve: false,
             notes: "رفض تشغيلي تجريبي").call
         end
+      end
+    end
+
+    def seed_loyalty_rules(actor)
+      earning = LoyaltyRule.find_or_initialize_by(code: "DEMO-EARN-100")
+      earning.update!(name: "نقطة لكل جنيه تجريبي", rule_type: :earning, active: true,
+        points_awarded: 1, spend_threshold_cents: 100, minimum_eligible_spend_cents: 100, expiration_days: 365)
+      redemption = LoyaltyRule.find_or_initialize_by(code: "DEMO-REDEEM-100")
+      redemption.update!(name: "مائة نقطة تساوي جنيهاً تجريبياً", rule_type: :redemption, active: true,
+        redemption_points: 100, redemption_value_cents: 100, minimum_redemption_points: 100,
+        maximum_redemption_points: 5_000)
+      [ earning, redemption ].each do |rule|
+        AdminAuditEvent.find_or_create_by!(actor:, auditable: rule, action: "loyalty_rule_seeded")
+      end
+    end
+
+    def seed_loyalty_wallet(accounts, products, orders, pos)
+      customer = accounts.fetch(:customer)
+      admin = accounts.fetch(:admin)
+      Wallet::Adjust.new(customer:, actor: admin, amount_cents: 25_000, direction: "credit",
+        reason: "رصيد افتتاحي تجريبي", idempotency_key: "demo:wallet:opening").call
+      Loyalty::Adjust.new(customer:, actor: admin, points: 1_000, direction: "credit",
+        reason: "نقاط افتتاحية تجريبية", idempotency_key: "demo:loyalty:opening").call
+      delivered = orders.find(&:delivered?)
+      Loyalty::Earn.new(source: delivered, customer:, actor: admin,
+        idempotency_key: "demo:loyalty:online-earn").call if delivered
+
+      account = customer.ensure_loyalty_account!
+      unless account.ledger_entries.exists?(idempotency_key: "demo:loyalty:expired-earn")
+        account.ledger_entries.create!(entry_type: :earn, points: 50, reason: "نقاط تجريبية منتهية",
+          occurred_at: @reference_time - 40.days, expires_at: @reference_time - 1.day,
+          idempotency_key: "demo:loyalty:expired-earn")
+      end
+      Loyalty::Expire.new(account:, now: @reference_time).call
+
+      session = pos[:sessions].find { |entry| entry.identifier == "DEMO-POS-REFUND" }
+      sale = PosSale.find_by(number: "DEMO-POS-LOYALTY-WALLET")
+      unless sale
+        sale = session.pos_sales.create!(cashier: admin, customer:, number: "DEMO-POS-LOYALTY-WALLET")
+        Pos::Cart.new(sale:, actor: admin).add(product: products.fetch("sterile-gauze"))
+        payable = sale.total_cents - 100
+        wallet_amount = [ 1_000, payable ].min
+        cash_amount = payable - wallet_amount
+        payments = [ { payment_method: "wallet", amount_cents: wallet_amount } ]
+        payments << { payment_method: "cash", amount_cents: cash_amount, tendered_cents: cash_amount } if cash_amount.positive?
+        result = Pos::Complete.new(sale:, actor: admin, idempotency_key: "demo:pos:loyalty-wallet",
+          loyalty_points: 100, payments:).call
+        raise Refused, result.errors.join("، ") unless result.success?
       end
     end
 
