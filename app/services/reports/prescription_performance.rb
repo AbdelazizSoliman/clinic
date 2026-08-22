@@ -5,6 +5,7 @@ module Reports
     def initialize(range) = @range = range
     def call
       scope = Prescription.where(submitted_at: @range.range)
+      scope = scope.joins(:order).where(orders: { branch_id: Current.branch_scope.id }) if Current.branch_scope
       counts = scope.group(:status).count
       reviewed = scope.where.not(reviewed_at: nil)
       total_final = counts.values_at("approved", "partially_approved", "rejected").compact.sum
@@ -13,15 +14,20 @@ module Reports
       Result.new(status_counts: counts,
         approval_rate: total_final.zero? ? nil : (counts.fetch("approved", 0) * 100.0 / total_final).round(1),
         rejection_rate: total_final.zero? ? nil : (counts.fetch("rejected", 0) * 100.0 / total_final).round(1),
-        average_review_seconds: reviewed.average("EXTRACT(EPOCH FROM (reviewed_at - submitted_at))")&.to_i,
+        average_review_seconds: reviewed.average("EXTRACT(EPOCH FROM (prescriptions.reviewed_at - prescriptions.submitted_at))")&.to_i,
         review_sample_count: reviewed.count, oldest: scope.where(status: %i[submitted under_review]).order(:submitted_at).limit(10),
-        follow_ups: OrderFollowUp.where(created_at: @range.range, kind: :prescription_clarification).group(:status).count,
+        follow_ups: follow_ups.group(:status).count,
         item_status_counts: items.group(:status).count,
         substitution_count: items.where(status: :substituted).count,
         pharmacist_workload: pharmacist_workload(items))
     end
 
     private
+
+    def follow_ups
+      scope = OrderFollowUp.where(created_at: @range.range, kind: :prescription_clarification)
+      Current.branch_scope ? scope.joins(:order).where(orders: { branch_id: Current.branch_scope.id }) : scope
+    end
 
     def pharmacist_workload(items)
       counts_by_id = items.where.not(reviewed_by_id: nil).group(:reviewed_by_id).count

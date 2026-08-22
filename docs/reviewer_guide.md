@@ -224,3 +224,5 @@ and quarantined examples.
 For Phase 22, open **المرتجعات** from staff navigation, locate a delivered order or completed POS receipt, approve it, inspect prescription lines as the pharmacist, receive to the original batch, then post the refund as admin. Retry receipt/refund to observe idempotency and verify the original transaction remains unchanged.
 
 For Phase 23, review the demo customer's points/wallet history, the identified mixed-payment POS receipt, and the admin ledger screen. Only its cash component changes reconciliation.
+
+For Phases 24–27, switch among the fictional branches and verify different batches, POS/purchasing activity, and a dispatched/received transfer. The seed also creates `DEMO-B` with independent products, stock, POS, online ordering, purchasing and ledger activity. Use tenant-A credentials or API tokens to request stable tenant-B IDs and observe not-found responses. Review `/api/v1/purchase_orders`, `/api/v1/returns`, webhook management/signatures, the advanced analytics dashboard/CSV, and run the three read-only `integrity:*` tasks.

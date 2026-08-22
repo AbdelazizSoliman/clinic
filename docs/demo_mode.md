@@ -157,3 +157,5 @@ verification environment.
 Phase 22 demo guidance uses fictional completed order/POS sources and stable return identifiers only. Returned batches, dispositions, inspections, and refund markers never trigger external communication or real payment activity.
 
 Phase 23 adds stable fictional rules, points and wallet credit, online earning, expired points, and an identified mixed-payment POS sale. Re-seeding does not duplicate economic value.
+
+Phases 24–27 add three branches for the primary showcase plus an independent `DEMO-B` organization with its own users, branch, products, batches, POS sale, online order, purchase order, loyalty/wallet activity and analytics. Stable `find_or_create`/idempotency keys make a second seed economically neutral. Demo API clients contain no usable plaintext credential and webhooks make no real delivery.

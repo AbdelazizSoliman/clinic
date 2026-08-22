@@ -15,7 +15,7 @@ class TransactionalEmailDeliveryJobTest < ActiveJob::TestCase
     fake_message.define_singleton_method(:deliver_now) { true }
     fake_proxy = Object.new
     fake_proxy.define_singleton_method(:customer_update) { fake_message }
-    NotificationMailer.stub(:with, fake_proxy) { TransactionalEmailDeliveryJob.perform_now(first.id) }
+    NotificationMailer.stub(:with, fake_proxy) { TransactionalEmailDeliveryJob.perform_now(first.organization_id, first.id) }
     assert first.reload.delivered?
     assert_not_includes first.attributes.to_json, "رسالة آمنة"
   end
@@ -23,7 +23,7 @@ class TransactionalEmailDeliveryJobTest < ActiveJob::TestCase
   test "failure records only exception class" do
     delivery = TransactionalEmailDelivery.create!(user: users(:customer), mailer: "Unsupported",
       action: "none", status: :queued, queued_at: Time.current, deduplication_key: "failed:1")
-    TransactionalEmailDeliveryJob.perform_now(delivery.id)
+    TransactionalEmailDeliveryJob.perform_now(delivery.organization_id, delivery.id)
     assert delivery.reload.failed?
     assert_equal "ArgumentError", delivery.last_error_class
   end

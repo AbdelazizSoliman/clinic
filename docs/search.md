@@ -284,3 +284,7 @@ Deferred: transliteration, stemming/lemmatization, query-history suggestions, pe
 personalization, ranking weights tuned on real traffic, and index-assisted fuzzy matching via
 a session-level similarity threshold. Permanently out of scope: external search services,
 vector or semantic embeddings, generative AI search, recommendations, voice and image search.
+
+## Tenant isolation
+
+Products, ingredients, synonyms and search events are organization-owned and centrally scoped. Suggestions and all storefront/POS/substitution results therefore exclude other tenants even for guessed stable IDs. Search events also retain the verified branch context, so reports and aggregate CSV honor staff branch access; historical rows were backfilled to their organization's deterministic default branch.

@@ -12,7 +12,7 @@
       <%= link_to "العروض والكوبونات", admin_promotions_path if current_user.can_manage_promotions? %><%= link_to "الولاء والمحفظة", admin_loyalty_wallet_path if current_user.can_manage_loyalty_wallet? %><%= link_to "المتجر", root_path, class: "mr-auto" %>
       <%= link_to "المستخدمون", admin_users_path if current_user.can_manage_users? %><%= link_to "الإعدادات", edit_admin_pharmacy_setting_path if current_user.can_manage_application_settings? %>
       <%= link_to "التقارير", admin_reports_root_path if current_user.can_view_business_reports? || current_user.can_view_inventory_reports? %>
-      <%= link_to "عن النسخة التجريبية", demo_path if demo_mode? %>
+      <%= link_to "عن النسخة التجريبية", demo_path if demo_mode? %><strong class="rounded bg-white/10 px-2 py-1"><%= current_branch&.display_name %></strong>
     </nav></header><%= render "shared/flash" %><main><%= yield %></main>
   </body>
 </html>

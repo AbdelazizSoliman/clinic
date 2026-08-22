@@ -6,6 +6,8 @@ module Returns
     end
 
     def call
+      return failure(@request, "لا يمكن استلام مرتجع عبر مؤسسات مختلفة") unless Operations::TenantGuard.same_organization?(
+        @request, @request.source, @actor)
       return failure(@request, "غير مصرح بتنفيذ قرار المخزون") unless @actor&.can_disposition_returns?
       return failure(@request, "مفتاح العملية مطلوب") if @key.blank?
       ReturnRequest.transaction do

@@ -328,3 +328,7 @@ lines), therapeutic-class grouping, POS patient linkage for patient-dependent
 rules, ingredient-group allergy matching, and any external drug-information
 source. Generative clinical advice, diagnosis, autonomous prescribing, OCR and
 prescription NLP remain permanently out of scope.
+
+## Tenant and analytics boundary
+
+Rules, conditions, evaluations, findings and their clinical references are tenant-owned; rule code/version uniqueness is per organization. Evaluation services reject mixed-tenant reviewables, products and users before findings are persisted. Analytics expose aggregate severity, rule type, acknowledgement/override and post-substitution counts under clinical authorization; they are operational metrics, not quality scores or outcome inference.

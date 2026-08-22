@@ -1,0 +1,10 @@
+main:
+  code: MAIN
+  name: Main Branch
+  arabic_name: الفرع الرئيسي
+  active: true
+  timezone: Africa/Cairo
+  default: true
+  fulfilment_enabled: true
+  pos_enabled: true
+  purchasing_enabled: true

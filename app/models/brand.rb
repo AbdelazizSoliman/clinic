@@ -6,7 +6,7 @@ class Brand < ApplicationRecord
   has_many :products, dependent: :restrict_with_error
   has_one_attached :logo
 
-  validates :name, :slug, presence: true, uniqueness: true
+  validates :name, :slug, presence: true, uniqueness: { scope: :organization_id }
   validates :slug, format: { with: /\A[a-z0-9]+(?:-[a-z0-9]+)*\z/ }
   validates :active, inclusion: { in: [ true, false ] }
   validates :website_url, format: { with: %r{\Ahttps?://[^\s]+\z} }, allow_blank: true

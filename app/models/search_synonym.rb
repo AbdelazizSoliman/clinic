@@ -10,7 +10,7 @@ class SearchSynonym < ApplicationRecord
 
   validates :term, :expansion, presence: true, length: { maximum: 60 }
   validates :normalized_term, :normalized_expansion, presence: true, length: { minimum: 2, maximum: 60 }
-  validates :normalized_expansion, uniqueness: { scope: :normalized_term }
+  validates :normalized_expansion, uniqueness: { scope: %i[organization_id normalized_term] }
   validates :notes, length: { maximum: 500 }, allow_blank: true
   validates :active, inclusion: { in: [ true, false ] }
   validate :pair_differs

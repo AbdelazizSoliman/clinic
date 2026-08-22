@@ -2,12 +2,15 @@ class TransactionalEmailDeliveryJob < ApplicationJob
   queue_as :mailers
   retry_on StandardError, wait: :polynomially_longer, attempts: 3
 
-  def perform(delivery_id)
-    delivery = TransactionalEmailDelivery.find(delivery_id)
-    return if delivery.delivered? || delivery.cancelled?
-    delivery.update!(status: :processing, attempts_count: delivery.attempts_count + 1, last_error_class: nil)
-    mail_for(delivery).deliver_now
-    delivery.update!(status: :delivered, delivered_at: Time.current, failed_at: nil)
+  def perform(organization_id, delivery_id)
+    delivery = nil
+    with_organization(organization_id) do
+      delivery = TransactionalEmailDelivery.find(delivery_id)
+      return if delivery.delivered? || delivery.cancelled?
+      delivery.update!(status: :processing, attempts_count: delivery.attempts_count + 1, last_error_class: nil)
+      mail_for(delivery).deliver_now
+      delivery.update!(status: :delivered, delivered_at: Time.current, failed_at: nil)
+    end
   rescue => error
     delivery&.update!(status: :failed, failed_at: Time.current, last_error_class: error.class.name)
     Errors::Reporter.capture(error, context: { job_class: self.class.name })

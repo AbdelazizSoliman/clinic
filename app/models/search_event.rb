@@ -8,6 +8,7 @@ class SearchEvent < ApplicationRecord
   TEXTLESS_CONTEXTS = %w[substitution].freeze
 
   belongs_to :selected_product, class_name: "Product", optional: true
+  belongs_to :branch
 
   scope :zero_result, -> { where(zero_result: true) }
   scope :with_text, -> { where.not(normalized_query: nil) }

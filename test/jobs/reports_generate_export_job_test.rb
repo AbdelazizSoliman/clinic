@@ -7,7 +7,7 @@ class ReportsGenerateExportJobTest < ActiveJob::TestCase
     assert result.success?
     assert_enqueued_with(job: Reports::GenerateExportJob)
 
-    Reports::GenerateExportJob.perform_now(result.export.id)
+    Reports::GenerateExportJob.perform_now(result.export.organization_id, result.export.id)
     export = result.export.reload
     assert export.completed?
     assert export.file.attached?
@@ -15,7 +15,7 @@ class ReportsGenerateExportJobTest < ActiveJob::TestCase
     assert export.expires_at.future?
 
     export.update!(expires_at: 1.minute.ago)
-    Reports::CleanupExpiredExportsJob.perform_now
+    Reports::CleanupExpiredExportsJob.perform_now(export.organization_id)
     assert export.reload.expired?
     assert_not export.file.attached?
   end

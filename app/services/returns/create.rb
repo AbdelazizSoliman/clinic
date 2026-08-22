@@ -7,6 +7,7 @@ module Returns
     end
 
     def call
+      return failure(nil, "لا يمكن إنشاء مرتجع عبر مؤسسات مختلفة") unless Operations::TenantGuard.same_organization?(@source, @actor)
       return failure(nil, "المعاملة الأصلية غير مؤهلة للمرتجع") unless eligible_source?
       return failure(nil, "غير مصرح بإنشاء المرتجع") unless authorized?
       request = nil

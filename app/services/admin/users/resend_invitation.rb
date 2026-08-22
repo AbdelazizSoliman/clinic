@@ -15,7 +15,7 @@ module Admin
           UserAuditEvent.create!(user: @user, actor: @actor, action: "invitation_resent")
           created
         end
-        InvitationDeliveryJob.perform_later(invitation.id, token)
+        InvitationDeliveryJob.perform_later(invitation.organization_id, invitation.id, token)
         true
       end
     end

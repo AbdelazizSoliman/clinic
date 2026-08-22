@@ -1,5 +1,7 @@
 class InventoryBatch < ApplicationRecord
   belongs_to :product
+  belongs_to :branch, default: -> { Current.branch || Branch.default_branch }
+  belongs_to :source_inventory_batch, class_name: "InventoryBatch", optional: true
   belongs_to :supplier, optional: true
   belongs_to :purchase_receipt, optional: true
   belongs_to :purchase_receipt_item, optional: true
@@ -13,7 +15,7 @@ class InventoryBatch < ApplicationRecord
   normalizes :batch_number, :lot_number, with: ->(value) { value.to_s.strip.upcase.presence }
 
   validates :batch_number, :expiry_date, :received_at, presence: true
-  validates :batch_number, uniqueness: true, length: { maximum: 100 }
+  validates :batch_number, uniqueness: { scope: :branch_id }, length: { maximum: 100 }
   validates :original_quantity, numericality: { only_integer: true, greater_than: 0 }
   validates :on_hand_quantity, :reserved_quantity, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
   validates :unit_cost_cents, numericality: { only_integer: true, greater_than_or_equal_to: 0 }, allow_nil: true
@@ -62,7 +64,7 @@ class InventoryBatch < ApplicationRecord
   end
 
   def identity_is_immutable
-    fields = %w[product_id supplier_id purchase_receipt_id purchase_receipt_item_id batch_number lot_number manufacture_date expiry_date received_at original_quantity unit_cost_cents]
+    fields = %w[product_id branch_id source_inventory_batch_id supplier_id purchase_receipt_id purchase_receipt_item_id batch_number lot_number manufacture_date expiry_date received_at original_quantity unit_cost_cents]
     errors.add(:base, "هوية التشغيلة وسجلها التجاري غير قابلين للتعديل") if (changes.keys & fields).any?
   end
 end

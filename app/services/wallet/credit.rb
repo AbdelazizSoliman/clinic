@@ -6,6 +6,7 @@ module Wallet
         entry_type.to_s, source, actor, reason, idempotency_key
     end
     def call
+      return failure(nil, "لا يمكن قيد محفظة عبر مؤسسات مختلفة") unless Operations::TenantGuard.same_organization?(@customer, @source, @actor)
       existing = WalletLedgerEntry.find_by(idempotency_key: @key)
       return success(existing) if existing
       return failure(nil, "قيمة الائتمان غير صحيحة") unless @amount.positive? && @type.in?(WalletLedgerEntry::CREDIT_TYPES)

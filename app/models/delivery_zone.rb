@@ -5,8 +5,8 @@ class DeliveryZone < ApplicationRecord
   has_many :orders, dependent: :restrict_with_error
 
   validates :name, :code, :governorate, :city, presence: true
-  validates :code, uniqueness: true, format: { with: /\A[a-z0-9]+(?:-[a-z0-9]+)*\z/ }
-  validates :name, uniqueness: { scope: %i[governorate city] }
+  validates :code, uniqueness: { scope: :organization_id }, format: { with: /\A[a-z0-9]+(?:-[a-z0-9]+)*\z/ }
+  validates :name, uniqueness: { scope: %i[organization_id governorate city] }
   validates :delivery_fee_cents, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
   validates :free_delivery_threshold_cents, :minimum_order_cents, numericality: { only_integer: true, greater_than_or_equal_to: 0 }, allow_nil: true
   validates :estimated_min_minutes, numericality: { only_integer: true, greater_than: 0 }

@@ -92,6 +92,26 @@ class GuidedDemoTest < ActionDispatch::IntegrationTest
     assert_select "[aria-label='تلميح للنسخة التجريبية']", count: 0
   end
 
+  test "second organization has independent economic data and reseeding is idempotent" do
+    DemoData::Seeder.call
+    organization = Organization.unscoped.find_by!(code: "DEMO-B")
+    first = Current.set(organization:) do
+      [ Branch.count, Product.count, InventoryBatch.sum(:on_hand_quantity), PosSale.completed.count,
+        Order.count, PurchaseOrder.count, LoyaltyLedgerEntry.count, WalletLedgerEntry.count ]
+    end
+
+    DemoData::Seeder.call
+
+    second = Current.set(organization:) do
+      [ Branch.count, Product.count, InventoryBatch.sum(:on_hand_quantity), PosSale.completed.count,
+        Order.count, PurchaseOrder.count, LoyaltyLedgerEntry.count, WalletLedgerEntry.count ]
+    end
+    assert_equal first, second
+    assert first.all?(&:positive?)
+  ensure
+    Current.reset
+  end
+
   test "login explains temporary credentials without rendering them" do
     get new_user_session_path
 

@@ -1,7 +1,7 @@
 class LoyaltyRule < ApplicationRecord
   enum :rule_type, { earning: 0, redemption: 1 }, validate: true
   validates :code, :name, presence: true
-  validates :code, uniqueness: true
+  validates :code, uniqueness: { scope: :organization_id }
   validates :minimum_eligible_spend_cents, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
   validates :expiration_days, numericality: { only_integer: true, greater_than: 0 }, allow_nil: true
   validate :configuration_is_valid

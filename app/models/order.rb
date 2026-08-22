@@ -1,5 +1,8 @@
 class Order < ApplicationRecord
+  after_create_commit { Webhooks::Publish.call("order.created", { order_id: id, number:, branch_id:, status: }) }
+  after_update_commit :publish_order_webhook, if: :saved_change_to_status?
   belongs_to :user
+  belongs_to :branch, default: -> { Current.branch || Branch.default_branch }
   belongs_to :cart
   has_many :items, class_name: "OrderItem", dependent: :destroy, inverse_of: :order
   has_one :order_address, dependent: :destroy
@@ -69,5 +72,10 @@ class Order < ApplicationRecord
   def synchronize_payment_breakdown
     return unless new_record? || will_save_change_to_total_cents? || will_save_change_to_wallet_paid_cents?
     self.cash_on_delivery_due_cents = total_cents.to_i - wallet_paid_cents.to_i
+  end
+
+  def publish_order_webhook
+    event = delivered? ? "order.completed" : "order.updated"
+    Webhooks::Publish.call(event, { order_id: id, number:, branch_id:, status: })
   end
 end

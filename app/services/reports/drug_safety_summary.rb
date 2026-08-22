@@ -10,6 +10,11 @@ module Reports
     def call
       findings = DrugSafetyFinding.where(created_at: @range.range)
       evaluations = DrugSafetyEvaluation.where(created_at: @range.range)
+      if Current.branch_scope
+        reviews = branch_reviews
+        evaluations = evaluations.where(prescription_review_id: reviews)
+        findings = findings.joins(:drug_safety_evaluation).where(drug_safety_evaluations: { prescription_review_id: reviews })
+      end
       status_counts = findings.group(:status).count
       Result.new(
         cards: { findings: findings.count, blocking: findings.where(blocking: true).count,
@@ -30,7 +35,17 @@ module Reports
 
     private
 
-    def open_blocking_scope = DrugSafetyFinding.current.unresolved.blocking
+    def open_blocking_scope
+      scope = DrugSafetyFinding.current.unresolved.blocking
+      Current.branch_scope ? scope.joins(:drug_safety_evaluation).where(drug_safety_evaluations: { prescription_review_id: branch_reviews }) : scope
+    end
+
+    def branch_reviews
+      order_ids = Order.where(branch: Current.branch_scope).select(:id)
+      pos_ids = PosSale.where(branch: Current.branch_scope).select(:id)
+      PrescriptionReview.where(reviewable_type: "Order", reviewable_id: order_ids)
+        .or(PrescriptionReview.where(reviewable_type: "PosSale", reviewable_id: pos_ids)).select(:id)
+    end
 
     def override_by_pharmacist(findings)
       counts = findings.where(status: :overridden).where.not(resolved_by_id: nil).group(:resolved_by_id).count

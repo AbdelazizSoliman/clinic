@@ -26,6 +26,7 @@ inactive:
   active: false
 
 admin:
+  default_branch: main
   email: admin@example.com
   encrypted_password: <%= Devise::Encryptor.digest(User, "password123") %>
   first_name: مدير
@@ -35,6 +36,7 @@ admin:
   active: true
 
 pharmacist:
+  default_branch: main
   email: pharmacist@example.com
   encrypted_password: <%= Devise::Encryptor.digest(User, "password123") %>
   first_name: صيدلي
@@ -44,6 +46,7 @@ pharmacist:
   active: true
 
 order_manager:
+  default_branch: main
   email: operations@example.com
   encrypted_password: <%= Devise::Encryptor.digest(User, "password123") %>
   first_name: مدير
@@ -53,6 +56,7 @@ order_manager:
   active: true
 
 inventory_manager:
+  default_branch: main
   email: inventory@example.com
   encrypted_password: <%= Devise::Encryptor.digest(User, "password123") %>
   first_name: مدير

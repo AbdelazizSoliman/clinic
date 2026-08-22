@@ -3,7 +3,7 @@ module Pos
     before_action :find_sale, only: %i[show complete void]
 
     def index
-      @sales = (current_user.admin? ? PosSale.all : current_user.pos_sales).includes(:cashier).order(created_at: :desc).limit(100)
+      @sales = (current_user.admin? ? PosSale.where(branch: current_branch) : current_user.pos_sales.where(branch: current_branch)).includes(:cashier).order(created_at: :desc).limit(100)
     end
 
     def new

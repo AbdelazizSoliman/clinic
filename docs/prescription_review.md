@@ -249,3 +249,5 @@ exercises the per-item flow; treat the whole-prescription path as a
 compatibility surface, not the primary API.
 
 Prescription returns preserve the original review, substitution, decisions, acknowledgements, findings, and batch allocations. A pharmacist records a new return inspection; returning physical stock does not rerun drug-safety rules.
+
+Prescription, patient profile, review items and substitution history are organization-owned. HTTP lookups use tenant-scoped parents and `Prescriptions::DecideLine` rejects a product, branch, reviewer or reviewable from another tenant before allocation or decision history is written. Analytics expose workload/status/turnaround aggregates only, never individual clinical histories.

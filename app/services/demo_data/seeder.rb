@@ -90,6 +90,8 @@ module DemoData
 
     def seed_all
       accounts = seed_accounts
+      branches = seed_branches(accounts)
+      Current.branch = branches.fetch(:main)
       setting = seed_setting
       categories = seed_categories
       brands = seed_brands
@@ -110,9 +112,138 @@ module DemoData
       pos = seed_pos(accounts, products)
       seed_return_scenarios(accounts, pos)
       seed_loyalty_wallet(accounts, products, orders, pos)
+      seed_secondary_organization
       setting.class.invalidate_cache
       build_manifest(accounts, categories, brands, products, zones, orders, promotions, coupons, purchasing, pos,
         ingredients, safety_rules, synonyms)
+    ensure
+      Current.reset
+    end
+
+    def seed_secondary_organization
+      source_category = Category.first
+      source_brand = Brand.first
+      source_product = Product.active.first
+      source_order = Order.includes(:items, :order_address).first
+      organization = Organization.unscoped.find_or_create_by!(code: "DEMO-B") do |record|
+        record.assign_attributes(name: "صيدليات النخيل التجريبية", active: true, timezone: "Africa/Cairo", currency: "EGP", locale: "ar")
+      end
+      Current.set(organization:) do
+        branch = Branch.find_or_create_by!(code: "PALM-MAIN") do |record|
+          record.assign_attributes(name: "Palm Main Branch", arabic_name: "فرع النخيل الرئيسي", active: true,
+            timezone: "Africa/Cairo", default: true, fulfilment_enabled: true, pos_enabled: true, purchasing_enabled: true)
+        end
+        admin = User.find_or_initialize_by(email: "admin@palm-demo.example.test")
+        unless admin.persisted?
+          admin.assign_attributes(first_name: "مدير", last_name: "النخيل", mobile_number: "01000000881", role: :admin,
+            active: true, default_branch: branch, password: password_for(:admin), otp_secret: totp_secret, otp_enabled_at: @reference_time)
+          admin.save!
+        end
+        customer = User.find_or_initialize_by(email: "customer@palm-demo.example.test")
+        unless customer.persisted?
+          customer.assign_attributes(first_name: "عميل", last_name: "النخيل", mobile_number: "01000000882", role: :customer,
+            active: true, password: password_for(:customer))
+          customer.save!
+        end
+        admin.branch_memberships.find_or_create_by!(branch:)
+        category = Category.find_or_create_by!(slug: "palm-health") do |record|
+          record.assign_attributes(source_category.attributes.slice("name", "description", "icon", "position", "active")
+            .merge(name: "منتجات النخيل"))
+        end
+        brand = Brand.find_or_create_by!(slug: "palm-brand") do |record|
+          record.assign_attributes(source_brand.attributes.slice("description", "website_url", "active").merge(name: "علامة النخيل"))
+        end
+        product = Product.find_or_create_by!(slug: "palm-demo-product") do |record|
+          copied = source_product.attributes.except("id", "created_at", "updated_at", "organization_id", "slug", "sku", "barcode",
+            "category_id", "brand_id", "stock_quantity")
+          record.assign_attributes(copied.merge(name: "منتج النخيل التجريبي", sku: "PALM-DEMO-1", barcode: "990000000001",
+            category:, brand:, stock_quantity: 0, active: true, requires_prescription: false))
+        end
+        batch = InventoryBatch.find_or_create_by!(branch:, batch_number: "PALM-BATCH-1") do |record|
+          record.assign_attributes(product:, lot_number: "PALM-LOT-1", expiry_date: Date.current + 18.months,
+            received_at: @reference_time - 10.days, original_quantity: 40, on_hand_quantity: 40,
+            reserved_quantity: 0, returned_quarantine_quantity: 0, unit_cost_cents: 2_500)
+        end
+        Inventory::BatchAggregate.sync_product!(product)
+        unless InventoryMovement.exists?(idempotency_key: "demo-b:opening:#{batch.id}")
+          product.inventory_movements.create!(branch:, actor: admin, inventory_batch: batch, movement_type: :opening_balance,
+            quantity_delta: batch.on_hand_quantity, quantity_before: 0, quantity_after: product.stock_quantity,
+            batch_quantity_before: 0, batch_quantity_after: batch.on_hand_quantity, reason: "رصيد افتتاحي للمنظمة التجريبية الثانية",
+            idempotency_key: "demo-b:opening:#{batch.id}")
+        end
+        LoyaltyRule.find_or_create_by!(code: "PALM-EARN") do |record|
+          record.assign_attributes(name: "كسب نقاط النخيل", rule_type: :earning, active: true,
+            minimum_eligible_spend_cents: 0, spend_threshold_cents: 100, points_awarded: 1,
+            expiration_days: 365, effective_from: @reference_time - 1.day)
+        end
+        seed_secondary_pos(branch, admin, customer, product)
+        seed_secondary_order(branch, customer, product, source_order)
+        seed_secondary_purchasing(branch, admin, product)
+      end
+    end
+
+    def seed_secondary_pos(branch, admin, customer, product)
+      return if PosSale.exists?(number: "DEMO-B-POS-1")
+      Current.branch = branch
+      session = Pos::OpenSession.new(actor: admin, opening_cash_cents: 5_000, identifier: "DEMO-B-POS-SESSION").call.record
+      sale = session.pos_sales.create!(branch:, cashier: admin, customer:, number: "DEMO-B-POS-1")
+      Pos::Cart.new(sale:, actor: admin).add(product:, quantity: 2)
+      result = Pos::Complete.new(sale:, actor: admin, idempotency_key: "demo-b:pos:1",
+        payments: [ { payment_method: "cash", amount_cents: sale.reload.total_cents, tendered_cents: sale.total_cents } ]).call
+      raise Refused, result.errors.join("، ") unless result.success?
+      Wallet::Credit.new(customer:, amount_cents: 1_000, entry_type: :credit, source: sale, actor: admin,
+        reason: "رصيد محفظة تجريبي", idempotency_key: "demo-b:wallet:1").call
+    end
+
+    def seed_secondary_order(branch, customer, product, source_order)
+      return if Order.exists?(number: "DEMO-B-ORDER-1")
+      cart = Cart.create!(user: customer, status: :completed, currency: "EGP")
+      cents = (product.price * 100).round
+      order = Order.create!(user: customer, branch:, cart:, number: "DEMO-B-ORDER-1", status: :submitted,
+        payment_method: :cash_on_delivery, payment_status: :unpaid, delivery_method: :standard, currency: "EGP",
+        subtotal_cents: cents, discount_cents: 0, loyalty_discount_cents: 0, delivery_fee_cents: 0,
+        delivery_discount_cents: 0, prescription_adjustment_cents: 0, total_cents: cents, wallet_paid_cents: 0,
+        customer_email: customer.email, customer_mobile_number: customer.mobile_number,
+        customer_first_name: customer.first_name, customer_last_name: customer.last_name, submitted_at: @reference_time)
+      order.items.create!(product:, product_name: product.name, product_slug: product.slug, brand_name: product.brand.name,
+        category_name: product.category.name, quantity: 1, unit_price_cents: cents, original_unit_price_cents: cents,
+        final_unit_price_cents: cents, discount_cents: 0, line_total_cents: cents, requires_prescription: false)
+      address = source_order&.order_address
+      order.create_order_address!(address ? address.attributes.except("id", "order_id", "organization_id", "created_at", "updated_at") :
+        { label: "المنزل", recipient_name: customer.full_name, mobile_number: customer.mobile_number,
+          governorate: "القاهرة", city: "مدينة تجريبية", street: "شارع النخيل", building_number: "1" })
+      order.create_fulfilment!(branch:, status: :unassigned)
+    end
+
+    def seed_secondary_purchasing(branch, admin, product)
+      return if PurchaseOrder.exists?(number: "DEMO-B-PO-1")
+      Current.branch = branch
+      supplier = Supplier.find_or_create_by!(code: "PALM-SUP") { |record| record.assign_attributes(name: "مورد النخيل التجريبي", active: true) }
+      order = Purchasing::CreateOrder.new(actor: admin, supplier:, attributes: { expected_at: Date.current + 5.days }).call.purchase_order
+      order.update!(number: "DEMO-B-PO-1")
+      Purchasing::AddItem.new(purchase_order: order, actor: admin, product:, ordered_quantity: 5, unit_cost_cents: 2_400).call
+      Purchasing::Submit.new(purchase_order: order, actor: admin).call
+      Purchasing::Approve.new(purchase_order: order.reload, actor: admin).call
+    end
+
+    def seed_branches(accounts)
+      definitions = {
+        main: [ "MAIN", "Main Branch", "الفرع الرئيسي", true ],
+        nasr_city: [ "NASR", "Nasr City Branch", "فرع مدينة نصر", false ],
+        heliopolis: [ "HELIO", "Heliopolis Branch", "فرع مصر الجديدة", false ]
+      }
+      branches = definitions.transform_values do |code, name, arabic_name, default|
+        Branch.find_or_initialize_by(code:).tap do |branch|
+          branch.update!(name:, arabic_name:, timezone: "Africa/Cairo", active: true, default:,
+            fulfilment_enabled: true, pos_enabled: true, purchasing_enabled: true)
+        end
+      end
+      accounts.each_value do |user|
+        next unless user.privileged?
+        user.update!(default_branch: branches.fetch(:main)) unless user.default_branch == branches.fetch(:main)
+        branches.each_value { |branch| user.branch_memberships.find_or_create_by!(branch:) }
+      end
+      branches
     end
 
     def seed_accounts

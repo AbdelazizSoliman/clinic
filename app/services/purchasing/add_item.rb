@@ -12,6 +12,8 @@ module Purchasing
 
     def call
       return failure(nil, "غير مصرح بإدارة المشتريات") unless @actor&.can_manage_purchasing?
+      return failure(nil, "لا يمكن استخدام منتج من مؤسسة أخرى") unless Operations::TenantGuard.same_organization?(
+        @purchase_order, @actor, @product)
       return failure(nil, "يمكن تعديل البنود في المسودة فقط") unless @purchase_order.draft?
       return failure(nil, "المنتج غير نشط") unless @product&.active?
       item = nil

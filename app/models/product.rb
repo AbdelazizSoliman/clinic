@@ -28,14 +28,14 @@ class Product < ApplicationRecord
   scope :discontinued, -> { where.not(discontinued_at: nil) }
 
   validates :name, :slug, :price, :stock_quantity, presence: true
-  validates :slug, uniqueness: true, format: { with: /\A[a-z0-9]+(?:-[a-z0-9]+)*\z/ }
+  validates :slug, uniqueness: { scope: :organization_id }, format: { with: /\A[a-z0-9]+(?:-[a-z0-9]+)*\z/ }
   validates :price, numericality: { greater_than_or_equal_to: 0 }
   validates :compare_at_price, numericality: { greater_than: 0 }, allow_nil: true
   validates :stock_quantity, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
   validates :cost_price, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
   validates :low_stock_threshold, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
   validates :maximum_order_quantity, numericality: { only_integer: true, greater_than: 0 }
-  validates :sku, :barcode, uniqueness: true, allow_blank: true
+  validates :sku, :barcode, uniqueness: { scope: :organization_id }, allow_blank: true
   validates :active, :featured, :requires_prescription, :cold_chain_required, inclusion: { in: [ true, false ] }
   validate :compare_at_price_exceeds_price
 
@@ -51,16 +51,25 @@ class Product < ApplicationRecord
     ((compare_at_price - price) / compare_at_price * 100).round
   end
 
-  def active_reserved_quantity
-    return inventory_reservations.select(&:active?).sum(&:quantity) if inventory_reservations.loaded?
-
-    inventory_reservations.active.sum(:quantity)
+  def active_reserved_quantity(branch = nil)
+    relation = inventory_reservations.active
+    relation = relation.where(branch:) if branch
+    if inventory_reservations.loaded?
+      return inventory_reservations.select { |reservation| reservation.active? && (!branch || reservation.branch_id == branch.id) }.sum(&:quantity)
+    end
+    relation.sum(:quantity)
   end
 
-  def batch_stock_quantity = inventory_batches.sum(:on_hand_quantity)
+  def batch_stock_quantity(branch = nil)
+    relation = inventory_batches
+    relation = relation.where(branch:) if branch
+    relation.sum(:on_hand_quantity)
+  end
 
-  def available_to_sell_quantity
-    inventory_batches.allocatable.sum("on_hand_quantity - reserved_quantity")
+  def available_to_sell_quantity(branch = nil)
+    relation = inventory_batches.allocatable
+    return relation.where(branch:).sum("on_hand_quantity - reserved_quantity - returned_quarantine_quantity") if branch
+    relation.group(:branch_id).sum("on_hand_quantity - reserved_quantity - returned_quarantine_quantity").values.max.to_i
   end
 
   def available? = available_to_sell_quantity.positive?

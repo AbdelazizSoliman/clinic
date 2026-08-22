@@ -6,6 +6,7 @@ module Loyalty
         maximum_value_cents.to_i, actor, idempotency_key
     end
     def call
+      return failure(nil, "لا يمكن استبدال نقاط عبر مؤسسات مختلفة") unless Operations::TenantGuard.same_organization?(@customer, @source, @actor)
       existing = LoyaltyLedgerEntry.find_by(idempotency_key: @key)
       return success(existing, points: existing.points, value_cents: existing.metadata["value_cents"].to_i) if existing
       return success(nil) if @requested.zero?

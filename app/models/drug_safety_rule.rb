@@ -20,7 +20,7 @@ class DrugSafetyRule < ApplicationRecord
   scope :ordered, -> { order(Arel.sql("severity DESC"), :code, :version) }
 
   validates :code, presence: true, format: { with: /\A[A-Z0-9][A-Z0-9\-]*\z/ }, length: { maximum: 40 },
-    uniqueness: { scope: :version }
+    uniqueness: { scope: %i[organization_id version] }
   validates :version, numericality: { only_integer: true, greater_than: 0 }
   validates :name, :arabic_label, presence: true, length: { maximum: 160 }
   validates :description, presence: true, length: { maximum: 2000 }
@@ -75,7 +75,7 @@ class DrugSafetyRule < ApplicationRecord
 
   def single_active_version_per_code
     return unless active? && code.present?
-    scope = self.class.active.where(code:)
+    scope = self.class.unscoped.active.where(organization_id:, code:)
     scope = scope.where.not(id:) if persisted?
     errors.add(:active, "يوجد إصدار نشط آخر لنفس الرمز") if scope.exists?
   end

@@ -2,10 +2,19 @@ module Admin
   module Reports
     class BaseController < ApplicationController
       before_action :authenticate_user!
+      before_action :establish_report_branch_scope
       before_action :prepare_range
       layout "reports"
 
       private
+
+      def establish_report_branch_scope
+        Current.branch_scope = if current_user.admin? && params[:branch_id].present?
+          Branch.find_by(id: params[:branch_id])
+        elsif !current_user.admin?
+          current_branch
+        end
+      end
 
       def prepare_range
         @date_range = ::Reports::DateRange.call(params.slice(:preset, :from, :to).permit!)
@@ -30,7 +39,9 @@ module Admin
       end
 
       def safe_filters
-        params.slice(:preset, :from, :to, :status, :category_id, :brand_id, :zone_id).permit!.to_h
+        filters = params.slice(:preset, :from, :to, :status, :category_id, :brand_id, :zone_id, :branch_id).permit!.to_h
+        filters[:branch_id] = Current.branch_scope.id if Current.branch_scope
+        filters
       end
     end
   end

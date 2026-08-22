@@ -1,4 +1,5 @@
 featured_primary:
+  branch: main
   product: featured
   batch_number: TEST-BATCH-FEATURED
   lot_number: TEST-LOT-FEATURED
@@ -10,6 +11,7 @@ featured_primary:
   unit_cost_cents: 4000
 
 skin_primary:
+  branch: main
   product: skin_product
   batch_number: TEST-BATCH-SKIN
   lot_number: TEST-LOT-SKIN

@@ -6,7 +6,7 @@ module EmailDeliveries
       delivery = TransactionalEmailDelivery.find_or_create_by!(deduplication_key:) do |record|
         record.assign_attributes(user:, notification:, mailer:, action:, status: :queued, queued_at: Time.current)
       end
-      TransactionalEmailDeliveryJob.perform_later(delivery.id) if delivery.previously_new_record?
+      TransactionalEmailDeliveryJob.perform_later(delivery.organization_id, delivery.id) if delivery.previously_new_record?
       delivery
     rescue ActiveRecord::RecordNotUnique
       retry

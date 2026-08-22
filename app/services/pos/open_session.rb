@@ -8,12 +8,14 @@ module Pos
 
     def call
       return failure(nil, "غير مصرح بتشغيل نقطة البيع") unless @actor&.can_operate_pos?
+      branch = Current.branch || @actor.default_branch
+      return failure(nil, "اختر فرعًا مصرحًا لنقطة البيع") unless branch&.pos_enabled? && @actor.branch_access?(branch)
       return failure(nil, "رصيد بداية الصندوق لا يمكن أن يكون سالبًا") if @opening_cash_cents.negative?
       existing = @actor.cashier_sessions.open.first
       return success(existing) if existing
 
       session = CashierSession.transaction do
-        created = @actor.cashier_sessions.create!(identifier: @identifier.presence || NumberGenerator.session,
+        created = @actor.cashier_sessions.create!(branch:, identifier: @identifier.presence || NumberGenerator.session,
           opening_cash_cents: @opening_cash_cents, opened_at: Time.current)
         audit(@actor, created, "pos_session_opened", opening_cash_cents: @opening_cash_cents)
         created

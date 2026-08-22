@@ -123,6 +123,8 @@ module Reports
     # never anything that identifies a searcher.
     def search
       scope = SearchEvent.where(created_at: @range.range).with_text
+      scope = scope.where(branch: Current.branch_scope) if Current.branch_scope
+      scope = scope
         .group(:normalized_query, :context)
         .order(Arel.sql("COUNT(*) DESC"), Arel.sql("normalized_query ASC")).limit(CsvExporter::MAX_ROWS + 1)
       totals = scope.count

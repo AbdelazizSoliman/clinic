@@ -38,7 +38,9 @@ module Orders
         @cart.update!(status: :converting)
         items = @cart.items.includes(product: %i[brand category]).to_a
         products = Product.where(id: items.map(&:product_id)).order(:id).lock.index_by(&:id)
+        @branch = Branches::FulfilmentSelector.call(items)
         transaction_errors.concat(validate_locked_items(items, products))
+        transaction_errors << "لا يوجد فرع واحد يملك مخزونًا كافيًا لكل بنود الطلب" if !@branch && transaction_errors.empty?
         if transaction_errors.any?
           raise ActiveRecord::Rollback
         end
@@ -64,7 +66,7 @@ module Orders
         create_items_and_reservations!(order, totals)
         create_commercial_records!(order, totals)
         create_address_snapshot!(order)
-        order.create_fulfilment!(delivery_zone: @delivery_zone, delivery_slot: @delivery_slot, status: :unassigned)
+        order.create_fulfilment!(branch: @branch, delivery_zone: @delivery_zone, delivery_slot: @delivery_slot, status: :unassigned)
         create_prescription!(order) if prescription_required
         @cart.update!(status: :completed)
       end
@@ -114,14 +116,19 @@ module Orders
         product = products[item.product_id]
         if !product&.active?
           "#{item.product.name} لم يعد نشطًا"
-        elsif item.quantity > product.available_to_sell_quantity
-          "الكمية المطلوبة من #{product.name} غير متاحة؛ المتاح #{product.available_to_sell_quantity}"
+        elsif item.quantity > available_quantity_for(product)
+          "الكمية المطلوبة من #{product.name} غير متاحة؛ المتاح #{available_quantity_for(product)}"
         end
       end
     end
 
+    def available_quantity_for(product)
+      return product.available_to_sell_quantity(@branch) if @branch
+      Branch.fulfilment_enabled.map { |branch| product.available_to_sell_quantity(branch) }.max.to_i
+    end
+
     def create_order!(totals, prescription_required)
-      @user.orders.create!(
+      @user.orders.create!(branch: @branch,
         cart: @cart, number: Orders::NumberGenerator.call,
         status: prescription_required ? :pending_prescription : :submitted,
         payment_method: @payment_method, payment_status: :unpaid, delivery_method: @delivery_method,
@@ -182,7 +189,7 @@ module Orders
           line_total_cents: line.line_total_cents, requires_prescription: product.requires_prescription?
         )
         unless product.requires_prescription?
-          reservation = order.inventory_reservations.create!(order_item: item, product:, quantity: line.quantity, status: :active,
+          reservation = order.inventory_reservations.create!(branch: order.branch, order_item: item, product:, quantity: line.quantity, status: :active,
             expires_at: Inventory::ReservationExpiryPolicy.expires_at_for(order))
           allocation = Inventory::AllocateFefo.new(reservation:).call
           unless allocation.success?

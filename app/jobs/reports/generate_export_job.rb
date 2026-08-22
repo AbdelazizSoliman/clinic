@@ -3,8 +3,11 @@ module Reports
     queue_as :exports
     retry_on ActiveRecord::Deadlocked, wait: :polynomially_longer, attempts: 3
 
-    def perform(export_id)
-      export = ReportExport.find(export_id)
+    def perform(organization_id, export_id)
+      export = nil
+      with_organization(organization_id) do
+        export = ReportExport.find(export_id)
+        Current.branch_scope = Branch.find(export.filters["branch_id"]) if export.filters["branch_id"].present?
       return if export.completed? || export.expired?
       unless AsyncExporter.authorized?(export.user, export.report_type)
         export.update!(status: :failed, failed_at: Time.current, error_class: "AuthorizationChanged")
@@ -18,7 +21,8 @@ module Reports
       export.file.attach(io: StringIO.new(csv.content), filename: safe_filename(export, range), content_type: "text/csv")
       export.update!(status: :completed, row_count: csv.row_count, completed_at: Time.current,
         expires_at: ReportExport::RETENTION.from_now)
-      notify(export, "report_export_completed", "اكتمل تصدير التقرير", "أصبح ملف التقرير جاهزًا للتنزيل.")
+        notify(export, "report_export_completed", "اكتمل تصدير التقرير", "أصبح ملف التقرير جاهزًا للتنزيل.")
+      end
     rescue => error
       export&.update!(status: :failed, failed_at: Time.current, error_class: error.class.name)
       notify(export, "report_export_failed", "تعذر تصدير التقرير", "تعذر إنشاء ملف التقرير. حاول مرة أخرى لاحقًا.") if export

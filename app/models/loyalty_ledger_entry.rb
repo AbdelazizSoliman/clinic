@@ -2,6 +2,7 @@ class LoyaltyLedgerEntry < ApplicationRecord
   CREDIT_TYPES = %w[earn redemption_restore adjustment_credit].freeze
   DEBIT_TYPES = %w[redeem expire earn_reversal adjustment_debit].freeze
   belongs_to :loyalty_account
+  belongs_to :branch, default: -> { source.try(:branch) || Current.branch || Branch.default_branch }
   belongs_to :source, polymorphic: true, optional: true
   belongs_to :actor, class_name: "User", optional: true
   belongs_to :reversal_of, class_name: "LoyaltyLedgerEntry", optional: true

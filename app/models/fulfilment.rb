@@ -1,5 +1,6 @@
 class Fulfilment < ApplicationRecord
   belongs_to :order
+  belongs_to :branch, default: -> { order&.branch || Current.branch || Branch.default_branch }
   belongs_to :delivery_zone, optional: true
   belongs_to :delivery_slot, optional: true
   belongs_to :assigned_to, class_name: "User", optional: true

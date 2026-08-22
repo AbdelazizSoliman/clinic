@@ -1,6 +1,7 @@
 class WalletLedgerEntry < ApplicationRecord
   CREDIT_TYPES = %w[credit refund adjustment_credit reversal_credit].freeze
   belongs_to :wallet_account
+  belongs_to :branch, default: -> { source.try(:branch) || Current.branch || Branch.default_branch }
   belongs_to :source, polymorphic: true, optional: true
   belongs_to :actor, class_name: "User", optional: true
   belongs_to :reversal_of, class_name: "WalletLedgerEntry", optional: true

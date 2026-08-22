@@ -2,6 +2,7 @@ class InventoryReservation < ApplicationRecord
   belongs_to :order
   belongs_to :order_item
   belongs_to :product
+  belongs_to :branch, default: -> { order&.branch || Current.branch || Branch.default_branch }
   has_many :reservation_allocations, class_name: "InventoryReservationAllocation", dependent: :restrict_with_error
   has_many :inventory_batches, through: :reservation_allocations
 

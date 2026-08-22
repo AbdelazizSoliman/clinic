@@ -65,12 +65,12 @@ Status meanings:
 | Renal/hepatic and dose-limit rules | Needs structured clinical status and structured dose data that the application does not store | Planned | — | Phase 21+ |
 | Advanced Arabic search | Arabic normalization, exact identifier priority, token and ingredient matching, typo tolerance, suggestions, synonyms and search reports | Demo-ready | All roles | `Search::*`, pg_trgm, Phase 21 |
 | Transliteration and stemming | Latin↔Arabic transliteration, root/stem matching | Planned | — | Phase 22+ |
-| Returns | Returns, refunds, reverse inventory/logistics | Planned | — | Phase 22 |
-| Loyalty and wallet | Points, credits, wallet ledger | Planned | — | Phase 23 |
-| Multi-branch operations | Branch-specific stock and fulfilment | Planned | — | Phase 24 |
-| SaaS multi-tenancy | Tenant isolation and subscription operations | Planned | — | Phase 25 |
-| APIs and integrations | Public/partner APIs and external providers | Planned | — | Phase 26 |
-| Advanced analytics | Deeper operational and commercial analytics | Planned | — | Phase 27 |
+| Returns | Returns, refunds, reverse inventory/logistics | Demo-ready | Staff | Phase 22 |
+| Loyalty and wallet | Points, credits, immutable ledgers | Demo-ready | Customer, staff | Phase 23 |
+| Multi-branch operations | Branch-local stock/FEFO, fulfilment, POS, purchasing and transfers | Demo-ready | Staff, admin | Phase 24 |
+| SaaS multi-tenancy | Organization isolation, scoped jobs/reports/search and integrity audits | Demo-ready | Tenant roles | Phase 25 |
+| APIs and integrations | Scoped hashed credentials, read/write APIs and signed webhooks | Implemented | Integration clients | Phase 26 |
+| Advanced analytics | Tenant/branch-aware operational analytics and safe CSV | Demo-ready | Authorized staff | Phase 27 |
 
 “Partial” does not mean unsafe fallback behavior is enabled. Production-like
 email, storage, scanner, and external error reporting remain disabled or

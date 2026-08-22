@@ -18,7 +18,8 @@ module Search
       SearchEvent.create!(context: @result.context.to_s, query_fingerprint: @result.query.fingerprint,
         normalized_query: recorded_query, token_count: @result.query.tokens.size,
         result_count: @result.count, zero_result: @result.empty?,
-        selected_product: @selected_product, created_at: Time.current)
+        selected_product: @selected_product, branch: Current.branch || Branch.default_branch,
+        created_at: Time.current)
     rescue ActiveRecord::ActiveRecordError => error
       Errors::Reporter.capture(error)
       nil

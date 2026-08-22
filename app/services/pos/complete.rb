@@ -8,6 +8,8 @@ module Pos
     end
 
     def call
+      return failure(@sale, "تعارض مؤسسة عملية نقطة البيع") unless Operations::TenantGuard.same_organization?(
+        @sale, @sale.branch, @sale.cashier_session, @sale.cashier, @sale.customer)
       existing = PosSale.completed.find_by(completion_idempotency_key: @key) if @key.present?
       return success(existing) if existing
       return failure(@sale, "مفتاح إتمام العملية مطلوب") if @key.blank?
@@ -108,7 +110,7 @@ module Pos
           "#{item.product_name} غير نشط"
         elsif item.requires_prescription? && !review_item&.dispensable?
           "#{item.product_name} يحتاج قرارًا سريريًا نهائيًا"
-        elsif item.quantity > product.available_to_sell_quantity
+        elsif item.quantity > product.available_to_sell_quantity(@sale.branch)
           "الكمية المتاحة من #{item.product_name} غير كافية"
         end
       end
@@ -156,7 +158,7 @@ module Pos
         next if item.prescription_review_item&.rejected?
         remaining = item.quantity
         product = effective_product(item)
-        batches = InventoryBatch.where(product_id: product.id).allocatable.fefo.lock.to_a
+        batches = InventoryBatch.where(branch: @sale.branch, product_id: product.id).allocatable.fefo.lock.to_a
         batches.each do |batch|
           quantity = [ remaining, batch.available_quantity ].min
           next unless quantity.positive?

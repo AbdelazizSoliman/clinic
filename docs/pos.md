@@ -124,9 +124,10 @@ rather than a fuzzy search. A missing identifier now says so explicitly instead 
 bare empty list. See [`docs/search.md`](search.md).
 
 Phase 22 owns returns, refunds and completed-sale reversal. Real gateways,
-stored cards, offline mode, printer and drawer hardware, loyalty, customer
-credit, multi-branch scope and ERP integration remain out of scope.
+stored cards, offline mode, printer and drawer hardware, and ERP integration remain out of scope.
 
 Completed POS sales remain immutable. Phase 22 represents item returns and cash/external-terminal refunds as linked records; expected cash is opening cash plus cash sales minus completed cash refunds in that session. See [`returns.md`](returns.md).
 
 Phase 23 permits an explicit optional customer. Identified customers may redeem points and use mixed wallet/cash/terminal payment; anonymous sales remain unchanged. Wallet components never affect expected cash.
+
+Every cashier session and sale now belongs to one organization and branch. Completion requires their branches to agree and FEFO consumes only that branch's locked batches. Receipts identify the branch; customer loyalty/wallet accounts remain organization-wide while ledger entries retain branch context.

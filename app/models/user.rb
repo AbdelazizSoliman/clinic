@@ -1,4 +1,5 @@
 class User < ApplicationRecord
+  belongs_to :organization
   devise :database_authenticatable, :registerable, :recoverable, :rememberable, :validatable,
     :lockable, unlock_strategy: :none, maximum_attempts: 5
 
@@ -23,6 +24,9 @@ class User < ApplicationRecord
   has_one :loyalty_account, dependent: :restrict_with_error
   has_one :wallet_account, dependent: :restrict_with_error
   has_many :customer_pos_sales, class_name: "PosSale", foreign_key: :customer_id, dependent: :restrict_with_error
+  belongs_to :default_branch, class_name: "Branch", optional: true
+  has_many :branch_memberships, dependent: :restrict_with_error
+  has_many :branches, through: :branch_memberships
 
   enum :role, { customer: 0, admin: 1, pharmacist: 2, order_manager: 3, inventory_manager: 4 }, default: :customer, validate: true
 
@@ -95,6 +99,16 @@ class User < ApplicationRecord
   def can_view_return_reports? = admin? || order_manager? || inventory_manager?
   def can_manage_loyalty_wallet? = admin?
   def can_view_loyalty_wallet_reports? = admin? || order_manager?
+  def can_manage_branches? = admin?
+  def can_transfer_stock? = admin? || inventory_manager?
+
+  def accessible_branches
+    admin? ? Branch.active : branches.merge(Branch.active).where(branch_memberships: { active: true })
+  end
+
+  def branch_access?(branch)
+    branch.present? && (admin? || accessible_branches.exists?(id: branch.id))
+  end
 
   def ensure_loyalty_account!
     raise ActiveRecord::RecordInvalid, self unless customer?

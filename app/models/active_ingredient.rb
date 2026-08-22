@@ -12,9 +12,9 @@ class ActiveIngredient < ApplicationRecord
 
   before_validation :normalize
 
-  validates :code, presence: true, uniqueness: true, format: { with: /\A[A-Z0-9][A-Z0-9\-]*\z/ }, length: { maximum: 40 }
+  validates :code, presence: true, uniqueness: { scope: :organization_id }, format: { with: /\A[A-Z0-9][A-Z0-9\-]*\z/ }, length: { maximum: 40 }
   validates :name, presence: true, length: { maximum: 120 }
-  validates :normalized_name, presence: true, uniqueness: true
+  validates :normalized_name, presence: true, uniqueness: { scope: :organization_id }
   validates :active, inclusion: { in: [ true, false ] }
 
   def self.normalize_name(value) = value.to_s.unicode_normalize(:nfkc).downcase.gsub(/[[:space:]]+/, " ").strip

@@ -9,6 +9,7 @@ module Reports
 
     def call
       events = SearchEvent.where(created_at: @range.range)
+      events = events.where(branch: Current.branch_scope) if Current.branch_scope
       searches = events.count
       selections = events.where.not(selected_product_id: nil).count
       Result.new(

@@ -3,12 +3,13 @@ class ApplicationController < ActionController::Base
   include CurrentCart
 
   before_action :configure_permitted_parameters, if: :devise_controller?
+  before_action :establish_operational_context
   before_action :enforce_active_session
   before_action :enforce_session_version
   before_action :enforce_privileged_two_factor
   before_action :enforce_maintenance_mode
 
-  helper_method :wishlist_item_for, :wishlist_count, :demo_mode?
+  helper_method :wishlist_item_for, :wishlist_count, :demo_mode?, :current_branch
 
   # Only allow modern browsers supporting webp images, web push, badges, import maps, CSS nesting, and CSS :has.
   allow_browser versions: :modern
@@ -28,6 +29,20 @@ class ApplicationController < ActionController::Base
   end
 
   private
+
+  def establish_operational_context
+    Current.user = current_user
+    Current.organization = current_user&.organization || Organization.default_organization
+    Current.branch = resolve_current_branch
+  end
+
+  def resolve_current_branch
+    return Branch.default_branch unless current_user&.privileged?
+    requested = current_user.accessible_branches.find_by(id: session[:branch_id]) if session[:branch_id]
+    requested || current_user.default_branch || current_user.accessible_branches.order(default: :desc, code: :asc).first || Branch.default_branch
+  end
+
+  def current_branch = Current.branch
 
   def demo_mode?
     DemoMode.enabled?

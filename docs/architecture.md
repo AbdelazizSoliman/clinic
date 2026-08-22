@@ -307,8 +307,7 @@ or global database reset is introduced.
 - Cash on delivery is the only operational payment method.
 - No purchasing returns, supplier invoices/payments, or POS module. Batch/lot,
   expiry, quarantine, and FEFO are implemented through Phase 17.
-- No per-item substitution workflow or drug-safety rules engine.
-- No SMS, courier, payment-gateway, or public API integration.
+- No SMS, courier, payment-gateway, or arbitrary inbound integration. A scoped JSON API and signed outbound webhook boundary are implemented.
 - No permanent public demo is guaranteed.
 - Technical safeguards do not establish medical, privacy, or regulatory
   compliance.
@@ -332,3 +331,7 @@ Returns are a shared polymorphic aggregate constrained to immutable `Order` and 
 ## Phase 23 loyalty and wallet
 
 Separate per-customer accounts derive balances from immutable ledgers. Configured loyalty rules turn commercial snapshots into points/discount value; wallet entries remain monetary payment facts. See [`loyalty_wallet.md`](loyalty_wallet.md).
+
+## Platform expansion
+
+`Organization` is the tenant security root and owns branches and operational domains. `Current` establishes organization/branch context, composite constraints protect critical tenant pairs, and jobs serialize tenant identity. Branch-local batch authority remains intact beneath tenancy. `/api/v1` reuses domain services through hashed scoped credentials; webhook delivery is asynchronous and signed. Analytics is an explainable tenant/branch-scoped query layer. See [`multi_tenancy.md`](multi_tenancy.md), [`multi_branch.md`](multi_branch.md), [`api.md`](api.md), and [`analytics.md`](analytics.md).

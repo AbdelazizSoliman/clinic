@@ -1,4 +1,20 @@
 Rails.application.routes.draw do
+  namespace :api do
+    namespace :v1 do
+      resources :products, only: %i[index show]
+      resources :branches, only: :index
+      resources :inventory, only: :index
+      resources :orders, only: %i[index show] do
+        member { post :cancel }
+      end
+      resources :purchase_orders, only: %i[index show]
+      resources :returns, only: %i[index show]
+      resources :webhook_endpoints, only: %i[index show create update destroy] do
+        member { post :rotate_secret }
+      end
+    end
+  end
+  patch "branches/:id/select", to: "branches#update", as: :select_branch
   devise_for :users, controllers: { sessions: "users/sessions", registrations: "users/registrations", passwords: "users/passwords" }
   resource :two_factor_enrollment, only: %i[show create update]
   resource :two_factor_challenge, only: %i[show create]
@@ -113,6 +129,7 @@ Rails.application.routes.draw do
     end
   end
   namespace :admin do
+    resource :analytics, only: :show
     resource :loyalty_wallet, only: :show, controller: "loyalty_wallet" do
       post :create_rule
       post :adjust_loyalty

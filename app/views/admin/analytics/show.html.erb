@@ -1,0 +1,40 @@
+<div class="space-y-6" dir="rtl">
+  <div class="flex items-center justify-between gap-4">
+    <div><h1 class="text-2xl font-bold">التحليلات التنفيذية</h1><p class="text-sm text-slate-600"><%= @range.from.to_date %> — <%= @range.to.to_date %></p></div>
+    <%= link_to "تصدير CSV", admin_analytics_path(format: :csv, from: @range.from.to_date, to: @range.to.to_date), class: "rounded bg-slate-900 px-4 py-2 text-white" %>
+  </div>
+  <%= form_with url: admin_analytics_path, method: :get, class: "flex flex-wrap items-end gap-3 rounded border bg-white p-4" do |form| %>
+    <div><%= form.label :preset, "الفترة", class: "block text-sm" %><%= form.select :preset, [["اليوم", "today"], ["آخر 7 أيام", "last_7_days"], ["آخر 30 يوماً", "last_30_days"], ["الشهر الحالي", "current_month"], ["مخصص", "custom"]], { selected: params[:preset] }, class: "rounded border" %></div>
+    <div><%= form.label :from, "من", class: "block text-sm" %><%= form.date_field :from, value: params[:from], class: "rounded border" %></div>
+    <div><%= form.label :to, "إلى", class: "block text-sm" %><%= form.date_field :to, value: params[:to], class: "rounded border" %></div>
+    <%= form.submit "تطبيق", class: "rounded bg-slate-800 px-4 py-2 text-white" %>
+  <% end %>
+  <dl class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <% { "إجمالي المبيعات" => @metrics[:gross_sales_cents], "صافي المبيعات" => @metrics[:net_sales_cents], "المبالغ المستردة" => @metrics[:refunds_cents], "قيمة المخزون" => @metrics[:inventory_value_cents] }.each do |label, cents| %>
+      <div class="rounded border bg-white p-4"><dt class="text-sm text-slate-600"><%= label %></dt><dd class="mt-2 text-xl font-bold"><%= number_to_currency(cents / 100.0, unit: "ج.م") %></dd></div>
+    <% end %>
+  </dl>
+  <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+    <% {
+      "المبيعات" => [@analytics[:sales], admin_reports_sales_path],
+      "المشتريات" => [@analytics[:purchasing], admin_reports_purchasing_index_path],
+      "المخزون" => [@analytics[:inventory], admin_reports_batches_path],
+      "المرتجعات" => [@analytics[:returns], admin_reports_returns_path],
+      "الوصفة والتشغيل السريري" => [@analytics[:prescriptions], admin_reports_prescriptions_path],
+      "سلامة الدواء" => [@analytics[:safety], admin_reports_drug_safety_index_path]
+    }.each do |label, (dataset, path)| %>
+      <section class="rounded border bg-white p-4" aria-label="<%= label %>">
+        <div class="flex justify-between gap-2"><h2 class="font-bold"><%= label %></h2><%= link_to "عرض السجلات", path, class: "text-sm text-blue-700 underline" %></div>
+        <dl class="mt-3 space-y-1 text-sm">
+          <% dataset.first(6).each do |key, value| %>
+            <% next if value.is_a?(Hash) || value.is_a?(Array) %>
+            <div class="flex justify-between gap-3"><dt><%= key.to_s.humanize %></dt><dd class="font-medium"><%= value.nil? ? "—" : value %></dd></div>
+          <% end %>
+        </dl>
+      </section>
+    <% end %>
+  </div>
+  <div class="overflow-x-auto rounded border bg-white"><table class="w-full text-right"><caption class="p-4 text-right font-bold">مقارنة الفروع</caption><thead><tr><th class="p-3">الفرع</th><th class="p-3">المبيعات</th><th class="p-3">وحدات المخزون</th></tr></thead><tbody>
+    <% @metrics[:branches].each do |branch| %><tr class="border-t"><td class="p-3"><%= branch[:name] %></td><td class="p-3"><%= number_to_currency(branch[:sales_cents] / 100.0, unit: "ج.م") %></td><td class="p-3"><%= branch[:inventory_units] %></td></tr><% end %>
+  </tbody></table></div>
+</div>

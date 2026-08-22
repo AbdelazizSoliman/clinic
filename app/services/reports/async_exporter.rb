@@ -14,7 +14,7 @@ module Reports
 
       export = user.report_exports.create!(report_type: type, filters: safe_filters,
         status: :pending, requested_at: Time.current, deduplication_key: key)
-      GenerateExportJob.perform_later(export.id)
+      GenerateExportJob.perform_later(export.organization_id, export.id)
       Result.new(success?: true, export:, error: nil)
     rescue ActiveRecord::RecordNotUnique
       retry

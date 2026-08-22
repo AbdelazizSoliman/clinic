@@ -9,9 +9,12 @@ module Purchasing
 
     def call
       return failure(nil, "غير مصرح بإدارة المشتريات") unless @actor&.can_manage_purchasing?
+      return failure(nil, "لا يمكن استخدام مورد من مؤسسة أخرى") unless Operations::TenantGuard.same_organization?(
+        @actor, @supplier, Current.branch || @actor.default_branch)
       order = nil
       PurchaseOrder.transaction do
-        order = PurchaseOrder.create!(@attributes.merge(supplier: @supplier, created_by: @actor,
+        order = PurchaseOrder.create!(@attributes.merge(branch: Current.branch || @actor.default_branch,
+          supplier: @supplier, created_by: @actor,
           number: "PENDING-#{SecureRandom.uuid}", status: :draft, currency: "EGP"))
         order.update!(number: "PO-#{order.created_at.in_time_zone('Africa/Cairo').strftime('%Y%m%d')}-#{order.id.to_s.rjust(6, '0')}")
         event(order, "created", to: "draft")

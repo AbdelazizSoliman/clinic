@@ -7,6 +7,8 @@ module Returns
     end
 
     def call
+      return failure(@request, "لا يمكن الاسترداد عبر مؤسسات مختلفة") unless Operations::TenantGuard.same_organization?(
+        @request, @request.source, @actor)
       existing = ::Refund.find_by(idempotency_key: @key)
       return success(existing) if existing
       return failure(@request, "إصدار الاسترداد متاح للمدير فقط") unless @actor&.can_refund_returns?

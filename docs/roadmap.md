@@ -12,4 +12,7 @@
   query-history suggestions remain deferred.
 - Phase 22 — append-only customer/POS returns, reverse batch logistics, controlled refunds, receipts and reporting: implemented.
 - Phase 23 — deterministic loyalty and wallet ledgers across online, POS, and returns: implemented.
-- Phase 24 — scheduled expiration operations and later approved financial extensions: deferred.
+- Phase 24 — multi-branch inventory, fulfilment, POS, purchasing and batch-aware transfers: implemented.
+- Phase 25 — organization tenancy, isolation boundaries, tenant-aware jobs and integrity audits: implemented.
+- Phase 26 — scoped API credentials, purchasing/returns APIs and signed asynchronous webhooks: implemented.
+- Phase 27 — tenant/branch-aware advanced operational analytics and safe CSV: implemented.

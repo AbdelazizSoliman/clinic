@@ -1,5 +1,7 @@
 class ReturnRequest < ApplicationRecord
+  after_update_commit :publish_return_webhook, if: :saved_change_to_status?
   belongs_to :source, polymorphic: true
+  belongs_to :branch, default: -> { source&.branch || Current.branch || Branch.default_branch }
   belongs_to :requested_by, class_name: "User"
   belongs_to :reviewed_by, class_name: "User", optional: true
   has_many :items, class_name: "ReturnItem", dependent: :restrict_with_error, inverse_of: :return_request
@@ -17,4 +19,11 @@ class ReturnRequest < ApplicationRecord
   def remaining_refundable_cents = refundable_cents - refunded_cents
   def medication_inspection_pending? = items.where(pharmacist_inspection_required: true, inspected_at: nil).exists?
   def to_param = number
+
+  private
+
+  def publish_return_webhook
+    return unless refunded? || closed?
+    Webhooks::Publish.call("return.completed", { return_id: id, number:, branch_id:, status: })
+  end
 end

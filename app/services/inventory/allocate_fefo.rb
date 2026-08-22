@@ -7,11 +7,13 @@ module Inventory
     end
 
     def call
+      return failure("تعارض مؤسسة حجز المخزون") unless Operations::TenantGuard.same_organization?(
+        @reservation, @reservation.order, @reservation.product, @reservation.branch)
       allocations = []
       InventoryReservation.transaction do
         @reservation.lock!
         return success(@reservation.reservation_allocations.to_a) if @reservation.reservation_allocations.exists?
-        batches = InventoryBatch.where(product_id: @reservation.product_id).allocatable.fefo.lock.to_a
+        batches = InventoryBatch.where(branch: @reservation.branch, product_id: @reservation.product_id).allocatable.fefo.lock.to_a
         remaining = @reservation.quantity
         batches.each do |batch|
           quantity = [ remaining, batch.available_quantity ].min

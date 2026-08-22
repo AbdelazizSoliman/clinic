@@ -1,5 +1,6 @@
 class CashierSession < ApplicationRecord
   belongs_to :user
+  belongs_to :branch, default: -> { Current.branch || user&.default_branch || Branch.default_branch }
   has_many :pos_sales, dependent: :restrict_with_error
   has_many :refunds, dependent: :restrict_with_error
 

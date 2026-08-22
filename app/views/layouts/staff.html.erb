@@ -26,7 +26,7 @@
           <%= link_to "المتجر", root_path %>
           <%= link_to "عن النسخة التجريبية", demo_path if demo_mode? %>
         </div>
-        <span class="mr-auto text-sm"><%= current_user.full_name %> · <%= t("staff.roles.#{current_user.role}") %></span>
+        <div class="mr-auto flex items-center gap-2 text-sm"><strong><%= current_branch&.display_name %></strong><% if current_user.accessible_branches.count > 1 %><% current_user.accessible_branches.order(:code).each do |branch| %><%= button_to branch.display_name, select_branch_path(branch), method: :patch, class: "rounded border px-2 py-1" %><% end %><% end %><span><%= current_user.full_name %> · <%= t("staff.roles.#{current_user.role}") %></span></div>
       </nav>
     </header>
     <%= render "shared/flash" %>

@@ -3,7 +3,7 @@ class PharmacySetting < ApplicationRecord
     attachable.variant :header, resize_to_fill: [ 96, 96 ], preprocessed: true
   end
 
-  validates :singleton_key, inclusion: { in: [ 1 ] }, uniqueness: true
+  validates :singleton_key, inclusion: { in: [ 1 ] }, uniqueness: { scope: :organization_id }
   validates :pharmacy_name, :default_currency, :default_locale, :time_zone, :order_number_prefix, presence: true
   validates :default_currency, inclusion: { in: %w[EGP] }
   validates :default_locale, inclusion: { in: %w[ar] }
@@ -17,10 +17,12 @@ class PharmacySetting < ApplicationRecord
   validate :acceptable_logo
 
   def self.current
-    Rails.cache.fetch("pharmacy-setting/current", expires_in: 5.minutes) { first || new }
+    Rails.cache.fetch("pharmacy-setting/#{Current.organization&.id || Organization.default_organization&.id}", expires_in: 5.minutes) { first || new }
   end
 
-  def self.invalidate_cache = Rails.cache.delete("pharmacy-setting/current")
+  def self.invalidate_cache
+    Rails.cache.delete("pharmacy-setting/#{Current.organization&.id || Organization.default_organization&.id}")
+  end
 
   private
 

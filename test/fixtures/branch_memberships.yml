@@ -1,0 +1,16 @@
+admin_main:
+  branch: main
+  user: admin
+  active: true
+pharmacist_main:
+  branch: main
+  user: pharmacist
+  active: true
+order_manager_main:
+  branch: main
+  user: order_manager
+  active: true
+inventory_manager_main:
+  branch: main
+  user: inventory_manager
+  active: true

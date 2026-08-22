@@ -14,6 +14,8 @@ module Prescriptions
 
     def call
       return failure("القرار السريري متاح للصيدلي فقط") unless @actor&.can_make_prescription_decisions?
+      return failure("لا يمكن اتخاذ قرار سريري عبر مؤسسات مختلفة") unless Operations::TenantGuard.same_organization?(
+        @item, @item.prescription_review, @actor, @substitute)
       return failure("قرار البند غير صحيح") unless DECISIONS.include?(@decision)
       return failure("سبب القرار مطلوب") if @reason.blank?
       errors = preflight_errors

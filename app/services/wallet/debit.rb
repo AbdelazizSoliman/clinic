@@ -5,6 +5,7 @@ module Wallet
       @customer, @amount, @source, @actor, @reason, @key = customer, amount_cents.to_i, source, actor, reason, idempotency_key
     end
     def call
+      return failure(nil, "لا يمكن استخدام محفظة من مؤسسة أخرى") unless Operations::TenantGuard.same_organization?(@customer, @source, @actor)
       existing = WalletLedgerEntry.find_by(idempotency_key: @key)
       return success(existing) if existing
       return failure(nil, "قيمة الدفع غير صحيحة") unless @amount.positive?

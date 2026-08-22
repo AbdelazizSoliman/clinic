@@ -117,3 +117,7 @@ authorization.
 Phase 17 extends each immutable receipt line with one or more batches, mandatory
 expiry, batch-linked movements, FEFO reservation allocations, and
 expiry/quarantine reporting. See [Batch inventory](batch_inventory.md).
+
+## Branch and tenant destination
+
+Suppliers are organization-wide; each purchase order has one destination branch. Every receipt inherits that destination and creates only branch-local batches/movements. API reads require `purchasing:read`; there is no API stock-mutation endpoint. Purchasing analytics report tenant-scoped spend, volume, supplier/cost trends, overdue orders, partial receipts, and observed—not contractual—lead time.

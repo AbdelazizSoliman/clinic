@@ -1,5 +1,6 @@
 class PurchaseOrder < ApplicationRecord
   belongs_to :supplier
+  belongs_to :branch, default: -> { Current.branch || created_by&.default_branch || Branch.default_branch }
   belongs_to :created_by, class_name: "User"
   belongs_to :approved_by, class_name: "User", optional: true
   belongs_to :cancelled_by, class_name: "User", optional: true

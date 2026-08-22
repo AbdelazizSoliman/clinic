@@ -3,7 +3,7 @@ class Coupon < ApplicationRecord
   has_many :redemptions, class_name: "PromotionRedemption", dependent: :restrict_with_error
   before_validation :normalize_code
   validates :code, :normalized_code, presence: true
-  validates :normalized_code, uniqueness: { case_sensitive: false }
+  validates :normalized_code, uniqueness: { scope: :organization_id, case_sensitive: false }
   validates :total_usage_limit, :per_customer_usage_limit, numericality: { only_integer: true, greater_than: 0 }, allow_nil: true
   validate :within_promotion_schedule
 

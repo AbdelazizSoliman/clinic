@@ -5,6 +5,7 @@ module Loyalty
       @source, @customer, @actor, @key = source, customer, actor, idempotency_key
     end
     def call
+      return failure(nil, "لا يمكن كسب نقاط عبر مؤسسات مختلفة") unless Operations::TenantGuard.same_organization?(@customer, @source, @actor)
       existing = LoyaltyLedgerEntry.find_by(idempotency_key: @key)
       return success(existing, points: existing.points) if existing
       return success(nil) unless @customer&.customer? && completed_source?

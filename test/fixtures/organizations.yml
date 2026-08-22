@@ -1,0 +1,8 @@
+default:
+  id: 1
+  code: DEFAULT
+  name: Default Pharmacy Organization
+  active: true
+  timezone: Africa/Cairo
+  currency: EGP
+  locale: ar

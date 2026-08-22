@@ -44,7 +44,8 @@ hold is blocked while a batch has active reservations.
 
 Arabic pages and CSV cover batch inventory, expiry, quarantine, supplier and
 receipt provenance, movements, FEFO exceptions, and received-cost valuation.
-Phase 17 excludes POS, returns, substitutions, multi-branch inventory, RFID or
-barcode printing, warehouse optimization, ERP, analytics, and AI.
+RFID/barcode printing, warehouse optimization, ERP, and AI remain out of scope.
 
 Returned stock always traces to its original allocation. Sellable restocks increase the same safe batch; quarantined custody increases `returned_quarantine_quantity`, which is excluded from FEFO availability; write-off/destroy decisions remain append-only movements.
+
+Batches now belong to organization + branch. FEFO and reservations require that exact pair. Transfers decrement a source batch at dispatch, retain its lineage/lot/expiry while in transit, and create destination stock only at receipt. The compatibility product aggregate is reconciled against batch truth by `integrity:inventory`.

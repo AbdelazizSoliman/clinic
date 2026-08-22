@@ -13,6 +13,8 @@ module Purchasing
 
     def call
       return failure(nil, "غير مصرح باستلام المشتريات") unless @actor&.can_receive_purchasing?
+      return failure(nil, "تعارض مؤسسة أمر الشراء") unless Operations::TenantGuard.same_organization?(
+        @purchase_order, @purchase_order.branch, @purchase_order.supplier, @actor)
       return failure(nil, "معرف عملية الاستلام مطلوب") if @idempotency_key.blank?
       existing = PurchaseReceipt.find_by(idempotency_key: @idempotency_key)
       return success(existing) if existing&.purchase_order_id == @purchase_order.id
@@ -41,7 +43,7 @@ module Purchasing
 
         Product.where(id: requested.map { |item, _, _| item.product_id }.sort).order(:id).lock.load
         reference = "PR-#{@purchase_order.id}-#{Digest::SHA256.hexdigest(@idempotency_key).first(10).upcase}"
-        receipt = @purchase_order.receipts.create!(reference:, received_by: @actor, received_at: @received_at,
+        receipt = @purchase_order.receipts.create!(branch: @purchase_order.branch, reference:, received_by: @actor, received_at: @received_at,
           supplier_document_number: @supplier_document_number.to_s.squish.presence, notes: @notes.to_s.squish.presence,
           idempotency_key: @idempotency_key)
 
@@ -51,7 +53,7 @@ module Purchasing
             unit_cost_cents: item.unit_cost_cents, inventory_movement: nil)
           specs.each_with_index do |spec, index|
             product_before = product.stock_quantity
-            batch = InventoryBatch.create!(product:, supplier: @purchase_order.supplier, purchase_receipt: receipt,
+            batch = InventoryBatch.create!(branch: @purchase_order.branch, product:, supplier: @purchase_order.supplier, purchase_receipt: receipt,
               purchase_receipt_item: receipt_item, batch_number: spec[:batch_number],
               lot_number: spec[:lot_number], manufacture_date: spec[:manufacture_date],
               expiry_date: spec[:expiry_date], received_at: @received_at,

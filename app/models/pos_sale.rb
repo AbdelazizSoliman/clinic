@@ -1,5 +1,6 @@
 class PosSale < ApplicationRecord
   belongs_to :cashier_session
+  belongs_to :branch, default: -> { cashier_session&.branch || Current.branch || Branch.default_branch }
   belongs_to :cashier, class_name: "User"
   belongs_to :discount_approved_by, class_name: "User", optional: true
   belongs_to :voided_by, class_name: "User", optional: true

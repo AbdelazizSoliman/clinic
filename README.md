@@ -325,7 +325,7 @@ the test and audit jobs against PostgreSQL.
 10. APIs and Integrations
 11. Advanced Analytics
 
-These are planned modules, not current capabilities.
+Phases 17–27 are implemented; the feature matrix records deliberate external-service and clinical-data limitations.
 
 ## Disclaimer
 
@@ -336,3 +336,5 @@ repository demonstrates software engineering and product workflow design; it
 is not a medical, legal, or regulatory certification.
 
 Phase 22 adds append-only returns and refunds. Phase 23 adds separate immutable loyalty-point and monetary-wallet ledgers shared by online checkout, identified POS sales, and returns. See [docs/returns.md](docs/returns.md) and [docs/loyalty_wallet.md](docs/loyalty_wallet.md).
+
+Phases 24–27 add organization → branch scoping, branch-local stock and transfers, secure scoped APIs/signed webhooks, and tenant/branch-aware analytics. See [multi-branch](docs/multi_branch.md), [multi-tenancy](docs/multi_tenancy.md), [API](docs/api.md), and [analytics](docs/analytics.md).
