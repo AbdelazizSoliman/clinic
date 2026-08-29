@@ -1,9 +1,14 @@
 # Suppliers and purchasing
 
-Phase 16 adds a product-level supplier and purchasing workflow to the globally
-scoped pharmacy. It deliberately does not model batches, lots, manufacture or
-expiry dates, FEFO, invoices, supplier payments, returns, landed cost, or
-accounting valuation.
+Release 1.0 includes organization-wide suppliers and branch-destination purchase
+orders with approval, partial/full receiving, immutable receipt history, and
+branch-local batch creation with lot, manufacture/expiry, cost, quarantine, and
+FEFO integration. The original Phase 16 product-level purchasing workflow was
+extended by Phase 17 batch inventory and Phase 24 branch scoping.
+
+Supplier invoices/payments, landed-cost accounting, ERP exchange, and
+supplier-return workflows are not implemented. Customer/POS sales returns are a
+separate Release 1.0 domain and must not be described as purchasing returns.
 
 ## Roles
 

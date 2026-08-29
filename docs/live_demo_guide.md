@@ -18,9 +18,12 @@ or repository documentation.
   synthetic record and discuss states and authorization.
 - Do not open server configuration, environment variables, storage URLs,
   developer tools, Rails consoles, logs, or recovery-code screens.
-- Call the implemented payment method “cash on delivery.” Do not suggest that a
-  gateway, SMS, courier, ERP, WhatsApp, branches, or safety engine is
-  already connected.
+- Call the implemented online payment method “cash on delivery.” Wallet, POS
+  cash, and external-terminal entries are internal ledger/operational markers;
+  no gateway executes funds. Do not suggest that SMS, courier, ERP, WhatsApp,
+  supplier, payment, or external clinical providers are connected. Branch
+  operations and locally configured deterministic safety rules may be shown with
+  their documented limits.
 - If an expected seeded link is missing, do not improvise by changing data.
   move to the relevant screenshot and explain that the operator will inspect
   the isolated seed after the session.
@@ -87,7 +90,7 @@ last-30-days reports.
 **Explain:** one Rails/PostgreSQL workflow connects commerce and operations;
 there is no permanent public deployment. Invite one focused question.
 
-**Avoid:** rushing through settings, users, or roadmap modules.
+**Avoid:** rushing through settings, users, or unrelated modules.
 
 ## Ten-minute version
 
@@ -139,7 +142,11 @@ services own authorization, locking, events, and side effects.
 **Explain:** reservations prevent the same available stock being promised twice;
 consumption occurs at ready-for-delivery and movement arithmetic is append-only.
 
-**Avoid:** saying lots, batches, expiry, or FEFO exist.
+**Explain:** `InventoryBatch` is the branch-local physical-stock authority;
+expiry, quarantine, reservation allocation, purchasing receipts, and FEFO are
+implemented and traceable.
+
+**Avoid:** implying certified recall, warehouse, or regulatory validation.
 
 ### 7:30–9:00 — Administration and reporting
 
@@ -156,10 +163,11 @@ are private and expire. Promotions preserve scope, timing, limits, and snapshots
 **Click:** Return to the guided center or a prepared architecture diagram.
 
 **Explain:** Rails modular monolith, PostgreSQL transactions/locks, Hotwire,
-Solid Queue, and why local transactions fit the workflow. State single-pharmacy,
-COD, external-service, and deployment boundaries.
+Solid Queue, and why local transactions fit the workflow. State the
+application-level organization/branch boundary, COD/provider limits, and lack of
+a commercial SaaS control plane or production validation.
 
-**Avoid:** reading the full roadmap. Ask which path the audience wants to
+**Avoid:** reading the full productization backlog. Ask which path the audience wants to
 inspect more deeply.
 
 ## Twenty-minute version
@@ -203,7 +211,9 @@ optimistic version, decision transitions, and resulting order/reservation
 behavior. Contrast pharmacist access with order-manager limitations.
 
 **Avoid:** file content, live medical decisions, scanner-effectiveness claims,
-or claiming a drug-safety engine.
+or presenting locally configured deterministic drug-safety findings as diagnosis,
+prescribing, a certified clinical database, or a replacement for pharmacist
+judgment.
 
 ### 10:00–12:30 — Fulfilment hand-offs
 
@@ -224,8 +234,9 @@ movement history.
 **Explain:** physical/reserved/available calculation; product/reservation locks;
 movement before/delta/after invariant; release versus return-to-stock.
 
-**Avoid:** showing cost data outside the authorized purchasing view; do not
-claim lot, expiry, FEFO, supplier invoicing/payment, or purchasing returns.
+**Avoid:** showing cost data outside the authorized purchasing view. Lot,
+expiry, quarantine, FEFO and batch receiving are implemented; supplier invoices,
+supplier payments and supplier-return workflows are not.
 
 ### 15:00–17:30 — Admin, promotions, and reports
 
@@ -251,10 +262,12 @@ Docker verification, and deterministic seed tests.
 
 ### 19:00–20:00 — Limits and discussion
 
-**Click:** Prepared limitations/roadmap slide.
+**Click:** Prepared Release 1.0 boundary and productization slide.
 
-**Explain:** one pharmacy, COD, temporary demonstration, and separately
-configured external services. Clearly label every future module as planned.
+**Explain:** application-level organization tenancy and multi-branch operations,
+COD and internal payment markers, temporary demonstration, and separately
+configured external services. Clearly separate implemented application domains
+from absent control-plane/provider capabilities.
 
 **Avoid:** feature negotiation during the tour. Record follow-up requirements
 for a later scoped conversation.
@@ -265,8 +278,10 @@ for a later scoped conversation.
 
 The connected workflow benefits from local transactions and server-side
 authorization. Hotwire adds responsiveness without duplicating validation and
-permissions in a second application. A future API would need its own explicit
-requirements and authorization design.
+permissions in a second application. The separate `/api/v1` integration surface
+uses scoped credentials for the documented catalog, branch, inventory, order,
+purchasing, return, and webhook-management operations; it is not a generic full
+API or a separate SPA backend.
 
 **How do you prevent overselling?**
 
@@ -301,9 +316,11 @@ avoids distributed consistency overhead at the current scope.
 
 **Can it support branches, online payment, or integrations?**
 
-They are possible extension areas, not implemented claims. Each changes data,
-failure, reconciliation, authorization, and operational boundaries and must be
-scoped separately. See the [client FAQ](client_faq.md).
+Application-level multi-branch operations are implemented. Online payment is not:
+online checkout uses cash on delivery plus the internal wallet. A scoped API and
+signed outbound webhook boundary are implemented, but compatibility with any
+payment, SMS, WhatsApp, courier, ERP, supplier, or clinical provider must be
+scoped and validated separately. See the [client FAQ](client_faq.md).
 
 **Can I access a public demo later?**
 

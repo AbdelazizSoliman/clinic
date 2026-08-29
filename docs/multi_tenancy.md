@@ -1,4 +1,4 @@
-# SaaS multi-tenancy
+# Application-level organization tenancy
 
 `Organization` is the security root: organization → branches → operational records. Forward migrations create `DEFAULT`, backfill historical rows, add non-null ownership, and enforce critical organization/parent pairs with composite foreign keys. `Current.organization`, `Current.branch`, and optional report `Current.branch_scope` are established per request and reset afterward. Tenant-sensitive jobs serialize organization ID and establish the same context explicitly.
 

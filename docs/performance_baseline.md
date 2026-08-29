@@ -1,5 +1,10 @@
 # Local performance and query baseline
 
+This is a small-data historical measurement, not Release 1.0 capacity evidence
+or a production-scale certification. It must be rerun against a named commit,
+production-shaped data, infrastructure, and workload before any performance or
+throughput claim is made.
+
 Measured 2026-07-16 with Ruby 3.4.6, Rails 8.1.3, PostgreSQL, 24 seeded
 products, development mode, one warm local process. These figures are
 repeatable diagnostics—not production capacity or load-test results.

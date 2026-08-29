@@ -69,9 +69,12 @@ implied.
 
 - Production deployment, hosting, paid infrastructure, and ongoing operations.
 - Payment gateways, SMS, WhatsApp, courier, ERP, or other external integrations.
-- Suppliers/purchasing, batch/lot/expiry/FEFO inventory, POS, returns, loyalty,
-  multi-branch, multi-tenancy, public APIs, or advanced analytics.
-- Drug interaction, allergy, substitution, diagnosis, or medical advice logic.
+- Client-specific adaptation of the implemented purchasing, batch/FEFO, POS,
+  customer/POS sales returns, loyalty/wallet, multi-branch, organization-tenancy,
+  scoped API/webhook, analytics, and configurable drug-safety foundations.
+- Platform-super-admin provisioning, tenant subscription billing, plan
+  enforcement, supplier returns, or provider-specific integrations.
+- Diagnosis, prescribing, autonomous clinical decisions, or medical advice.
 - Legal, medical, privacy, accessibility, PCI, or regulatory certification.
 - Content entry, production data migration, branding creation, and native mobile
   applications.
@@ -103,15 +106,19 @@ requirements agreed during discovery.
 
 **Is it ready for multiple branches?**
 
-No. The current portfolio is globally scoped to one pharmacy. Branch-specific
-inventory, staffing, fulfilment, reporting, and authorization require a
-separate architecture extension.
+Application-level multi-branch operations are implemented and demo-ready:
+authorized staff can switch branches, and inventory/FEFO, POS, purchasing,
+fulfilment, transfers, returns, and reporting retain branch context. A client
+engagement must still confirm market-specific branch catalog, pricing, staffing,
+tax, and delivery rules.
 
 **Does prescription scanning mean clinical validation?**
 
 No. File validation and malware-scan gating protect the upload boundary;
-pharmacist decisions remain human workflow. The application does not provide
-medical advice or a drug-safety engine.
+pharmacist decisions remain human workflow. The application also includes
+configurable deterministic drug-safety decision support based on locally
+configured rules and structured data. It does not diagnose, prescribe, use a
+certified external clinical knowledge provider, or replace pharmacist judgment.
 
 **What technologies are used?**
 
@@ -121,9 +128,10 @@ checks.
 
 **Can external services be integrated?**
 
-Potentially, after reviewing provider APIs, authentication, failure modes,
-privacy constraints, webhooks, test environments, and operational ownership.
-No such integration should be assumed from the portfolio alone.
+A scoped integration API and signed outbound webhooks are implemented for the
+documented Release 1.0 surface. Compatibility with a particular ERP, courier,
+payment, SMS, WhatsApp, supplier, or clinical provider requires a separate
+adapter, test environment, failure policy, and operational owner.
 
 ## Upwork proposal foundation
 
@@ -164,10 +172,12 @@ business transactions.
 
 My Saydaliyati portfolio project demonstrates this approach in an Arabic RTL
 pharmacy scenario: atomic checkout and snapshots, inventory reservations and
-append-only movements, private prescription review, staff roles, fulfilment,
-reports, TOTP 2FA, and deterministic demo data. I will distinguish reusable
-engineering patterns from pharmacy-specific assumptions when discussing your
-project.
+append-only branch-local batch movements, private per-item prescription review,
+configurable deterministic drug-safety gates, purchasing, POS, customer/POS
+sales returns, loyalty/wallet ledgers, tenant/branch isolation, scoped APIs,
+signed webhooks, analytics, TOTP 2FA, and deterministic demo data. I will
+distinguish reusable engineering patterns from pharmacy-specific assumptions
+when discussing your project.
 
 ### Demo invitation
 
@@ -188,7 +198,8 @@ delivery sequence before implementation begins.
 - Replace the bracketed workflow with details from the client's brief.
 - Mention only two or three relevant portfolio parallels.
 - Ask one concrete question that affects architecture or acceptance.
-- Never imply that roadmap features or external integrations already exist.
+- Never imply that provider-specific integrations or unimplemented control-plane
+  features already exist.
 - Avoid promising compliance, scale, production launch, or a schedule before
   the client requirements are known.
 
@@ -201,9 +212,10 @@ reservations, fulfilment, promotions, reporting, role-based access, and TOTP
 2FA. The implementation emphasizes transactions, explicit state changes,
 immutable order history, append-only stock movements, automated tests, and
 clear documentation. A private demonstration with fictional data is available
-on request. The current portfolio is a single-pharmacy, cash-on-delivery system;
-external payments, branches, suppliers, loyalty, and integrations are extension
-work rather than existing capabilities.
+on request. Release 1.0 includes application-level organization tenancy,
+multi-branch operations, purchasing, batch/FEFO inventory, POS, customer/POS
+sales returns, loyalty/wallet, scoped APIs/webhooks, and analytics. Real payment
+gateways and provider-specific integrations are separate work.
 
 ## LinkedIn Featured Project entry
 
@@ -218,14 +230,16 @@ storefront to prescription review, inventory reservations, order fulfilment,
 delivery configuration, promotions, reporting, and administration. The project
 uses explicit service objects and PostgreSQL consistency controls for critical
 state changes, private role-scoped document access, TOTP 2FA for privileged
-users, and deterministic fictional data for repeatable on-request demos. It is
-presented as a single-pharmacy, cash-on-delivery implementation; external
-payments, suppliers, branches, tenancy, and public integrations remain outside
-the current scope.
+users, and deterministic fictional data for repeatable on-request demos. It also
+includes application-level organization/branch isolation, purchasing,
+batch/FEFO inventory, POS, sales returns, loyalty/wallet, scoped integration APIs,
+signed outbound webhooks, and tenant-aware analytics. It is not presented as a
+production-validated SaaS control plane or as having real payment/provider
+integrations.
 
 ### Technology list
 
-Ruby 3.4.6; Rails 8.1.3; PostgreSQL; Hotwire; Turbo; Stimulus; Tailwind CSS;
+Ruby 3.4.6; Rails 8.1.3.1; PostgreSQL; Hotwire; Turbo; Stimulus; Tailwind CSS;
 Devise; TOTP; Active Storage; Solid Queue; Solid Cache; Minitest; Docker;
 GitHub Actions
 

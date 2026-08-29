@@ -20,12 +20,13 @@ stable fictional scenario, and business behavior behind each capture.
 - [`docs/architecture.md`](architecture.md) explains the deployed boundaries,
   domains, transactions, security model, and limitations.
 - [`docs/feature_matrix.md`](feature_matrix.md) separates implemented, demo-ready,
-  partial/external, and planned capabilities.
+  externally configured, and intentionally absent capabilities.
 - [`config/routes.rb`](../config/routes.rb) shows the customer, staff, admin,
   report, export, health, and private-file HTTP boundaries.
 
-Look for: one Rails modular monolith, explicit roles, private resources, and a
-roadmap that is not presented as current functionality.
+Look for: one Rails modular monolith, explicit roles, private resources,
+application-level organization/branch isolation, and external/control-plane
+boundaries that are not presented as current functionality.
 
 ## 2. Checkout and commercial snapshots
 

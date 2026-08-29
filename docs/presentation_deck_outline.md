@@ -2,7 +2,9 @@
 
 This 14-slide outline is suitable for a portfolio review, technical interview,
 or client conversation. Use the wording appropriate to the audience and retain
-the limitations slide. Do not turn roadmap items into product screenshots.
+the limitations slide. Label retained Phase 15 captures as historical until the
+Release 1.0 recapture; do not depict absent provider/control-plane capabilities
+as implemented.
 
 ## 1. Saydaliyati
 
@@ -95,14 +97,19 @@ the limitations slide. Do not turn roadmap items into product screenshots.
   assets, framework loading, and Docker checks.
 - Visual: guided demo center and mobile storefront.
 
-## 13. Current limits and roadmap
+## 13. Release 1.0 limits and productization
 
-- Current: one pharmacy, cash on delivery, no permanent public deployment.
-- External services require operator configuration and verification.
-- Roadmap sequence after product-level purchasing: lots/expiry/FEFO; POS;
-  per-item review; safety rules; search; returns; loyalty; branches; tenancy;
-  APIs; analytics.
-- Say “planned,” never “supported,” for every roadmap item.
+- Current application capabilities include organization tenancy, multi-branch
+  operations, branch-local batch/FEFO inventory, purchasing, POS, customer/POS
+  sales returns, loyalty/wallet, scoped APIs/webhooks, and analytics.
+- No commercial SaaS control plane, platform-super-admin provisioning,
+  subscription billing, plan enforcement, or production tenant validation.
+- No real online/external-card payment execution or provider-specific SMS,
+  WhatsApp, courier, ERP, supplier, or certified clinical integration.
+- External SMTP, storage, scanner, monitoring, backup, and webhook-consumer
+  services require operator configuration and production verification.
+- Current priorities are installation, buyer documentation, demo reset,
+  configuration UX, localization, browser verification, and sanitized packaging.
 
 ## 14. Lessons learned and discussion
 

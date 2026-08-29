@@ -218,10 +218,11 @@ depend on mutable history.
 
 **Does inventory support purchasing, batches, expiry, or FEFO?**
 
-Supplier orders and partial/full receipts are implemented at product level and
-increase physical stock through append-only movements. Lots, batches,
-expiry-aware allocation, FEFO, supplier invoices/payments, and purchase returns
-are not implemented.
+Yes. Suppliers and purchase orders support approval and partial/full receiving
+into branch-local batches with lot, expiry, cost, quarantine and append-only
+movement history. Online/POS allocation uses deterministic FEFO across eligible
+batches. Supplier invoices/payments and supplier-return workflows are not
+implemented; customer/POS sales returns are a separate implemented domain.
 
 ## Testing and quality
 
@@ -294,19 +295,24 @@ accessibility review.
 
 Confirm the target market, pharmacy operating model, data/privacy obligations,
 roles, payment and delivery providers, recovery objectives, and acceptance
-criteria. Those decisions come before adding roadmap modules.
+criteria. Those decisions come before adapting the implemented modules or adding
+provider-specific integrations.
 
 **What is the largest current product limitation?**
 
-The globally scoped single-pharmacy model. Multi-branch and tenancy affect most
-ownership, inventory, reporting, and authorization queries and cannot be added
-as a superficial flag.
+The implemented application-level organization/branch boundary is not yet a
+commercial SaaS control plane: there is no platform-super-admin provisioning,
+self-service tenant onboarding, subscription billing, plan enforcement, or
+production tenant validation. Buyer installation, current browser verification,
+provider configuration, licensing, and upgrade/support packaging are also open.
 
 **What is intentionally simple?**
 
-Payment is cash on delivery, stock is product-level rather than lot-level, and
-states use explicit maps rather than a state-machine dependency. These choices
-keep the implemented boundary inspectable while leaving known extensions clear.
+Online payment is cash on delivery plus the internal wallet; POS cash and
+external-terminal entries are operational records rather than gateway execution.
+`InventoryBatch` is the branch-local physical-stock authority, while
+`Product#stock_quantity` remains a synchronized compatibility aggregate. States
+use explicit maps rather than a state-machine dependency.
 
 **What was the hardest conceptual distinction?**
 
@@ -322,6 +328,6 @@ cleanup. Random seed records are not enough to explain a connected workflow.
 
 **What should not be inferred from the portfolio?**
 
-Real client results, medical decision support, compliance certification,
-production scale, permanent hosting, or support for roadmap modules and
-unconfigured external integrations.
+Real client results, autonomous or certified medical decision-making, compliance
+certification, production scale, permanent hosting, a commercial SaaS control
+plane, or configured provider-specific integrations.

@@ -31,9 +31,8 @@ administration.
 
 The repository is a software engineering portfolio project and supports
 temporary, on-request demonstrations. A permanently available public deployment
-is not guaranteed. The customer, pharmacy, supplier, purchasing, batch/lot,
-expiry, and FEFO workflows are implemented through Phase 17. See
-[`docs/batch_inventory.md`](docs/batch_inventory.md).
+is not guaranteed. The current package reflects all merged work through Phase
+27; the canonical scope is the [Release 1.0 feature matrix](docs/feature_matrix.md).
 
 Start with the [reviewer and presentation index](docs/deliverables_index.md) to
 choose a recruiter, engineering, client, demo, or interview review path.
@@ -52,7 +51,7 @@ choose a recruiter, engineering, client, demo, or interview review path.
 - [Docker](#docker)
 - [Tests and quality checks](#tests-and-quality-checks)
 - [Documentation](#documentation)
-- [Roadmap](#roadmap-phases-1727)
+- [Release boundary](#release-10-boundary)
 
 ## Capabilities
 
@@ -151,7 +150,7 @@ inside a transaction. See [Architecture](docs/architecture.md) for details.
 
 ## Technical stack
 
-- Ruby 3.4.6 and Rails 8.1.3
+- Ruby 3.4.6 and Rails 8.1.3.1
 - PostgreSQL
 - Hotwire: Turbo, Stimulus, and Importmap
 - Tailwind CSS
@@ -202,8 +201,10 @@ and [operator checklist](docs/demo_operator_checklist.md).
 
 ## Screenshots
 
-All images below come from the real application and deterministic fictional demo
-dataset.
+The retained images below are real Phase 15 browser captures made with a
+deterministic fictional demo dataset. They predate the complete Release 1.0
+tenant/branch, POS, returns, loyalty, integration, and analytics scope and are
+historical portfolio evidence rather than current release certification.
 
 | Arabic storefront | Cart and coupon |
 | --- | --- |
@@ -288,9 +289,16 @@ bin/rails zeitwerk:check
 bin/rails tailwindcss:build
 ```
 
-GitHub Actions also builds and inspects the production Docker image, checks the
-container health endpoint, verifies production eager loading/assets, and runs
-the test and audit jobs against PostgreSQL.
+The repository currently commits no browser/system scenarios; `test:system` is
+scaffolding only. Request, model, service, job, authorization, and isolation
+tests cover the implemented domains, while current browser verification remains
+an explicit release gap.
+
+GitHub Actions is configured to build and inspect the production Docker image,
+check the container health endpoint, verify production eager loading/assets, and run
+the test and audit jobs against PostgreSQL. Historical results apply only to the
+dated commit/run that produced them, not automatically to an uncommitted working
+tree.
 
 ## Documentation
 
@@ -302,7 +310,7 @@ the test and audit jobs against PostgreSQL.
 - [Drug safety rules engine](docs/drug_safety_rules.md)
 - [Advanced Arabic search](docs/search.md)
 - [Portfolio engineering case study](docs/portfolio_case_study.md)
-- [Feature matrix and roadmap](docs/feature_matrix.md)
+- [Canonical Release 1.0 feature matrix](docs/feature_matrix.md)
 - [Technical reviewer guide](docs/reviewer_guide.md)
 - [Visual gallery](docs/visual_gallery.md) and [screenshot plan](docs/screenshot_plan.md)
 - [Demo mode](docs/demo_mode.md) and [demo operator checklist](docs/demo_operator_checklist.md)
@@ -311,21 +319,19 @@ the test and audit jobs against PostgreSQL.
 - [Security operations](docs/security_operations.md)
 - [Environment variables](docs/environment_variables.md)
 
-## Roadmap: Phases 17–27
+## Release 1.0 boundary
 
-1. Batch, Lot, Expiry, and FEFO
-2. Pharmacy POS
-3. Per-Item Prescription Review and Substitution
-4. Drug Safety Rules Engine
-5. Advanced Arabic Search
-6. Returns and Reverse Logistics
-7. Loyalty and Wallet
-8. Multi-Branch Operations
-9. SaaS Multi-Tenancy
-10. APIs and Integrations
-11. Advanced Analytics
-
-Phases 17–27 are implemented; the feature matrix records deliberate external-service and clinical-data limitations.
+Release 1.0 includes the merged Phase 16–27 operational domains through
+application-level organization tenancy and multi-branch operations. It does not
+include a commercial SaaS control plane, platform-super-admin provisioning,
+subscription billing, plan enforcement, production tenant validation, supplier
+returns, real payment execution, or provider-specific courier/SMS/WhatsApp/ERP/
+supplier/clinical integrations. Production SMTP, storage, scanning, monitoring,
+backups, and webhook consumers require operator configuration and verification.
+There is no permanent validated public demo, committed browser/system scenario,
+production-scale result, or regulatory/accessibility/penetration-test
+certification. See the [feature matrix](docs/feature_matrix.md), [release notes](docs/release_1_0.md),
+and [release checklist](docs/release_checklist.md).
 
 ## Disclaimer
 

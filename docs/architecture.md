@@ -303,16 +303,29 @@ or global database reset is introduced.
 
 ## Current limitations
 
-- One globally scoped pharmacy; no multi-branch or multi-tenant boundary.
-- Cash on delivery is the only operational payment method.
-- No purchasing returns, supplier invoices/payments, or POS module. Batch/lot,
-  expiry, quarantine, and FEFO are implemented through Phase 17.
-- No SMS, courier, payment-gateway, or arbitrary inbound integration. A scoped JSON API and signed outbound webhook boundary are implemented.
+- Organization tenancy and multi-branch operations are application-level
+  boundaries. There is no platform-super-admin provisioning workflow,
+  self-service tenant onboarding, subscription billing, plan enforcement, or
+  production tenant validation.
+- Online checkout uses cash on delivery plus the internal wallet. POS cash and
+  external-terminal entries and related refunds are operational records; no
+  gateway executes card payments or refunds.
+- Purchasing/receiving and customer/POS sales returns are implemented, but
+  supplier returns, supplier invoices/payments, and ERP settlement are not.
+- No SMS, WhatsApp, courier, payment, ERP, supplier, or external certified
+  clinical provider is integrated. A scoped JSON integration API and signed
+  outbound webhook boundary are implemented for the documented operations.
+- Drug-safety findings are configurable deterministic decision support based on
+  local rules and structured data; they do not diagnose, prescribe, or replace
+  pharmacist judgment.
 - No permanent public demo is guaranteed.
-- Technical safeguards do not establish medical, privacy, or regulatory
-  compliance.
+- Zero browser/system scenarios are committed at the Release 1.0 baseline.
+- Technical safeguards and repository tests do not establish production-scale,
+  accessibility, penetration-test, medical, privacy, payment, or regulatory
+  certification. SMTP, storage, scanning, monitoring, backups, and webhook
+  consumers require production configuration and verification.
 
-For implementation status and planned phases, see the
+For canonical implementation status and limitations, see the
 [feature matrix](feature_matrix.md).
 
 ## Batch inventory aggregate

@@ -1,5 +1,13 @@
 # Feature matrix
 
+This matrix is the canonical Release 1.0 truth set for buyer-facing,
+portfolio-facing, demo-facing, and interview-facing documentation. Historical
+phase evidence remains useful only when it is labeled with its date or commit.
+
+Release 1.0 is an Arabic RTL pharmacy commerce and operations application with
+application-level organization tenancy and multi-branch operations. It is not a
+complete commercial SaaS control plane or a certified production deployment.
+
 | Phase 18 capability | Status |
 | --- | --- |
 | Cashier sessions and reconciliation | Complete |
@@ -57,24 +65,41 @@ Status meanings:
 | Purchasing | Draft/submission/admin approval, immutable lines, partial receipts, cancellation/closure | Demo-ready | Inventory manager, admin | `Purchasing::*`, purchase and authorization tests |
 | Purchase inventory | Idempotent receipt movements, outstanding quantities and cost history | Demo-ready | Inventory manager, admin | `PurchaseReceipt*`, `purchase_received`, receiving tests |
 | Purchasing reports | Supplier totals, outstanding/overdue, top products, latest costs and CSV | Demo-ready | Inventory manager, admin | `Reports::PurchasingSummary`, report tests |
-| Batch inventory and FEFO | Receipt batches, expiry/quarantine, multi-batch reservations, traced consumption, valuation and CSV | Demo-ready | Inventory manager, admin | `InventoryBatch`, `Inventory::AllocateFefo`, batch tests |
-| Lots, batches, expiry, FEFO | Lot-level stock and expiry-aware allocation | Planned | — | Phase 17 |
-| Pharmacy POS | Counter sales and shift/cash workflow | Demo-ready | Pharmacist, order manager, admin | Phase 18 |
+| Batch/lot inventory and FEFO | Branch-local receipt batches, lot/expiry/quarantine state, multi-batch reservations, deterministic FEFO, traced consumption, valuation and CSV | Demo-ready | Inventory manager, admin | `InventoryBatch`, `Inventory::AllocateFefo`, batch tests |
+| Pharmacy POS | Counter sales, cashier sessions, cash reconciliation, wallet and manual external-terminal markers, receipts and reports | Demo-ready | Pharmacist, order manager, admin | `Pos::*`, POS request/service/report tests |
 | Per-item prescription review | Item decisions and therapeutic substitution workflow | Demo-ready | Pharmacist | `PrescriptionReview`, `Prescriptions::DecideLine`, Phase 19 |
 | Drug safety rules | Versioned local rules for interaction, duplicate therapy, allergy, age, pregnancy/lactation and contraindication; pharmacist acknowledgement, documented override, blocking gate, reports and CSV | Demo-ready | Pharmacist (clinical), admin (rules) | `DrugSafety::*`, `DrugSafetyRule`, Phase 20 |
 | Renal/hepatic and dose-limit rules | Needs structured clinical status and structured dose data that the application does not store | Planned | — | Phase 21+ |
 | Advanced Arabic search | Arabic normalization, exact identifier priority, token and ingredient matching, typo tolerance, suggestions, synonyms and search reports | Demo-ready | All roles | `Search::*`, pg_trgm, Phase 21 |
 | Transliteration and stemming | Latin↔Arabic transliteration, root/stem matching | Planned | — | Phase 22+ |
-| Returns | Returns, refunds, reverse inventory/logistics | Demo-ready | Staff | Phase 22 |
-| Loyalty and wallet | Points, credits, immutable ledgers | Demo-ready | Customer, staff | Phase 23 |
-| Multi-branch operations | Branch-local stock/FEFO, fulfilment, POS, purchasing and transfers | Demo-ready | Staff, admin | Phase 24 |
-| SaaS multi-tenancy | Organization isolation, scoped jobs/reports/search and integrity audits | Demo-ready | Tenant roles | Phase 25 |
-| APIs and integrations | Scoped hashed credentials, read/write APIs and signed webhooks | Implemented | Integration clients | Phase 26 |
-| Advanced analytics | Tenant/branch-aware operational analytics and safe CSV | Demo-ready | Authorized staff | Phase 27 |
+| Customer/POS sales returns | Partial-quantity returns against immutable online/POS sources, batch-traced inspection/disposition, refund records, receipts and reports | Demo-ready | Customer, staff | `Returns::*`, return request/service tests; no supplier-return workflow |
+| Loyalty and wallet | Configurable points, expiry/reversal, monetary wallet, immutable ledgers and online/identified-POS use | Demo-ready | Customer, staff | `Loyalty::*`, `Wallet::*`, ledger tests |
+| Multi-branch operations | Authorized branch switching, branch-local stock/FEFO, fulfilment, POS, purchasing, returns, reports and batch-aware transfers | Demo-ready | Staff, admin | Branch/transfer services and isolation tests |
+| Application-level organization tenancy | Organization isolation for operational data, configuration, credentials, jobs, reports/search and integrity audits | Demo-ready | Tenant roles | Tenant controller/service/job isolation tests |
+| Scoped integration API | Hashed scoped credentials; catalog, branch, inventory and order reads; order cancellation; purchasing/return reads; rate limits and idempotency where applicable | Implemented | Integration clients | `/api/v1`, API request tests |
+| Signed outbound webhooks | Tenant-configured HTTPS endpoints, display-once secrets, HMAC signatures, retry state and selected order/inventory/return/purchasing events | Implemented | Integration clients | `Webhooks::*`, webhook security tests |
+| Advanced analytics | Tenant/branch-aware operational and executive analytics with bounded date ranges and formula-safe CSV | Demo-ready | Authorized staff | `Analytics::*`, analytics request/service tests |
 
 “Partial” does not mean unsafe fallback behavior is enabled. Production-like
 email, storage, scanner, and external error reporting remain disabled or
 fail-closed until an operator supplies and verifies isolated services.
 
-| Returns and reverse logistics | Implemented | Shared online/POS aggregate, partial quantities, batch traceability, inspection, disposition, refunds, receipt, report/CSV |
-| Loyalty and wallet | Implemented | Configurable points, expiration allocation, immutable wallet ledger, online/POS mixed payment, return effects, UI and CSV |
+## Release 1.0 commercial and validation boundary
+
+The following are not Release 1.0 capabilities or certifications:
+
+- a platform-super-admin tenant-provisioning workflow, self-service tenant
+  onboarding, subscription billing, plan enforcement, or production tenant
+  validation;
+- a real online payment gateway or execution of external-card payments/refunds;
+- SMS, WhatsApp, courier, ERP, supplier-API, or other provider-specific
+  integrations;
+- supplier returns, supplier invoices/payments, or accounting/ERP settlement;
+- an external certified clinical knowledge provider, diagnosis, prescribing, or
+  replacement of pharmacist judgment;
+- regulatory, HIPAA, GDPR, PCI, accessibility, penetration-test,
+  production-scale, or uptime certification;
+- a permanent validated public demo or committed browser/system scenarios; and
+- verified production SMTP, storage, scanning, monitoring, backups, or webhook
+  consumers. The repository contains boundaries and runbooks for these services,
+  but operators must configure and validate them in their own environment.

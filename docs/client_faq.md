@@ -11,7 +11,8 @@ the canonical implementation-status reference.
 - **Partial/external:** an application boundary exists, but a real service must
   be selected, configured, and operationally verified.
 - **Possible extension:** not implemented; requires discovery and engineering.
-- **Roadmap:** named as future work, with no delivery commitment.
+- **Intentionally absent:** outside the Release 1.0 boundary unless separately
+  discovered, implemented, and validated.
 
 ## Can this support multiple pharmacies or tenants?
 
@@ -125,7 +126,8 @@ configured and verified for a live environment.
 
 ## Is the application ready to deploy publicly?
 
-**Current status: no public deployment.** CI, Docker verification, production
+**Current status: no permanent validated public deployment.** CI configuration,
+commit-scoped Docker verification, production
 configuration validation, health/readiness endpoints, and operational runbooks
 are present. A real launch still requires infrastructure, providers, secrets,
 backups, monitoring, domain/TLS, capacity testing, data preparation, support
@@ -133,10 +135,12 @@ ownership, and legal/security/accessibility review.
 
 ## Can it expose mobile or partner APIs?
 
-**Current status: not implemented; roadmap.** The application is server-rendered
-with Hotwire. API work requires consumers, versioning, authentication and
-authorization, rate limits, serialization, idempotency, documentation, and
-support commitments. Responsive browser views are not an API.
+**Current status: implemented integration API.** Versioned endpoints use
+display-once/digested scoped credentials, tenant isolation, rate limits and
+idempotency for supported writes. The actual surface covers catalog, branch,
+inventory and order reads, order cancellation, purchasing/return reads, and
+webhook management. This is not a generic full API, native mobile application,
+or promise of compatibility with an unspecified partner.
 
 ## Is it compliant with HIPAA, GDPR, PCI, or pharmacy regulations?
 
@@ -148,7 +152,8 @@ medical, privacy, and security review.
 
 ## Can it be demonstrated now?
 
-**Current status: demo-ready on request.** A temporary isolated environment can
+**Current status: repository/demo-data ready for an on-request walkthrough.** A temporary isolated environment can
 be seeded with deterministic fictional data and shown through normal customer
 and privileged authentication. There is no permanent public URL or published
-credential. Access is revoked and secrets are rotated after the session.
+credential, and zero browser/system scenarios are committed at the current
+baseline. Access is revoked and secrets are rotated after the session.

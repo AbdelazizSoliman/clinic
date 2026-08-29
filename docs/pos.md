@@ -1,7 +1,8 @@
 # Pharmacy POS — Phase 18
 
-Phase 18 adds an Arabic RTL counter-sale workflow for one pharmacy. It is an
-in-application cash register, not a payment gateway or hardware integration.
+Phase 18 introduced the Arabic RTL counter-sale workflow; Release 1.0 scopes each
+cashier session and sale to an organization and branch. It is an in-application
+cash register, not a payment gateway or hardware integration.
 
 ## Architecture decision
 

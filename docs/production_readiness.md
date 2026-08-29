@@ -1,6 +1,10 @@
-# Phase 14 production readiness
+# Release 1.0 production-readiness assessment
 
-Rails is upgraded from 7.2.3.1 to 8.1.3; Ruby remains 3.4.6. Rails 8.1 defaults
+This is a readiness assessment, not an evergreen “production-ready” claim. Any
+verification result applies only to its stated date, commit, environment, and
+external-service configuration.
+
+Rails is upgraded from 7.2.3.1 to 8.1.3.1; Ruby remains 3.4.6. Rails 8.1 defaults
 are loaded deliberately. PostgreSQL, Devise, Importmap, Turbo, Stimulus,
 Tailwind, Pagy, Active Storage, and Active Job remain in place. Production uses
 private S3-compatible storage, SMTP, Solid Queue, and Solid Cache. Boot fails
@@ -44,9 +48,10 @@ The existing `test:system` task contains zero committed system tests. No
 Chrome/Chromium executable is installed in the current local environment, so a
 local real-browser desktop/390px, keyboard, overflow, and end-to-end TOTP QR run
 has not been completed. GitHub Actions installs Chrome for the system-test task.
-The production Docker image, non-root runtime, eager load, assets, and container
-health check have been verified in GitHub Actions; external services were not
-contacted by that verification.
+CI is configured to verify the production Docker image, non-root runtime, eager
+load, assets, and container health check. The dated Release 1.0 result is recorded
+in [release_1_0.md](release_1_0.md) for its baseline commit; external services
+were not contacted by that verification.
 
 Database-backed services retain existing locking/idempotency protections for
 checkout reservations, promotion redemptions, delivery-slot counters, and the

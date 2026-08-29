@@ -270,8 +270,9 @@ metrics about what was typed; no claim is made about customer intent beyond that
 - No stemming, root extraction or definite-article stripping: `اليومي` does not match a
   product named only `يومي`.
 - Fuzzy matching runs as a filter, not an index probe, because our 0.5 word-similarity
-  threshold is looser than pg_trgm's operator default of 0.6. On a single-pharmacy catalogue
-  this is measured at low single-digit milliseconds; a much larger catalogue would want a
+  threshold is looser than pg_trgm's operator default of 0.6. On the small historical
+  benchmark catalog this measured at low single-digit milliseconds; a much larger tenant
+  catalog would want a
   session-level `word_similarity_threshold` so the `<%` operator can use the GIN index.
 - Normalized projections are maintained by model callbacks, so a bulk `update_all` on a name
   would bypass them. Fixtures spell the projections out explicitly for the same reason.

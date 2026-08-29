@@ -71,8 +71,9 @@ confirmed, preparing, ready, dispatched, delivered, rejected, and cancelled
 orders; active/inactive fictional suppliers; draft, submitted, approved,
 partially received, fully received, and cancelled purchase orders; varied
 expected dates and purchase costs; and dates distributed across recent weeks for
-reports. Purchasing receipts increase product-level stock only—no batch or
-expiry data is seeded.
+reports. Purchasing receipts create branch-local batches and movements; the seed
+also includes expired, near-expiry, quarantined, transferable, reserved, and
+FEFO-consumed batch scenarios.
 
 Per-item prescription review (Phase 19) scenarios run through the real
 pharmacist decision services, not direct attribute writes: `DEMO-PRESCRIPTION-NEW`
@@ -110,11 +111,11 @@ production mode the task also refuses to run without
 `DEMO_STORAGE_ISOLATED=true`; this is operator confirmation that Active Storage
 points to a private demo-only bucket. It never sends invitations.
 
-There is intentionally no `demo:reset` task yet. The singleton pharmacy setting,
-append-only audit records, and globally scoped relational graph require a
-separately reviewed deletion manifest and ordering before selective removal can
-be guaranteed. Never use `db:drop`, `db:reset`, or `db:seed:replant`, and never
-place real production records in the demo database.
+There is intentionally no `demo:reset` task yet. Tenant/branch relationships,
+organization-scoped settings, and append-only audit, inventory, clinical, and
+financial records require a separately reviewed deletion manifest and ordering
+before selective removal can be guaranteed. Never use `db:drop`, `db:reset`, or
+`db:seed:replant`, and never place real production records in the demo database.
 
 ## Guided journeys
 

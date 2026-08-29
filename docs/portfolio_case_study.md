@@ -203,35 +203,26 @@ claimed.
 
 - There is no permanent public deployment; remote demos are temporary and
   operator-managed.
-- Data is scoped to one global pharmacy, not branches or tenants.
-- Cash on delivery is the only operational payment method.
-- Supplier purchasing and partial receiving are implemented at product level.
-  Lots/batches, expiry/FEFO, POS, purchasing returns/invoices/payments, customer
-  returns, loyalty, substitution, and drug-safety rules are not implemented.
-- There is no SMS, courier, payment-gateway, or public API integration.
-- Linux browser installation was unavailable in the Phase 15E environment.
-  Real-browser journeys and captures were instead run against local Rails using
-  installed Chrome through the DevTools protocol. The repository still has no
-  committed Selenium system-test suite for these guided journeys.
+- Organization tenancy and branch-local operations are implemented, but no
+  platform-super-admin provisioning, subscription billing/plan enforcement, or
+  production tenant deployment is claimed.
+- COD, cash, wallet and external-terminal markers are modeled; no payment
+  gateway executes real funds.
+- Supplier purchasing, batches/FEFO, POS, customer/POS sales returns, loyalty/wallet, substitution,
+  drug safety, APIs/webhooks and analytics are implemented. Supplier invoices,
+  supplier payments/returns and provider-specific integrations are not.
+- There is no SMS, courier, payment-gateway or external clinical-data integration.
+- The Release 1.0 environment had no usable Chrome/Chromium executable. The
+  older 21 captures are retained as historical evidence, not current proof.
 - Technical safeguards do not replace legal, privacy, pharmacy, security, or
   accessibility review for a real operating market.
 
 ## Next steps
 
-The roadmap deliberately grows operational depth after the current commerce
-foundation:
+Release work should remain evidence-led: recapture current browser journeys,
+run a real deployment rehearsal with owner-selected infrastructure, complete
+capacity/accessibility/security reviews appropriate to the target market, and
+integrate external providers only after their contracts and boundaries exist.
 
-1. Batch/lot, expiry, and FEFO inventory.
-2. Pharmacy POS.
-3. Per-item prescription review and substitution.
-4. Drug safety rules.
-5. Advanced Arabic search.
-6. Returns and reverse logistics.
-7. Loyalty and wallet.
-8. Multi-branch operations.
-9. SaaS multi-tenancy.
-10. APIs and integrations.
-11. Advanced analytics.
-
-See the [feature matrix](feature_matrix.md) for the implemented/planned boundary
+See the [feature matrix](feature_matrix.md) for the canonical Release 1.0 boundary
 and [architecture](architecture.md) for current technical details.

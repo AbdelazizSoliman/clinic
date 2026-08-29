@@ -10,7 +10,7 @@ positioning. It is grounded in the [feature matrix](feature_matrix.md),
 
 - The [README](../README.md) gives the broadest introduction: current
   capabilities, roles, connected workflow, stack, screenshots, setup, and the
-  Phase 16–27 roadmap.
+  Release 1.0 boundary.
 - The [engineering case study](portfolio_case_study.md) explains the product
   problem, important design decisions, engineering outcomes, and limitations.
 - The [technical reviewer guide](reviewer_guide.md) maps high-value claims to
@@ -19,8 +19,9 @@ positioning. It is grounded in the [feature matrix](feature_matrix.md),
   captures made with deterministic fictional data.
 - The [screenshot plan](screenshot_plan.md) records stable scenarios, roles,
   viewports, sanitization rules, and capture verification.
-- The roadmap is stated in the README and [feature matrix](feature_matrix.md),
-  which distinguishes implemented, demo-ready, partial, and planned work.
+- The [feature matrix](feature_matrix.md) is the canonical truth set and
+  distinguishes implemented, demo-ready, externally configured, and
+  intentionally absent capabilities.
 - The [architecture overview](architecture.md) documents the modular monolith,
   domain and external boundaries, data flows, consistency mechanisms, security,
   and current limitations.
@@ -62,13 +63,15 @@ positioning. It is grounded in the [feature matrix](feature_matrix.md),
 
 ### Current limitations and claims to avoid
 
-- The application is globally scoped to one pharmacy. Multi-branch operation
-  and SaaS tenancy are roadmap items.
-- Cash on delivery is the only operational payment method. No payment gateway,
-  SMS, courier, ERP, WhatsApp, or public API is integrated.
-- Suppliers, purchasing, lots/batches, expiry-aware FEFO, POS, per-item
-  substitution, drug-safety rules, returns, loyalty, and advanced analytics are
-  not implemented.
+- Application-level organization tenancy and branch-local operations are
+  implemented with repository isolation tests; no production tenant validation,
+  platform-super-admin provisioning, subscription billing, or plan enforcement
+  is claimed.
+- COD, wallet, cash and external-terminal markers are modeled, but no real
+  payment gateway, SMS, courier, ERP, or WhatsApp provider is integrated.
+- Suppliers/purchasing, batches/FEFO, POS, per-item substitution, drug safety,
+  returns, loyalty/wallet, scoped APIs/webhooks and analytics are Release 1.0
+  capabilities. External providers and webhook receivers require configuration.
 - Email tracking, private production storage configuration, malware-scanner
   adapters, and error-reporting boundaries exist, but real services require
   operator configuration and verification.
@@ -76,7 +79,8 @@ positioning. It is grounded in the [feature matrix](feature_matrix.md),
   isolated, and arranged on request.
 - Do not claim real-client adoption, revenue, conversion, production traffic,
   performance at scale, regulatory compliance, formal accessibility
-  conformance, or medical decision support.
+  conformance, or autonomous/certified medical decision-making. The implemented
+  drug-safety engine is locally configured deterministic decision support only.
 
 ### Best external screenshots
 
@@ -89,10 +93,10 @@ guided demo center, and mobile storefront. See the ranked and platform-specific
 
 ### 15 seconds — recruiter
 
-Saydaliyati is a Rails 8 portfolio application that connects an Arabic RTL
-pharmacy storefront to prescription review, inventory reservations, fulfilment,
-and reporting. It demonstrates secure role-based workflows, transactional
-integrity, Hotwire, PostgreSQL, and a repeatable on-request demo.
+Saydaliyati is a Rails 8 Arabic RTL pharmacy portfolio application joining
+customer commerce to application-level organization/branch-scoped clinical,
+batch inventory, purchasing, POS, returns, ledger, integration and analytics
+workflows.
 
 ### 30 seconds — engineering manager
 
@@ -114,9 +118,10 @@ focused review queue, order staff manage preparation and delivery stages,
 inventory staff can distinguish stock on hand from stock already reserved, and
 administrators can manage promotions, users, and reports. The project includes
 a safe fictional dataset and a guided environment for temporary live
-demonstrations. It currently represents one pharmacy and does not yet include
-online payment, suppliers, branches, loyalty, or external integrations; those
-would be separate extensions.
+demonstrations. Release 1.0 also includes application-level organization tenancy,
+multi-branch operations, purchasing, batch/FEFO inventory, POS, customer/POS
+sales returns, loyalty/wallet, scoped APIs/webhooks, and analytics. It does not
+execute real online payments or include provider-specific integrations.
 
 ## Project summaries
 
@@ -135,9 +140,11 @@ append-only movements record consumption. Private prescription access is
 role-scoped and gated by validation and scan state. Privileged roles use TOTP
 2FA. A deterministic fictional dataset and role-aware demo center support
 repeatable, temporary demonstrations without bypassing authentication. The
-current scope is one pharmacy with cash on delivery; external payment,
-multi-branch, supplier, lot/FEFO, and public API capabilities remain outside the
-implemented product.
+implemented scope includes application-level organization tenancy,
+multi-branch operations, purchasing, branch-local batch/FEFO inventory, POS,
+sales returns, loyalty/wallet, a scoped integration API, signed webhooks, and
+tenant-aware analytics. Real payment gateways and provider-specific integrations
+remain outside Release 1.0.
 
 ### Medium summary
 
@@ -172,12 +179,12 @@ customers, prescriptions, and fulfilment. Private asynchronous CSV exports add
 ownership revalidation, status tracking, deduplication, concurrency limits, and
 expiry without exposing public download URLs.
 
-A deterministic fictional dataset, stable business identifiers, 21 reviewed
-browser screenshots, and an authenticated guided-demo center support temporary,
-on-request demonstrations. No permanent public deployment is promised. Current
-scope is a single pharmacy using cash on delivery; payment gateways, suppliers,
-lots and FEFO, POS, branches, tenancy, loyalty, returns, and external APIs are
-planned possibilities rather than existing features.
+A deterministic fictional dataset, stable business identifiers, and an
+authenticated guided-demo center support temporary, on-request demonstrations.
+The 21 retained screenshots are historical Phase 15 evidence pending a current
+Release 1.0 recapture. The implemented scope includes organizations, branches,
+batches/FEFO, purchasing, POS, returns, loyalty/wallet, APIs/webhooks and
+analytics; real providers and permanent hosting are not claimed.
 
 ### Long project overview
 
@@ -234,13 +241,16 @@ permissions. Twenty-one reviewed browser captures document desktop and mobile
 views. A temporary demonstration can be arranged in an isolated environment;
 there is no permanent public deployment and no authentication shortcut.
 
-The current implementation targets one globally scoped pharmacy and uses cash
-on delivery. Real SMTP, private object storage, malware scanning, and external
-error reporting require separately configured services. Payment gateways, SMS,
-couriers, suppliers and purchasing, lots/batches and FEFO, POS, returns,
-loyalty, multi-branch operation, SaaS tenancy, public APIs, and advanced
-analytics are not current capabilities. The repository presents them only as
-possible roadmap work.
+The current implementation uses cash on delivery for online orders and supports
+wallet, cash, and manual external-terminal markers where documented. It includes
+application-level organization tenancy and multi-branch operations, purchasing,
+branch-local batches/FEFO, POS, customer/POS sales returns, loyalty/wallet,
+scoped APIs, signed outbound webhooks, and tenant-aware analytics. It does not
+include a commercial SaaS control plane, platform-super-admin provisioning,
+subscription billing, supplier returns, real payment execution, or
+provider-specific SMS/WhatsApp/courier/ERP/supplier/clinical integrations. Real
+SMTP, private object storage, malware scanning, monitoring, backups, and webhook
+consumers require separately configured and verified services.
 
 ## Portfolio positioning
 
@@ -251,8 +261,9 @@ internal engineering teams building workflow-heavy Rails applications,
 regulated-data-adjacent products, Arabic/localized commerce, inventory or order
 operations, and business systems that need background jobs and role separation.
 It also supports conversations with small businesses exploring a custom
-commerce-and-operations product, provided the current single-pharmacy boundary
-and extension work are explained early.
+commerce-and-operations product, provided its application-level tenancy,
+external-service requirements, and missing commercial SaaS control plane are
+explained early.
 
 ### Rails skills showcased
 

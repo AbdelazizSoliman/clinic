@@ -2,8 +2,9 @@
 
 Start here for a structured review of Saydaliyati. The project is an engineering
 portfolio and supports temporary, on-request demonstrations; it has no
-guaranteed permanent public deployment. All demo data is fictional, and roadmap
-items are not current capabilities.
+guaranteed permanent validated public deployment. The isolated `demo:seed`
+dataset is fictional; the general starter seed has a separately documented
+commercial-distribution cleanup requirement.
 
 ## Choose a review path
 
@@ -39,7 +40,8 @@ items are not current capabilities.
   Arabic 10–15 minute narrative.
 - [Operator checklist](demo_operator_checklist.md) — before, during, and after
   controls for a temporary session.
-- [Visual gallery](visual_gallery.md) — all 21 reviewed real-browser captures.
+- [Visual gallery](visual_gallery.md) — 21 reviewed Phase 15 real-browser captures,
+  retained as historical evidence pending a Release 1.0 recapture.
 - [Screenshot plan](screenshot_plan.md) — capture scenarios, manifest,
   sanitization, and verification evidence.
 - [Screenshot selection](screenshot_selection.md) — ranked top 5, 8, and 12,
@@ -58,7 +60,7 @@ items are not current capabilities.
 - [Interview guide](interview_guide.md) — repository-grounded questions and
   concise answers across Rails, architecture, Hotwire, database, security,
   inventory, testing, deployment, and trade-offs.
-- [Client FAQ](client_faq.md) — clear implemented/partial/extension/roadmap
+- [Client FAQ](client_faq.md) — clear implemented/external/extension
   answers for branches, payments, suppliers, loyalty, WhatsApp, ERP, and related
   questions.
 
@@ -76,10 +78,12 @@ items are not current capabilities.
 
 ## Presentation boundary
 
-Supplier management and product-level purchasing/receiving are implemented in
-Phase 16. Do not market lots/batches/expiry/FEFO, supplier invoices/payments or
-purchase returns, POS, per-item substitution, drug-safety rules, advanced
-search, customer returns, loyalty, branches, tenancy, APIs/integrations, or
-advanced analytics as implemented. Do not claim
-online payment, real SMTP/scanner/storage providers, regulatory certification,
-production scale, a permanent demo, or real-client results.
+Release 1.0 implements batches/FEFO, purchasing, POS, per-item substitution,
+deterministic drug-safety decision support, advanced search, customer/POS sales
+returns, loyalty/wallet, application-level organization tenancy and branches,
+scoped APIs/signed webhooks and analytics. Do not turn these into claims of a
+commercial SaaS control plane or provider/production certification: online or
+external-card payment execution, supplier returns, supplier/courier/SMS/
+WhatsApp/ERP/clinical providers, real SMTP/scanner/storage/monitoring/backups,
+regulatory/accessibility/penetration-test certification, production scale, a
+permanent validated demo, or real-client results are not evidenced.
