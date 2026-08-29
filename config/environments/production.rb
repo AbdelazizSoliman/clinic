@@ -41,7 +41,11 @@ Rails.application.configure do
   # config.action_dispatch.x_sendfile_header = "X-Accel-Redirect" # for NGINX
 
   # Store uploaded files on the local file system (see config/storage.yml for options).
-  config.active_storage.service = ENV["SECRET_KEY_BASE_DUMMY"] ? :test : :production
+  config.active_storage.service = if ENV["SECRET_KEY_BASE_DUMMY"]
+    :test
+  else
+    ENV.fetch("STORAGE_SERVICE", "production").to_sym
+  end
   config.active_storage.service_urls_expire_in = 5.minutes
 
   # Mount Action Cable outside main process or domain.
@@ -51,10 +55,10 @@ Rails.application.configure do
 
   # Assume all access to the app is happening through a SSL-terminating reverse proxy.
   # Can be used together with config.force_ssl for Strict-Transport-Security and secure cookies.
-  config.assume_ssl = true
+  config.assume_ssl = ENV.fetch("FORCE_SSL", "true") == "true"
 
   # Force all access to the app over SSL, use Strict-Transport-Security, and use secure cookies.
-  config.force_ssl = true
+  config.force_ssl = ENV.fetch("FORCE_SSL", "true") == "true"
 
   # Skip http-to-https redirect for the default health check endpoint.
   # config.ssl_options = { redirect: { exclude: ->(request) { request.path == "/up" } } }
@@ -85,12 +89,16 @@ Rails.application.configure do
   config.action_mailer.perform_caching = false
   config.action_mailer.delivery_method = :smtp
   config.action_mailer.raise_delivery_errors = true
-  config.action_mailer.default_url_options = { host: ENV.fetch("APP_HOST", "localhost"), protocol: "https" }
+  config.action_mailer.default_url_options = {
+    host: ENV.fetch("APP_HOST", "localhost"), protocol: ENV.fetch("APP_PROTOCOL", "https")
+  }
+  smtp_authentication = ENV.fetch("SMTP_AUTHENTICATION", "plain")
   config.action_mailer.smtp_settings = {
     address: ENV.fetch("SMTP_ADDRESS", "localhost"), port: ENV.fetch("SMTP_PORT", 587),
-    user_name: ENV.fetch("SMTP_USERNAME", "dummy"), password: ENV.fetch("SMTP_PASSWORD", "dummy"),
-    authentication: :plain, enable_starttls_auto: true
-  }
+    user_name: ENV["SMTP_USERNAME"], password: ENV["SMTP_PASSWORD"],
+    authentication: smtp_authentication == "none" ? nil : smtp_authentication.to_sym,
+    enable_starttls_auto: ENV.fetch("SMTP_STARTTLS", "true") == "true"
+  }.compact
 
   # Ignore bad email addresses and do not raise email delivery errors.
   # Set this to true and configure the email server for immediate delivery to raise delivery errors.
