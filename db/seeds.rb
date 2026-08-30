@@ -7,6 +7,11 @@
 #   ["Action", "Comedy", "Drama", "Horror"].each do |genre_name|
 #     MovieGenre.find_or_create_by!(name: genre_name)
 #   end
+# Tenancy must exist before any tenant-scoped record below, because db:prepare loads
+# db/schema.rb on an empty database and never runs the migration bodies that insert
+# the DEFAULT organization and MAIN branch. Idempotent, so re-seeding is safe.
+Installation::TenancyBootstrap.call
+
 # Demo storefront catalog. Upserts make this safe to run repeatedly.
 categories = [
   [ "الأدوية والعلاجات", "medicines", "أدوية وعلاجات للاحتياجات الصحية الشائعة", "💊" ],

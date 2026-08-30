@@ -54,6 +54,11 @@ services:
   worker:
     <<: *app
     command: ["./bin/jobs", "start"]
+    # The image healthcheck probes the web server on :3000, which this service does
+    # not run, so it would report unhealthy forever while the worker is fine. Job
+    # health is visible in solid_queue_processes.last_heartbeat_at.
+    healthcheck:
+      disable: true
     depends_on:
       prepare:
         condition: service_completed_successfully
