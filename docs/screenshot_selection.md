@@ -1,10 +1,10 @@
 # Screenshot selection for external presentation
 
-All recommendations use the reviewed Phase 15E captures in the
-[visual gallery](visual_gallery.md). Ranking favors a coherent story, visual
-clarity, role coverage, and evidence of engineering depth. It does not imply
-that a screenshot alone proves the underlying control; code and test links are
-in the [reviewer guide](reviewer_guide.md).
+The list below ranks the historical Phase 15E set. It is not a Release 1.0
+selection because it predates tenancy, branches, POS, returns, loyalty/wallet,
+APIs/webhooks and analytics. Use it only as historical process evidence until
+the current desktop/mobile set is recaptured. Screenshots never prove an
+underlying control; code and test links are in the [reviewer guide](reviewer_guide.md).
 
 ## Top 5
 
@@ -91,4 +91,3 @@ Product search, the prescription-product entry point, customer prescription
 status, pharmacist queue, admin users, and the remaining mobile views are valid
 supporting evidence. They are omitted from the ranked sets because adjacent
 captures communicate the same themes with more workflow or engineering context.
-

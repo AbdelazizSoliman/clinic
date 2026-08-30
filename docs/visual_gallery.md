@@ -1,5 +1,11 @@
 # Visual gallery
 
+> Historical evidence only: these 21 captures document the Phase 15 browser
+> pass and do not show the complete Release 1.0 tenant/branch, POS, returns,
+> ledger, API/webhook or analytics surfaces. They are retained for development
+> history, not presented as current certification. A current recapture remains
+> required because no usable Chrome/Chromium executable was available locally.
+
 These images were captured from the real Rails application with the deterministic
 fictional demo dataset. Desktop captures use 1440 × 1000 CSS pixels and mobile
 captures use 390 × 844. Passwords, TOTP values, recovery codes, storage URLs,

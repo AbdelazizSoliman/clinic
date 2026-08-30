@@ -1,5 +1,38 @@
 # Technical reviewer guide
 
+## Release 1.0 reviewer-first path
+
+1. **Tenancy:** `app/models/current.rb`, `app/models/organization.rb`,
+   `app/services/operations/tenant_guard.rb`, `test/controllers/tenant_idor_matrix_test.rb`.
+2. **Branches:** `app/models/branch.rb`, `app/models/branch_membership.rb`,
+   `app/controllers/branches_controller.rb`, `test/services/stock_transfers_test.rb`.
+3. **Checkout:** `app/services/orders/create_from_cart.rb` and
+   `test/services/orders_create_from_cart_test.rb`.
+4. **Inventory/FEFO:** `app/models/inventory_batch.rb`,
+   `app/services/inventory/allocate_fefo.rb`, `test/services/batch_inventory_test.rb`.
+5. **Purchasing:** `app/services/purchasing/receive.rb` and
+   `test/services/purchasing_test.rb`.
+6. **POS:** `app/services/pos/complete.rb` and `test/services/pos_test.rb`.
+7. **Prescription review:** `app/services/prescriptions/decide_line.rb` and
+   `test/services/prescription_line_review_test.rb`.
+8. **Drug safety:** `app/services/drug_safety/gate.rb`,
+   `app/services/drug_safety/reevaluate.rb`, `test/services/drug_safety_workflow_test.rb`.
+9. **Returns:** `app/services/returns/refund.rb` and `test/services/returns_test.rb`.
+10. **Loyalty/wallet:** `app/services/loyalty/`, `app/services/wallet/`, and
+    `test/services/loyalty_wallet_test.rb`.
+11. **Search:** `app/services/search/` and `test/services/search/`.
+12. **API/webhooks:** `app/controllers/api/v1/`, `app/services/webhooks/`,
+    `test/controllers/api_v1_test.rb`, `test/services/webhook_security_test.rb`.
+13. **Analytics:** `app/services/analytics/` and `test/services/analytics_test.rb`.
+14. **Demo:** `app/services/demo_data/seeder.rb`, `app/services/demo_guidance/`,
+    and `test/services/demo_data_seeder_test.rb`.
+15. **CI/security/integrity:** `.github/workflows/ci.yml`,
+    `config/brakeman.ignore`, `lib/tasks/integrity.rake`, and
+    `test/services/platform_integrity_checks_test.rb`.
+
+All paths above exist in Release 1.0. Read the linked tests alongside services;
+navigation visibility is not treated as authorization evidence.
+
 For Phase 18, sign in as the order manager, pharmacist or admin and open
 `/pos`. Open a session, scan a demo barcode, complete a cash sale, inspect the
 receipt and close the session. Use the pharmacist for a prescription-required

@@ -88,8 +88,8 @@ interaction without maintaining a duplicated API/client model.
 **How is Arabic RTL supported?**
 
 Views use semantic Arabic markup, document direction, direction-aware layouts,
-and responsive Tailwind utilities. Phase 15E reviewed desktop and 390-pixel
-Chrome captures for direction and document-level overflow.
+and responsive Tailwind utilities. A historical Phase 15E pass reviewed desktop
+and 390-pixel Chrome captures; current Release 1.0 recapture remains open.
 
 **What belongs in Stimulus?**
 

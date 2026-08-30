@@ -16,9 +16,9 @@ is false. Application code queries `DemoMode.enabled?` (or `demo_mode?` in
 controllers and views); it must not read `DEMO_MODE` directly.
 
 When enabled, authenticated interfaces display an Arabic demo banner and expose
-`/demo`. `DemoMode::SafetyPolicy` is the central extension point for later
-protected actions. Phase 15A intentionally configures no protected actions, so
-existing commerce and administration behavior is unchanged.
+`/demo`. `DemoMode::SafetyPolicy` is the central control for protected demo
+actions and normal authorization remains active; demo mode is not an
+impersonation or authentication bypass.
 
 ## External side-effect audit
 

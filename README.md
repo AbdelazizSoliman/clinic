@@ -1,33 +1,11 @@
 # Saydaliyati — Arabic RTL Pharmacy Commerce and Operations
 
-Phase 21 adds Arabic-aware product search across the storefront, POS, prescription
-substitution and staff lookup: diacritic/alef/ya normalization, exact barcode and SKU
-priority, multi-token Arabic+English matching, structured active-ingredient search,
-conservative typo tolerance, keyboard-accessible suggestions and privacy-conscious search
-reports — PostgreSQL and pg_trgm only, with no external search service.
-See [docs/search.md](docs/search.md).
-
-Phase 20 adds a deterministic drug safety rules engine: locally configured,
-immutably versioned rules for interactions, duplicate therapy, allergies, age
-limits and recorded pregnancy/lactation states, surfaced to pharmacists with
-severity, acknowledgement, documented override and a blocking dispensing gate.
-It is decision support only — it never prescribes, diagnoses, substitutes or
-approves anything on its own, and it uses no AI and no external drug database.
-See [docs/drug_safety_rules.md](docs/drug_safety_rules.md).
-
-Phase 19 upgrades prescription handling to an independent pharmacist decision
-per commercial line — approve, substitute a therapeutic alternative, or
-reject — online and in POS, with FEFO reallocation and an immutable clinical
-history. See [docs/prescription_review.md](docs/prescription_review.md).
-
-Phase 18 adds cashier sessions, scanner-ready Arabic RTL POS, transactional
-batch-FEFO sales, pharmacist approvals, controlled discounts, reconciliation,
-printable receipts and POS reports. See [docs/pos.md](docs/pos.md).
-
-Saydaliyati (صيدليتي) is a Ruby on Rails application that connects an Arabic
-right-to-left customer storefront with prescription review, stock reservation,
-order fulfilment, delivery operations, promotions, reporting, and pharmacy
-administration.
+Saydaliyati (صيدليتي) Release 1.0 is a Ruby on Rails modular monolith with
+application-level organization tenancy and multi-branch operations. It
+connects an Arabic right-to-left pharmacy storefront with tenant- and
+branch-scoped operations. It covers commerce, per-item prescription review,
+deterministic drug-safety gates, batch/lot inventory and FEFO, purchasing, POS,
+returns, loyalty/wallet ledgers, scoped APIs and signed webhooks, and analytics.
 
 The repository is a software engineering portfolio project and supports
 temporary, on-request demonstrations. A permanently available public deployment

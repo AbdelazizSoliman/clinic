@@ -16,19 +16,17 @@ the canonical implementation-status reference.
 
 ## Can this support multiple pharmacies or tenants?
 
-**Current status: not implemented; roadmap.** The application has one globally
-scoped pharmacy. Supporting independent pharmacies requires tenant ownership on
-business records, strict query and job isolation, tenant-aware storage and
-cache keys, configuration, authorization, administration, billing decisions,
-data migration, and isolation tests. It should be treated as a SaaS-tenancy
-project, not a configuration switch.
+**Current status: implemented/demo-ready.** Organizations own business records,
+credentials, configuration, jobs and reporting. Direct-ID and service-level
+isolation tests cover representative domains. Subscription billing and a
+platform-super-admin provisioning workflow, self-service tenant onboarding, plan
+enforcement, and production tenant validation are not part of Release 1.0.
 
 ## Can it support multiple branches of one pharmacy?
 
-**Current status: not implemented; roadmap.** Branches require branch-specific
-stock and reservations, staff assignments, catalogs/prices where applicable,
-delivery coverage, fulfilment routing, transfers, reports, settings, and access
-rules. The present inventory dashboard and order flow are global.
+**Current status: implemented/demo-ready.** Staff memberships and branch
+switching constrain branch-local batches, FEFO, reservations, POS, purchasing,
+fulfilment, transfers, returns and reports. Catalog data remains tenant-wide.
 
 ## Can it support online payment?
 
@@ -40,23 +38,23 @@ and tests. No online-payment claim should be made today.
 
 ## Can suppliers and purchasing be added?
 
-**Current status: not implemented; roadmap.** Supplier records, purchase orders,
-approval, receiving, cost history, discrepancies, and accounts/ERP boundaries
-can be designed as an extension. They should be coordinated with lot/expiry
-requirements because receiving often creates batch-level stock.
+**Current status: implemented/demo-ready.** Supplier records, purchase orders,
+submission/approval, partial and final receipt, batch creation, cost history and
+purchasing reports are present. Supplier invoicing/payment and ERP exchange are
+not implemented. There is no supplier-return workflow; customer/POS sales
+returns are a separate implemented domain.
 
 ## Does it track batches, lots, expiry, or FEFO?
 
-**Current status: not implemented; roadmap.** Inventory is product-level.
-Batch-level receiving, expiry dates, quarantine/recall, allocation, FEFO,
-adjustments, and traceability require a deeper inventory model and migration.
+**Current status: implemented/demo-ready.** `InventoryBatch` is authoritative;
+receipts create branch-local lots with expiry/cost, FEFO excludes expired or
+quarantined stock, and allocations/movements retain batch provenance.
 
 ## Can loyalty points or a wallet be added?
 
-**Current status: not implemented; roadmap.** A safe extension would require an
-append-only points/credit ledger, earning and redemption rules, expiry,
-reversal, promotion interaction, abuse controls, and financial/accounting
-decisions. Existing promotions and coupons are not a loyalty wallet.
+**Current status: implemented/demo-ready.** Separate immutable loyalty and
+monetary-wallet ledgers support earning, redemption, expiry and bounded return
+reversals across online and identified POS transactions.
 
 ## Can WhatsApp be integrated?
 
@@ -85,7 +83,8 @@ handling, and manual fallback.
 **Current status: not implemented; possible extension.** Discovery must define
 the system of record, data ownership, identifiers, synchronization direction,
 API/file protocol, mapping, retries, reconciliation, conflict handling, audit,
-and security. Public/partner APIs are themselves roadmap work.
+and security. Versioned scoped APIs and signed webhooks provide a safe
+integration boundary, but no ERP-specific mapping is included.
 
 ## Is prescription upload and review already implemented?
 
@@ -97,10 +96,12 @@ security, not automated medical validation.
 
 ## Does it check drug interactions, allergies, or substitutions?
 
-**Current status: not implemented; roadmap.** There is no drug-safety engine,
-clinical decision support, or per-item substitution workflow. Such work requires
-licensed clinical input, authoritative data sources, jurisdictional review,
-versioning, overrides, audit, and extensive safety validation.
+**Current status: implemented/demo-ready with a strict boundary.** Pharmacists
+can approve, reject or substitute each prescription line. A deterministic,
+versioned local rules engine re-evaluates structured context and blocks unresolved
+findings. It uses no external clinical database and does not diagnose or prescribe.
+Pharmacist acknowledgement and documented override remain human decisions; the
+engine does not replace pharmacist judgment.
 
 ## Are promotions and coupons implemented?
 
@@ -114,8 +115,8 @@ Client-specific commercial rules still require confirmation.
 
 **Current status: implemented/demo-ready.** Role-scoped operational reports and
 formula-safe CSV are present. Private queued exports include ownership checks,
-deduplication, limits, status, and expiry. This is operational reporting, not
-the roadmap's advanced analytics module.
+deduplication, limits, status, and expiry. Release 1.0 also includes
+tenant/branch-aware executive and operational analytics with comparisons.
 
 ## Is email implemented?
 
@@ -131,7 +132,7 @@ commit-scoped Docker verification, production
 configuration validation, health/readiness endpoints, and operational runbooks
 are present. A real launch still requires infrastructure, providers, secrets,
 backups, monitoring, domain/TLS, capacity testing, data preparation, support
-ownership, and legal/security/accessibility review.
+ownership, browser/system verification, and legal/security/accessibility review.
 
 ## Can it expose mobile or partner APIs?
 

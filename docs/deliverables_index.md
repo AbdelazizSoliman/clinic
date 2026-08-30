@@ -19,16 +19,20 @@ commercial-distribution cleanup requirement.
 ## Core repository documents
 
 - [README](../README.md) — project orientation, capabilities, stack, setup,
-  screenshots, documentation, and roadmap.
+  historical screenshots, documentation, and Release 1.0 boundary.
 - [Architecture](architecture.md) — domains, data flows, consistency and
   security boundaries, external systems, and limitations.
 - [Engineering case study](portfolio_case_study.md) — problem, product approach,
   implementation decisions, outcomes, trade-offs, and next steps.
 - [Feature matrix](feature_matrix.md) — canonical distinction between
-  implemented, demo-ready, partial/external, and planned capabilities.
+  implemented, demo-ready, externally configured, and intentionally absent
+  capabilities.
 - [Technical reviewer guide](reviewer_guide.md) — high-signal code and test path.
-- [Roadmap](../README.md#roadmap-phases-1727) — Phase 17–27 sequence; planned
-  modules only. The same statuses appear in the feature matrix.
+- [Authorization matrix](authorization_matrix.md) — role/domain access boundary.
+- [Release notes](release_1_0.md) and [release checklist](release_checklist.md) —
+  evidence, limitations, and the canonical future release gate.
+- [Completed phase history](roadmap.md) — status of the implemented Phase 18–27
+  business domains and deliberately deferred search/clinical capabilities.
 
 ## Demo and visual evidence
 

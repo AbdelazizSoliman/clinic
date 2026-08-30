@@ -1,14 +1,15 @@
 # Architecture overview
 
-Phase 18 uses a dedicated `PosSale` aggregate. Online `Order` retains
-customer/delivery/fulfilment semantics; POS drafts stay stock-neutral and
-completed counter sales consume the shared batch aggregate transactionally.
-See [pos.md](pos.md).
+Release 1.0 is organized as Platform → Organization/Tenant → Branch →
+Operational Domains. `Organization` is the isolation boundary; branch-aware
+workflows select an authorized branch and keep physical stock, allocation, POS,
+purchasing destinations, transfers, returns and reporting local to it.
 
 ## System context
 
-Saydaliyati serves five authenticated roles through one Arabic RTL web
-application:
+Saydaliyati serves five authenticated tenant roles through one Arabic RTL web
+application. Platform-level administration is not exposed as an ordinary
+tenant role.
 
 - Customers browse products, manage carts/addresses, submit orders and required
   prescription files, and view only their own records.
@@ -19,8 +20,9 @@ application:
   operations.
 
 External boundaries are PostgreSQL, private object storage, SMTP, ClamAV (or a
-future scanner adapter), and an optional error-reporting adapter. No payment,
-SMS, courier, supplier API, or clinical decision API is integrated.
+scanner adapter), optional error reporting, and tenant-configured webhook
+receivers/API clients. No payment gateway, SMS, courier, supplier API, or
+external clinical knowledge API is integrated.
 
 The maintainable system diagram is in
 [`diagrams/system_context.mmd`](diagrams/system_context.mmd).
@@ -145,17 +147,20 @@ for an already-cancelled order.
 
 ### Inventory
 
-`Product#stock_quantity` is physical stock. `InventoryReservation` records
-active, released, or consumed quantities for one order item. Available-to-sell
-stock is physical stock minus active reservations.
+`InventoryBatch` is the physical-stock authority. Each batch belongs to an
+organization, branch and product and carries lot, expiry and quarantine state.
+`Product#stock_quantity` is a compatibility aggregate that must equal the sum
+of its batches. `InventoryReservationAllocation` binds reservations to
+allocatable batches; available-to-sell subtracts active allocated reservations.
 
-`Inventory::AdjustStock` locks the product and prevents reductions below active
-reservations or below zero. Each accepted adjustment creates an
-`InventoryMovement` whose before/delta/after values must reconcile. Movement
-records abort updates and deletion. Consumption locks products and reservations,
-decrements physical stock, and creates idempotent movement records; release
-changes reservation state without inventing stock. Expiry, extension, release,
-consumption, and return-to-stock are separate operations.
+`Inventory::AllocateFefo` locks branch-local candidates and deterministically
+orders unexpired, non-quarantined batches by expiry and stable tie-breakers.
+Accepted adjustments, receipts, POS/online consumption, transfers and returns
+create arithmetically reconciled, append-only `InventoryMovement` records with
+idempotency references. Release changes reservation state without inventing
+stock. Transfer stock appears at the destination only on receipt; returns retain
+original batch and branch provenance and explicitly restock, quarantine or
+write off.
 
 See [`diagrams/order_inventory_flow.mmd`](diagrams/order_inventory_flow.mmd).
 

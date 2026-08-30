@@ -89,6 +89,8 @@ module DemoData
     end
 
     def seed_all
+      organization = seed_primary_organization
+      Current.organization = organization
       accounts = seed_accounts
       branches = seed_branches(accounts)
       Current.branch = branches.fetch(:main)
@@ -118,6 +120,16 @@ module DemoData
         ingredients, safety_rules, synonyms)
     ensure
       Current.reset
+    end
+
+    def seed_primary_organization
+      return Current.organization if Current.organization
+      return Organization.unscoped.order(:id).first if Organization.unscoped.exists?
+
+      Organization.unscoped.find_or_create_by!(code: "DEMO-A") do |record|
+        record.assign_attributes(name: "صيدلية الروضة التجريبية", active: true,
+          timezone: "Africa/Cairo", currency: "EGP", locale: "ar")
+      end
     end
 
     def seed_secondary_organization

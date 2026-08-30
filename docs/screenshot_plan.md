@@ -1,8 +1,13 @@
 # Screenshot plan
 
-Phase 15E captured this plan from one isolated deterministic demo database using
-fictional data only. The reviewed images live under `docs/images/portfolio/` and
-are presented in the [visual gallery](visual_gallery.md).
+The retained Phase 15E images under `docs/images/portfolio/` are historical.
+Release 1.0 requires a fresh deterministic capture; do not label the old set as
+current. Add current views for per-item review, safety finding, substitution,
+purchasing/receipt, branch transfer, POS/payment receipt, return/refund,
+loyalty/wallet, API/webhook administration, executive analytics and tenant/
+branch reporting. Keep at least one mobile storefront and one mobile operational
+view, producing the 20-view Release 1.0 set described by this plan plus those
+additional operational surfaces.
 
 Recommended viewports:
 

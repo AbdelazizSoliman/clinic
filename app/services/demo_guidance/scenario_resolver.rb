@@ -56,6 +56,7 @@ module DemoGuidance
       sale ? @routes.pos_sale_path(sale) : @routes.pos_sales_path
     end
     def pos_reports = allowed?(:can_view_pos_reports?) && @routes.admin_reports_pos_path(preset: "last_30_days")
+    def returns_queue = allowed?(:can_operate_orders?) && @routes.staff_returns_path
     def loyalty_wallet_admin = allowed?(:can_manage_loyalty_wallet?) && @routes.admin_loyalty_wallet_path
 
     def inventory_dashboard = allowed?(:can_manage_inventory?) && @routes.admin_root_path
@@ -102,6 +103,7 @@ module DemoGuidance
 
     def admin_delivery = allowed?(:can_manage_delivery?) && @routes.staff_delivery_zones_path
     def admin_reports = allowed?(:can_view_business_reports?) && @routes.admin_reports_root_path(preset: "last_30_days")
+    def admin_analytics = @user&.admin? && @routes.admin_analytics_path(preset: "last_30_days")
     def admin_security = @user&.admin? && @routes.admin_security_path
 
     def allowed?(capability)
