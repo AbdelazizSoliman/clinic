@@ -97,7 +97,7 @@ module Purchasing
     private
 
     def batch_specs_for(item, quantity)
-      raw_specs = Array(@batches[item.id.to_s] || @batches[item.id])
+      raw_specs = normalize_batch_specs(@batches[item.id.to_s] || @batches[item.id])
       raw_specs = [ {
         batch_number: "B-#{Digest::SHA256.hexdigest("#{@idempotency_key}:#{item.id}").first(16).upcase}",
         expiry_date: Date.current + 2.years,
@@ -114,6 +114,16 @@ module Purchasing
           notes: values[:notes].to_s.squish.presence
         }
       end
+    end
+
+    def normalize_batch_specs(raw_specs)
+      return [] if raw_specs.blank?
+      return raw_specs if raw_specs.is_a?(Array)
+      return Array(raw_specs) unless raw_specs.is_a?(Hash)
+
+      specs = raw_specs
+      spec_keys = specs.keys.map(&:to_s)
+      spec_keys.intersect?(%w[batch_number lot_number manufacture_date expiry_date quantity notes]) ? [ specs ] : specs.values
     end
 
     def stale!

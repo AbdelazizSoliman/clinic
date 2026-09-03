@@ -99,6 +99,26 @@ class BatchInventoryTest < ActiveSupport::TestCase
     assert_equal 2, result.receipt.inventory_batches.count
   end
 
+  test "purchase receiving accepts index-keyed batch fields submitted by the form" do
+    supplier = Supplier.create!(name: "مورد نموذج التشغيلات", code: "FORM-BATCH-SUP")
+    order = Purchasing::CreateOrder.new(actor: @manager, supplier:).call.purchase_order
+    item = Purchasing::AddItem.new(purchase_order: order, actor: @manager, product: @product,
+      ordered_quantity: 4, unit_cost_cents: 650).call.item
+    Purchasing::Submit.new(purchase_order: order, actor: @manager).call
+    Purchasing::Approve.new(purchase_order: order.reload, actor: @admin).call
+
+    result = Purchasing::Receive.new(purchase_order: order.reload, actor: @manager,
+      quantities: { item.id.to_s => "4" }, batches: { item.id.to_s => { "0" => {
+        "batch_number" => " form-batch-1 ", "expiry_date" => (Date.current + 3.months).to_s,
+        "quantity" => ""
+      } } }, idempotency_key: "form-shaped-batch-receipt").call
+
+    assert result.success?, result.errors.inspect
+    batch = result.receipt.inventory_batches.sole
+    assert_equal "FORM-BATCH-1", batch.batch_number
+    assert_equal 4, batch.original_quantity
+  end
+
   private
 
   def create_batch(number, quantity, expiry, **attributes)
